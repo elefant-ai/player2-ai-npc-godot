@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://cc80o6rwn8i0u"]
+
+[ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://dev_scenes/ai_example.gd" id="1_g5rfa"]
+[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/player2_config.gd" id="2_4gwsk"]
+
+[sub_resource type="Resource" id="Resource_1wox6"]
+script = ExtResource("2_4gwsk")
+endpoint_chat = "http://localhost:4315/v1/health"
+metadata/_custom_type_script = "uid://b6indg81ao1we"
+
+[node name="Test" type="Node3D"]
+
+[node name="Assistant" type="Node3D" parent="."]
+script = ExtResource("1_g5rfa")
+config = SubResource("Resource_1wox6")
+
+[node name="AI" type="Node" parent="Assistant"]

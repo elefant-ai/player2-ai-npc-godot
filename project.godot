@@ -1,0 +1,22 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Player2 Godot"
+config/features=PackedStringArray("4.4", "Forward Plus")
+
+[autoload]
+
+Player2WebHelper="*res://addons/player2/helpers/web_helper.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/player2/plugin.cfg")
