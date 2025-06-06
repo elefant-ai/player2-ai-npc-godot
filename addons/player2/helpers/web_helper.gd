@@ -20,15 +20,17 @@ func _parse_url_and_port(path : String) -> UrlPort:
 
 	return UrlPort.new(url, port)
 
-func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", on_completed : Callable = Callable(), on_fail : Callable = Callable()) -> void:
+func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", headers : Array[String] = [], on_completed : Callable = Callable(), on_fail : Callable = Callable()) -> void:
 
-	var headers = []
-	
 	var string_body = body if body is String else JsonClassConverter.class_to_json_string(body)
 
-	print("ASDF")
+	print("HTTP REQUEST:")
+	print("\n\n")
 	print(string_body)
-	return
+	print("\n\n")
+	# mock it
+	#on_completed.call('{"choices":[{"message":{"content":"Hello! How can I help you today?\n"}}]}', 200)
+	#return
 
 	var http = HTTPRequest.new()
 	add_child(http)
