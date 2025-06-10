@@ -1,8 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://cc80o6rwn8i0u"]
+[gd_scene load_steps=9 format=3 uid="uid://cc80o6rwn8i0u"]
 
-[ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://dev_scenes/ai_example.gd" id="1_g5rfa"]
+[ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/agent.gd" id="1_g5rfa"]
 [ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/player2_config.gd" id="2_4gwsk"]
-[ext_resource type="Script" path="res://dev_scenes/ai_tool_call.gd" id="3_1wox6"]
+[ext_resource type="Script" uid="uid://r7ec3bhr4ij0" path="res://dev_scenes/ai_simple_tool_receiver.gd" id="3_xoqp4"]
+[ext_resource type="Script" uid="uid://bmykr1h84hu66" path="res://addons/player2/helpers/tool_call/string_filter.gd" id="3_ygx8q"]
 [ext_resource type="Script" uid="uid://4flv2qyji2mp" path="res://dev_scenes/ai_simple_text_interface.gd" id="4_xoqp4"]
 
 [sub_resource type="Resource" id="Resource_1wox6"]
@@ -12,20 +13,34 @@ endpoint_chat = "http://127.0.0.1:4315/v1/chat/completions"
 endpoint_health = "http://127.0.0.1:4315/v1/health"
 metadata/_custom_type_script = "uid://b6indg81ao1we"
 
-[sub_resource type="Resource" id="Resource_xoqp4"]
-script = ExtResource("3_1wox6")
-name = "blink"
-description = "Blink the screen"
-metadata/_custom_type_script = "uid://dmre6k4vijb37"
+[sub_resource type="Resource" id="Resource_5xt60"]
+script = ExtResource("3_ygx8q")
+mode = 0
+list = Array[String]([])
+metadata/_custom_type_script = "uid://bmykr1h84hu66"
+
+[sub_resource type="LabelSettings" id="LabelSettings_ygx8q"]
+font_size = 156
 
 [node name="Test" type="Node3D"]
 
-[node name="Assistant" type="Node3D" parent="."]
+[node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
 script = ExtResource("1_g5rfa")
 config = SubResource("Resource_1wox6")
-tool_calls = Array[ExtResource("3_1wox6")]([SubResource("Resource_xoqp4")])
+system_message = "You are an agent that helps out the player! Here is your world status:
+${status}
 
-[node name="Simple Interface" type="ColorRect" parent="." node_paths=PackedStringArray("button", "text", "chat")]
+You are to reply and react when you get poked."
+tool_calls_scan_node_for_functions = [NodePath("../Tool Receiver")]
+tool_calls_scan_node_filter = SubResource("Resource_5xt60")
+metadata/_custom_type_script = "uid://bupnh0kqklshe"
+
+[node name="Tool Receiver" type="Node" parent="." node_paths=PackedStringArray("billboard", "blink_background")]
+script = ExtResource("3_xoqp4")
+billboard = NodePath("../Simple Interface/Billboard")
+blink_background = NodePath("../Simple Interface")
+
+[node name="Simple Interface" type="ColorRect" parent="." node_paths=PackedStringArray("button", "text", "chat", "poke_button")]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -37,6 +52,7 @@ script = ExtResource("4_xoqp4")
 button = NodePath("Button")
 text = NodePath("TextEdit")
 chat = NodePath("Label")
+poke_button = NodePath("Poke Button")
 
 [node name="Button" type="Button" parent="Simple Interface"]
 layout_mode = 0
@@ -64,5 +80,34 @@ offset_right = 943.0
 offset_bottom = -8.0
 vertical_alignment = 2
 
-[connection signal="chat_received" from="Assistant" to="Simple Interface" method="append_line"]
-[connection signal="text_sent" from="Simple Interface" to="Assistant" method="chat"]
+[node name="Billboard" type="Label" parent="Simple Interface"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -5.0
+offset_top = -288.0
+offset_right = -5.0
+offset_bottom = -288.0
+grow_horizontal = 2
+grow_vertical = 2
+label_settings = SubResource("LabelSettings_ygx8q")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Poke Button" type="Button" parent="Simple Interface"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -125.0
+offset_top = -64.0
+offset_right = -24.0
+offset_bottom = -13.0
+grow_horizontal = 0
+action_mode = 0
+text = "Poke"
+
+[connection signal="chat_received" from="Player2Agent" to="Simple Interface" method="append_line"]
+[connection signal="poked" from="Simple Interface" to="Player2Agent" method="notify" binds= ["You have just been poked!"]]
+[connection signal="text_sent" from="Simple Interface" to="Player2Agent" method="chat"]

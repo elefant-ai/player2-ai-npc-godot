@@ -1,0 +1,407 @@
+class_name Player2Agent
+extends Node
+
+@export var config : Player2Config
+@export_multiline var system_message : String = "You are an agent that helps out the player! Here is your world status:\n${status}"
+# TODO: Validate conversation_history_size > 0 and conversation_history_size > conversation_summary_buffer
+@export_subgroup("Conversation and Summary")
+@export var conversation_history_size : int = 64
+@export var conversation_summary_buffer : int = 48
+@export_multiline var summary_message : String = \
+"The agent has been chatting with the player.
+Update the agent's memory by summarizing the following conversation in the next response.
+Use natural language, not JSON. Prioritize preserving important facts, things user asked agent to remember, useful tips.
+
+Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars.
+"
+@export var summary_max_size : int = 500
+@export_multiline var summary_prefix : String = "Summary of earlier events: ${summary}"
+
+@export_subgroup("Tool Calls", "tool_calls")
+## Set this to an object to scan for functions in that object to call
+@export var tool_calls_scan_node_for_functions : Array[Node]
+## When scanning an object, filter out or only accept the following functions.
+@export var tool_calls_scan_node_filter : StringFilter = StringFilter.new()
+## Gives information to the Agent on how to handle using tool calls. 
+@export_multiline var tool_calls_choice : String = "Use whatever tools necessary to help the player when they need it."
+@export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
+
+signal tool_called(function_name : String, args : Dictionary)
+signal chat_received(message : String)
+signal chat_failed(error_code : int)
+
+var _messsage_queued : bool = false
+
+class ConversationMessage:
+	@export var message : String
+	@export var role : String
+var _conversation_history : Array[ConversationMessage]
+
+var _summarizing_history : bool = false
+var _current_summary : String = ""
+
+## Mapping of tool call name -> Callable
+var _tool_call_func_map : Dictionary
+
+## prints the client version, useful endpoint test
+func print_client_version() -> void:
+	Player2.get_health(config,
+		func(result):
+			print(result.client_version)
+	)
+
+func _queue_message(message : ConversationMessage) -> void:
+	_conversation_history.push_back(message)
+	_messsage_queued = true
+	if _summarizing_history:
+		# do not process conversation history, just push it
+		return
+	_process_conversation_history()	
+
+## Add chat message to our history.
+## This is a user talking to the agent.
+func chat(message : String) -> void:
+	var conversation_message : ConversationMessage = ConversationMessage.new()
+	conversation_message.message = message
+	conversation_message.role = "user"
+	_queue_message(conversation_message)
+
+## Add a notification message to our history
+## This is the developer talking to the agent, letting it know that something happened.
+func notify(message : String) -> void:
+	var conversation_message : ConversationMessage = ConversationMessage.new()
+	conversation_message.message = message
+	conversation_message.role = "developer"
+	_queue_message(conversation_message)
+
+## Check if our history has too many messages and prompt for a summary/cull
+func _process_conversation_history() -> void:
+
+	# Wait while we summarize please...
+	if _summarizing_history:
+		return
+
+	# max size
+	if _conversation_history.size() > conversation_history_size:
+		print("Conversation history limit reached: Cropping and summarizing")
+		# crop conversation history
+		var to_summarize := _conversation_history.slice(0, conversation_summary_buffer)
+		_conversation_history = _conversation_history.slice(_conversation_history.size() - conversation_history_size)
+
+		# summarize a fragment of the space we cropped out and push that to the start...
+		if to_summarize.size() > 0:
+			_summarizing_history = true
+			_summarize_history_internal(
+				to_summarize,
+				_current_summary,
+				func(result : String):
+					# We got our summary from the endpoint, set and move on.
+					_current_summary = result
+					if _current_summary.length() > summary_max_size:
+						_current_summary = _current_summary.substr(0, summary_max_size)
+					_summarizing_history = false,
+				func():
+					# error! Do nothing for now.
+					_summarizing_history = false
+			)
+
+## Send an API call to get a summary of a list of messages, completing with a single message that summarizes the conversation.
+func _summarize_history_internal(messages : Array[ConversationMessage], previous_summary : String, on_completed : Callable, on_fail : Callable) -> void:
+	var request := Player2Schema.ChatCompletionRequest.new()
+
+	# System message
+	var system_msg := Player2Schema.Message.new()
+	system_msg.role = "system"
+	system_msg.content = summary_message.replace("${summary_max_size}", str(summary_max_size))
+
+	# Get all previous messages as a log...
+	var messages_log = ""
+	if previous_summary.length() != 0:
+		messages_log += "(previous summary: \"" + previous_summary + "\")"
+	for message : ConversationMessage in messages:
+		messages_log += message.role + ": " + message.message + "\n"
+	var user_msg = Player2Schema.Message.new()
+	user_msg.role = "user"
+	user_msg.content = messages_log
+
+	var req_messages = [system_msg, user_msg]
+
+	# Simply add to list
+	# The agent interprets this as history, and can reply with something like "ok cool"
+	# so don't do it this way.
+	#for message : ConversationMessage in messages:
+		#var user_msg = Player2Schema.Message.new()
+		#user_msg.role = message.role
+		#user_msg.content = message.message
+		#req_messages.push_back(user_msg)
+
+	request.messages.assign(req_messages)
+	Player2.chat(config, request,
+		func(result):
+			if result.choices.size() != 0:
+				var reply = result.choices.get(0).message.content
+				on_completed.call(reply)
+				# done, good.
+				return
+			printerr("Invalid reply: ", JsonClassConverter.class_to_json_string(result) )
+			on_fail.call(),
+		on_fail
+	)
+
+## Append a reply message to our history, assuming it's from the assistant.
+func _append_agent_reply_to_history(message : String):
+	var msg := ConversationMessage.new()
+	msg.role = "assistant"
+	msg.message = message
+	_conversation_history.push_back(msg)
+
+# TODO: Move to helper file
+static func _get_tool_call_param_from_method_arg_dictionary(method_arg : Dictionary) -> AIToolCallParameter:
+	var result := AIToolCallParameter.new()
+	result.name = method_arg["name"]
+
+	match method_arg["type"]:
+		TYPE_INT:
+			result.type = AIToolCallParameter.Type.INTEGER
+		TYPE_FLOAT:
+			result.type = AIToolCallParameter.Type.NUMBER
+		TYPE_BOOL:
+			result.type = AIToolCallParameter.Type.BOOLEAN
+		TYPE_STRING:
+			result.type = AIToolCallParameter.Type.STRING
+		_:
+			# Unsupported type
+			printerr("Unsupported JSON type for the following method argument: " + JSON.stringify(method_arg))
+			return null
+	return result
+
+# TODO: Cache this
+## Scans functions in a provided class to consider as being tool calls
+func _scan_funcs_for_tools() -> Array[AIToolCall]:
+	var result : Array[AIToolCall] = []
+
+	var nodes_to_scan : Array[Node] = []
+	if tool_calls_scan_node_for_functions != null:
+		nodes_to_scan.append_array(tool_calls_scan_node_for_functions)
+
+	var self_funcs_to_ignore : Array[String] = []
+	# Get our class functions so we don't worry about it
+	var t := Player2Agent.new()
+	self_funcs_to_ignore.assign(t.get_method_list().map(func (t): return t["name"]))
+	t.queue_free()
+
+	var node_funcs_to_ignore : Array[String] = []
+	var n := Node.new()
+	node_funcs_to_ignore.assign(n.get_method_list().map(func (t): return t["name"]))
+	n.queue_free()
+
+	for node in nodes_to_scan:
+		var functions_documentation := Player2FunctionHelper.parse_documentation(node.get_script())
+		var functions := node.get_method_list()
+		var is_self := node == self
+		for function in functions:
+			var f_name : String = function["name"]
+
+			# our functions or base object functions
+			if is_self:
+				if self_funcs_to_ignore.has(f_name):
+					continue
+			else:
+				if node_funcs_to_ignore.has(f_name):
+					continue
+
+			# private functions
+			if f_name.begins_with("_"):
+				continue
+
+			var tool_call := AIToolCall.new()
+
+			# name and description
+			tool_call.function_name = f_name
+			tool_call.description = ""
+			if functions_documentation.has(f_name):
+				tool_call.description = functions_documentation[f_name]
+
+			# args
+			tool_call.args = []
+			for arg : Dictionary in function["args"]:
+				var tc_arg := _get_tool_call_param_from_method_arg_dictionary(arg)
+				if tc_arg:
+					tool_call.args.append(tc_arg)
+
+			result.append(tool_call)
+
+			# Update callable function as well
+			_tool_call_func_map[f_name] = Callable(node, f_name)
+
+	return result
+
+## Converts our representation of a tool call to the schema representation
+func _convert_tool_call(simple_tool_call : AIToolCall) -> Player2Schema.Tool:
+	var function_name = simple_tool_call.function_name
+	var tool_call := Player2Schema.Tool.new()
+	tool_call.type = "function"
+	var f := Player2Schema.Function.new()
+	f.name = function_name
+	f.description = simple_tool_call.description
+
+	var p := Player2Schema.Parameters.new()
+	p.type = "object"
+	p.properties = Dictionary()
+	p.required = []
+
+	# Arguments
+	for arg in simple_tool_call.args:
+		var arg_name := arg.name
+		var arg_t := Dictionary()
+		arg_t["type"] = AIToolCallParameter.arg_type_to_schema_type(arg.type)
+		arg_t["description"] = arg.description
+		if arg.type == AIToolCallParameter.Type.ENUM:
+			var enum_types_t : Array[String] = arg.enum_list
+			arg_t["enum"] = enum_types_t
+		p.properties.set(arg_name, arg_t)
+		pass
+
+	f.parameters = p
+	tool_call.function = f
+
+	return tool_call
+
+## Generate our tool call schema.
+func _generate_tools() -> Array[Player2Schema.Tool]:
+
+	var our_tools : Array[AIToolCall] = []
+	our_tools.append_array(get_manual_tool_calls(_tool_call_func_map))
+	our_tools.append_array(_scan_funcs_for_tools())
+
+	var result : Array[Player2Schema.Tool] = []
+	result.assign(our_tools.map(_convert_tool_call))
+
+	return result
+
+## At an interval, process chats and send to the API if we have something queued.
+func _process_chat_api() -> void:
+	if _summarizing_history:
+		return
+
+	_process_conversation_history()
+
+	# Additional check in case if we happened to start summarizing (just wait for it to finish)
+	if _summarizing_history:
+		return
+
+	if not _messsage_queued:
+		return
+
+	_messsage_queued = false
+
+	# Build the API request
+
+	var request := Player2Schema.ChatCompletionRequest.new()
+
+	var status := get_agent_status()
+
+	# System message
+	var system_msg := Player2Schema.Message.new()
+	system_msg.role = "system"
+	system_msg.content = system_message.replace("${status}", status)
+
+	var req_messages = [system_msg]
+	
+	# Summary message
+	if not _current_summary.is_empty():
+		var summary_msg := Player2Schema.Message.new()
+		summary_msg.role = "assistant"
+		summary_msg.content = summary_prefix.replace("${summary}", _current_summary)
+		req_messages.push_back(summary_msg)
+
+	# History
+	for conversation_element in _conversation_history:
+		var msg := Player2Schema.Message.new()
+		msg.role = conversation_element.role
+		msg.content = conversation_element.message
+		req_messages.push_back(msg)
+
+	request.messages = []
+	request.messages.assign(req_messages)
+
+	# Tools
+	request.tools = []
+	request.tools = _generate_tools()
+	request.tool_choice = tool_calls_choice
+
+	Player2.chat(config, request,
+		func(result):
+			for choice in result.choices:
+				var reply : String = choice.message.content
+				if reply and !reply.is_empty():
+					_append_agent_reply_to_history(reply)
+					chat_received.emit(reply.trim_suffix("\n"))
+				# Process tool calls IF they are present
+				if 'tool_calls' in choice.message:
+					var tool_call_history_messages = []
+					for tool_call in choice.message.tool_calls:
+						var tool_name : String = tool_call.function.name
+						#tool_name = "announce"
+						var args = JSON.parse_string(tool_call.function.arguments)
+						print("Got args: ")
+						print(args)
+						tool_called.emit(tool_name, args)
+						if _tool_call_func_map.has(tool_name):
+							# Organize the arguments, call the function...
+							var f : Callable = _tool_call_func_map.get(tool_name)
+							# Assume an object is present...
+							var o : Object = f.get_object()
+							if !o:
+								printerr("Failed to call tool call for function " + tool_name + " despite having a callable discovered earlier. Probably a bug!")
+								continue
+							var method_index = o.get_method_list().find_custom(func (m): return m["name"] == tool_name)
+							if method_index == -1:
+								printerr("Failed to call tool call for function " + tool_name + " for an available object. Probably a bug! Functions are printed below:")
+								print(o.get_method_list())
+								continue
+							var method : Dictionary = o.get_method_list()[method_index]
+							var args_list = method["args"]
+							print("arg list names:")
+							print(args_list)
+							var args_actual : Array = []
+							# Compile based on the args list
+							for arg_d in args_list:
+								var arg_name : String = arg_d["name"]
+								var arg_value = args[arg_name]
+								args_actual.append(arg_value)
+
+							# Call the function!
+							var func_result = f.callv(args_actual)
+
+							# If the function returned something then pass it to the agent.
+							if func_result:
+								var func_result_string = JsonClassConverter.class_to_json_string(func_result) if func_result is Object else func_result
+								var func_result_notify_string := tool_calls_reply_message \
+									.replace("${tool_call_name}", tool_name) \
+									.replace("${tool_call_reply}", func_result_string)
+								if func_result_notify_string && !func_result_notify_string.is_empty():
+									notify(func_result_notify_string)
+
+							# History
+							tool_call_history_messages.append("Called " + tool_name + " with arguments " + tool_call.function.arguments)
+					# Add the tool calls to history
+					if !tool_call_history_messages.is_empty():
+						_append_agent_reply_to_history(". ".join(tool_call_history_messages))
+				,
+		func(error_code : int) :
+			chat_failed.emit(error_code)
+	)
+
+## Overwrite to manually define tool calls instead of relying on signals.
+## Populate the function map with callables (function name -> callable) to automatically call a tool call function.
+func get_manual_tool_calls(function_map : Dictionary) -> Array[AIToolCall]:
+	return []
+
+## Overwrite to append agent status to every message
+func get_agent_status() -> String:
+	return ""
+
+func _process(delta: float) -> void:
+	# TODO: Interval? Rate limit?
+	_process_chat_api()

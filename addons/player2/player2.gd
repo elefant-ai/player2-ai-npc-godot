@@ -7,10 +7,12 @@ const WEB_HELPER_AUTOLOAD_PATH = "res://addons/player2/helpers/web_helper.gd"
 
 func _enter_tree() -> void:
 	# Initialization of the plugin goes here.
+	add_custom_type("Player2Agent", "Player2Agent", preload("agent.gd"), preload("p2.svg"))
 	pass
 
 func _exit_tree() -> void:
 	# Clean-up of the plugin goes here.
+	remove_custom_type("Player2Agent")
 	pass
 
 func _enable_plugin() -> void:

@@ -4,7 +4,10 @@ extends Node
 @export var text : TextEdit
 @export var chat : Label
 
+@export var poke_button : Button
+
 signal text_sent(text : String)
+signal poked
 
 func _ready() -> void:
 	button.pressed.connect(send)
@@ -16,6 +19,7 @@ func _ready() -> void:
 					text.accept_event()
 					send()
 	)
+	poke_button.pressed.connect(func(): poked.emit())
 
 func send() -> void:
 	append_line(text.text)
