@@ -2,7 +2,24 @@ class_name Player2Agent
 extends Node
 
 @export var config : Player2Config
-@export_multiline var system_message : String = "You are an agent that helps out the player! Here is your world status:\n${status}"
+
+## The main system message for every prompt.
+## ${player2_selected_character_name} and ${player2_selected_character_description} are sourced from the player's selected characters. Feel free to remove this if `use_player2_selected_character` is false.
+## ${status} is the current world status that is received from a function.
+@export_multiline var system_message : String = "You are an agent that helps out the player!\n\nYour name is ${player2_selected_character_name}.\nYour description: ${player2_selected_character_description}\n\nHere is your world status:\n${status}"
+
+@export_subgroup ("Player 2 Selected Character", "use_player2_selected_character")
+## If true, will grab information about the player's selected agents.
+@export var use_player2_selected_character : bool = true
+## If there are multiple agents, pick this index. Set to -1 to automatically pick a unique agent
+@export_range(-1, 99999) var use_player2_selected_character_desired_index : int = -1
+
+@export_subgroup("Text To Speech", "tts")
+@export var tts_enabled : bool = false
+@export var tts_speed : float = 1
+@export var tts_default_language : Player2TTS.Language = Player2TTS.Language.en_US
+@export var tts_default_gender : Player2TTS.Gender = Player2TTS.Gender.FEMALE
+
 # TODO: Validate conversation_history_size > 0 and conversation_history_size > conversation_summary_buffer
 @export_subgroup("Conversation and Summary")
 @export var conversation_history_size : int = 64
@@ -43,6 +60,10 @@ var _current_summary : String = ""
 ## Mapping of tool call name -> Callable
 var _tool_call_func_map : Dictionary
 
+## Current selected agent info
+var _selected_character : Dictionary
+var _selected_character_index := -1
+
 ## prints the client version, useful endpoint test
 func print_client_version() -> void:
 	Player2.get_health(config,
@@ -62,7 +83,7 @@ func _queue_message(message : ConversationMessage) -> void:
 ## This is a user talking to the agent.
 func chat(message : String) -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
-	conversation_message.message = message
+	conversation_message.message = "User: " + message
 	conversation_message.role = "user"
 	_queue_message(conversation_message)
 
@@ -70,9 +91,12 @@ func chat(message : String) -> void:
 ## This is the developer talking to the agent, letting it know that something happened.
 func notify(message : String) -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
-	conversation_message.message = message
+	conversation_message.message = "System: " + message
 	conversation_message.role = "developer"
 	_queue_message(conversation_message)
+
+func stop_tts() -> void:
+	Player2.tts_stop(config)
 
 ## Check if our history has too many messages and prompt for a summary/cull
 func _process_conversation_history() -> void:
@@ -279,6 +303,21 @@ func _generate_tools() -> Array[Player2Schema.Tool]:
 
 	return result
 
+func _tts_speak(reply_message : String) -> void:
+	var req := Player2Schema.TTSRequest.new()
+	req.text = reply_message
+	req.play_in_app = true
+	req.speed = tts_speed
+	# Thankfully these are just defaults, characters override this
+	req.voice_gender = Player2TTS.Gender.find_key(tts_default_gender).to_lower()
+	req.voice_language = Player2TTS.Language.find_key(tts_default_language)
+	# Selected character voice ID
+	if _selected_character and _selected_character["voice_ids"] and _selected_character["voice_ids"].size() != 0:
+		req.voice_ids = []
+		req.voice_ids.assign(_selected_character["voice_ids"])
+
+	Player2.tts_speak(config, req)
+
 ## At an interval, process chats and send to the API if we have something queued.
 func _process_chat_api() -> void:
 	if _summarizing_history:
@@ -304,10 +343,15 @@ func _process_chat_api() -> void:
 	# System message
 	var system_msg := Player2Schema.Message.new()
 	system_msg.role = "system"
-	system_msg.content = system_message.replace("${status}", status)
+	var system_msg_content = system_message\
+		.replace("${status}", status)\
+		.replace("${player2_selected_character_name}", _selected_character["name"] if _selected_character else "(undefined)")\
+		.replace("${player2_selected_character_description}", _selected_character["description"] if _selected_character else "(undefined)")
+	system_msg_content += "\nMessages that start with \"User:\" are the user talking to you. Messages that start with \"System\" are INTERNAL and you should treat it as STIMULI or INFORMATION from the world, NOT speech."
+	system_msg.content = system_msg_content
 
 	var req_messages = [system_msg]
-	
+
 	# Summary message
 	if not _current_summary.is_empty():
 		var summary_msg := Player2Schema.Message.new()
@@ -336,7 +380,10 @@ func _process_chat_api() -> void:
 				var reply : String = choice.message.content
 				if reply and !reply.is_empty():
 					_append_agent_reply_to_history(reply)
-					chat_received.emit(reply.trim_suffix("\n"))
+					var reply_message := reply.trim_suffix("\n") 
+					chat_received.emit(reply_message)
+					if tts_enabled:
+						_tts_speak(reply_message)
 				# Process tool calls IF they are present
 				if 'tool_calls' in choice.message:
 					var tool_call_history_messages = []
@@ -393,6 +440,19 @@ func _process_chat_api() -> void:
 			chat_failed.emit(error_code)
 	)
 
+func _update_selected_character_from_endpoint() -> void:
+	Player2.get_selected_characters(config, func(result):
+		var characters : Array = result["characters"]
+		if characters and characters.size() > 0:
+			var index = use_player2_selected_character_desired_index
+			if index >= characters.size() or index < 0:
+				# Invalid index, find a valid one.
+				# TODO: get a random index from the least available agents, so we actually fill it up one by one.
+				index = randi_range(0, characters.size() - 1)
+			_selected_character = characters[index]
+			_selected_character_index = index
+		)
+
 ## Overwrite to manually define tool calls instead of relying on signals.
 ## Populate the function map with callables (function name -> callable) to automatically call a tool call function.
 func get_manual_tool_calls(function_map : Dictionary) -> Array[AIToolCall]:
@@ -401,6 +461,10 @@ func get_manual_tool_calls(function_map : Dictionary) -> Array[AIToolCall]:
 ## Overwrite to append agent status to every message
 func get_agent_status() -> String:
 	return ""
+
+func _ready() -> void:
+	if use_player2_selected_character:
+		_update_selected_character_from_endpoint()
 
 func _process(delta: float) -> void:
 	# TODO: Interval? Rate limit?

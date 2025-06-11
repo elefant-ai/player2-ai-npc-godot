@@ -6,3 +6,6 @@ extends Resource
 @export_group("Endpoints", "endpoint")
 @export var endpoint_chat : String = "http://127.0.0.1:4315/v1/chat/completions"
 @export var endpoint_health : String = "http://127.0.0.1:4315/v1/health"
+@export var endpoint_tts_speak: String = "http://127.0.0.1:4315/v1/tts/speak"
+@export var endpoint_tts_stop: String = "http://127.0.0.1:4315/v1/tts/stop"
+@export var endpoint_get_selected_characters : String = "http://127.0.0.1:4315/v1/selected_characters"

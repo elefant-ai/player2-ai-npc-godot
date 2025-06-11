@@ -55,3 +55,12 @@ class Content extends Resource:
 
 class Health extends Resource:
 	@export var client_version : String
+
+class TTSRequest extends Resource:
+	@export var text : String
+	@export var play_in_app : bool
+	@export var speed : float
+	@export var voice_gender : String
+	@export var voice_language : String
+	@export var voice_ids : Array[String]
+	#@export var audio_format : String

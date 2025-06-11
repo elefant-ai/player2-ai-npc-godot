@@ -43,8 +43,8 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 			if on_fail != null:
 				on_fail.call(result)
 		else:
-			if on_completed != null:
-				on_completed.call(body.get_string_from_utf8(), response_code)
+			if on_completed:
+				on_completed.call(body.get_string_from_utf8() if body else "", response_code)
 		#if on_completed_inner != null:
 			#http.request_completed.disconnect(on_completed_inner)
 		remove_child(http)
