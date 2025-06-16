@@ -1,0 +1,8 @@
+<svg width="12" height="16" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs/>
+  <g>
+    <path stroke="none" fill="#999999" d="M6 14 L10 14 10 6 6 2 2 6 2 14 6 14 M0.6 4.6 L4.6 0.6 Q5.15 0 6 0 6.85 0 7.45 0.6 L11.45 4.6 Q12 5.15 12 6 L12 14 Q12 14.85 11.45 15.45 10.85 16 10 16 L2 16 Q1.15 16 0.6 15.45 0 14.85 0 14 L0 6 Q0 5.15 0.6 4.6"/>
+    <path stroke="none" fill="#E5E5E5" d="M6 2 L10 6 10 14 6 14 6 2"/>
+    <path stroke="none" fill="#FFFFFF" d="M6 2 L6 14 2 14 2 6 6 2"/>
+  </g>
+</svg>

@@ -39,6 +39,7 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 
 	var on_completed_inner : Callable
 	on_completed_inner = func(result, response_code, headers, body):
+		print("HTTP done")
 		if result != HTTPRequest.RESULT_SUCCESS:
 			if on_fail != null:
 				on_fail.call(result)
@@ -59,3 +60,12 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 		if on_fail != null:
 			on_fail.call(err)
 		return
+
+func call_timeout(call : Callable, timeout : float) -> void:
+	var t = Timer.new()
+	t.timeout.connect(func():
+		call.call()
+		t.queue_free())
+	t.start(timeout)
+	add_child(t)
+	pass

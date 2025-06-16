@@ -9,3 +9,6 @@ extends Resource
 @export var endpoint_tts_speak: String = "http://127.0.0.1:4315/v1/tts/speak"
 @export var endpoint_tts_stop: String = "http://127.0.0.1:4315/v1/tts/stop"
 @export var endpoint_get_selected_characters : String = "http://127.0.0.1:4315/v1/selected_characters"
+
+@export_group("Request Delay")
+@export var request_too_much_delay_seconds : float = 3

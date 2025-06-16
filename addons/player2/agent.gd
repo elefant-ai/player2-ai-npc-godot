@@ -7,6 +7,7 @@ extends Node
 ## ${player2_selected_character_name} and ${player2_selected_character_description} are sourced from the player's selected characters. Feel free to remove this if `use_player2_selected_character` is false.
 ## ${status} is the current world status that is received from a function.
 @export_multiline var system_message : String = "You are an agent that helps out the player!\n\nYour name is ${player2_selected_character_name}.\nYour description: ${player2_selected_character_description}\n\nHere is your world status:\n${status}"
+@export var queue_check_interval_seconds : float = 2
 
 @export_subgroup ("Player 2 Selected Character", "use_player2_selected_character")
 ## If true, will grab information about the player's selected agents.
@@ -43,8 +44,24 @@ Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars
 @export_multiline var tool_calls_choice : String = "Use whatever tools necessary to help the player when they need it."
 @export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
 
+var thinking: bool:
+	set(value):
+		if thinking != value:
+			thinking = value
+			if thinking:
+				thinking_began.emit()
+			else:
+				thinking_ended.emit()
+
+## Called when our ai agent starts thinking
+signal thinking_began
+## Called when our ai agent stops thinking and replies
+signal thinking_ended
+## Called when our ai agent calls a tool (used for manual tool calling)
 signal tool_called(function_name : String, args : Dictionary)
+## Called when our ai agent talks
 signal chat_received(message : String)
+## Called when our ai agent fails a chat
 signal chat_failed(error_code : int)
 
 var _messsage_queued : bool = false
@@ -63,6 +80,8 @@ var _tool_call_func_map : Dictionary
 ## Current selected agent info
 var _selected_character : Dictionary
 var _selected_character_index := -1
+
+var _queue_process_timer : Timer
 
 ## prints the client version, useful endpoint test
 func print_client_version() -> void:
@@ -92,7 +111,7 @@ func chat(message : String) -> void:
 func notify(message : String) -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
 	conversation_message.message = "System: " + message
-	conversation_message.role = "developer"
+	conversation_message.role = "user"
 	_queue_message(conversation_message)
 
 func stop_tts() -> void:
@@ -160,6 +179,7 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 		#req_messages.push_back(user_msg)
 
 	request.messages.assign(req_messages)
+	thinking = true
 	Player2.chat(config, request,
 		func(result):
 			if result.choices.size() != 0:
@@ -236,6 +256,9 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 
 			# private functions
 			if f_name.begins_with("_"):
+				continue
+
+			if !tool_calls_scan_node_filter.is_allowed(f_name):
 				continue
 
 			var tool_call := AIToolCall.new()
@@ -323,6 +346,10 @@ func _process_chat_api() -> void:
 	if _summarizing_history:
 		return
 
+	# Don't process new messages while we're thinking, wait to stop thinking...
+	if thinking:
+		return
+
 	_process_conversation_history()
 
 	# Additional check in case if we happened to start summarizing (just wait for it to finish)
@@ -374,16 +401,21 @@ func _process_chat_api() -> void:
 	request.tools = _generate_tools()
 	request.tool_choice = tool_calls_choice
 
+	thinking = true
 	Player2.chat(config, request,
 		func(result):
+			thinking = false
 			for choice in result.choices:
-				var reply : String = choice.message.content
-				if reply and !reply.is_empty():
-					_append_agent_reply_to_history(reply)
-					var reply_message := reply.trim_suffix("\n") 
-					chat_received.emit(reply_message)
-					if tts_enabled:
-						_tts_speak(reply_message)
+				if !"message" in choice:
+					continue
+				if "content" in choice.message:
+					var reply : String = choice.message.content
+					if reply and !reply.is_empty():
+						_append_agent_reply_to_history(reply)
+						var reply_message := reply.trim_suffix("\n") 
+						chat_received.emit(reply_message)
+						if tts_enabled:
+							_tts_speak(reply_message)
 				# Process tool calls IF they are present
 				if 'tool_calls' in choice.message:
 					var tool_call_history_messages = []
@@ -463,9 +495,18 @@ func get_agent_status() -> String:
 	return ""
 
 func _ready() -> void:
+	_queue_process_timer = Timer.new()
+	self.add_child(_queue_process_timer)
+	_queue_process_timer.wait_time = queue_check_interval_seconds
+	_queue_process_timer.one_shot = false
+	_queue_process_timer.timeout.connect(_process_chat_api)
+	_queue_process_timer.start()
+
+
 	if use_player2_selected_character:
 		_update_selected_character_from_endpoint()
 
 func _process(delta: float) -> void:
-	# TODO: Interval? Rate limit?
-	_process_chat_api()
+	# TODO override setter to avoid process func
+	_queue_process_timer.wait_time = queue_check_interval_seconds
+	#_process_chat_api()

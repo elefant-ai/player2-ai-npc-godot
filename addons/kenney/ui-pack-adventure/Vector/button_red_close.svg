@@ -1,0 +1,10 @@
+<svg width="48" height="24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs/>
+  <g>
+    <path stroke="none" fill="#8E3F38" d="M5 0 L43 0 Q48 0 48 5 L48 19 Q48 24 43 24 L5 24 Q0 24 0 19 L0 5 Q0 0 5 0 M2 5 L2 19 2 19.35 Q2.15 22 5 22 L43 22 43.35 22 Q45.85 21.85 46 19.35 L46 19 46 5 Q46 2.15 43.35 2 L43 2 5 2 Q2 2 2 5"/>
+    <path stroke="none" fill="#EC6A5F" d="M2 5 Q2 2 5 2 L43 2 43.35 2 Q46 2.15 46 5 L46 19 46 19.35 Q45.85 21.85 43.35 22 L43 22 5 22 Q2.15 22 2 19.35 L2 19 2 5 M4 5 L4 19 Q4 19.95 4.95 20 L43.05 20 Q43.95 19.95 44 19.05 L44 4.95 Q43.95 4 43 4 L5 4 Q4 4 4 5"/>
+    <path stroke="none" fill="#CF5E53" d="M4 5 Q4 4 5 4 L43 4 Q43.95 4 44 4.95 L44 19.05 Q43.95 19.95 43.05 20 L4.95 20 Q4 19.95 4 19 L4 5"/>
+    <path fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="3" d="M24 12 L28 16 M24 12 L20 16 M20.15 8 L24 12"/>
+    <path fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="3" d="M27.95 8 L24 12"/>
+  </g>
+</svg>

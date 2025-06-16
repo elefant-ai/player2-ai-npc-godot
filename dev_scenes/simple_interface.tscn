@@ -1,0 +1,74 @@
+[gd_scene load_steps=3 format=3 uid="uid://bj2556dthmk1e"]
+
+[ext_resource type="Script" uid="uid://4flv2qyji2mp" path="res://dev_scenes/simple_chat/ai_simple_text_interface.gd" id="1_6vno8"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ygx8q"]
+font_size = 156
+
+[node name="Simple Interface" type="ColorRect" node_paths=PackedStringArray("button", "text", "chat", "poke_button")]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -161.0
+grow_horizontal = 2
+grow_vertical = 0
+script = ExtResource("1_6vno8")
+button = NodePath("Button")
+text = NodePath("TextEdit")
+chat = NodePath("Label")
+poke_button = NodePath("Poke Button")
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 0
+offset_left = 967.0
+offset_top = 28.0
+offset_right = 1137.0
+offset_bottom = 131.0
+text = "Send"
+
+[node name="TextEdit" type="TextEdit" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -205.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_top = -222.0
+offset_right = 943.0
+offset_bottom = -8.0
+vertical_alignment = 2
+
+[node name="Billboard" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -5.0
+offset_top = -288.0
+offset_right = -5.0
+offset_bottom = -288.0
+grow_horizontal = 2
+grow_vertical = 2
+label_settings = SubResource("LabelSettings_ygx8q")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Poke Button" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -125.0
+offset_top = -64.0
+offset_right = -24.0
+offset_bottom = -13.0
+grow_horizontal = 0
+action_mode = 0
+text = "Poke"
