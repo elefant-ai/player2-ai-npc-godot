@@ -1,4 +1,4 @@
-class_name Player2Agent
+class_name Player2AINPC
 extends Node
 
 @export var config : Player2Config
@@ -105,7 +105,7 @@ func _queue_message(message : ConversationMessage) -> void:
 ## This is a user talking to the agent.
 func chat(message : String) -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
-	conversation_message.message = "User: " + message
+	conversation_message.message = message
 	conversation_message.role = "user"
 	_queue_message(conversation_message)
 
@@ -113,7 +113,7 @@ func chat(message : String) -> void:
 ## This is the developer talking to the agent, letting it know that something happened.
 func notify(message : String) -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
-	conversation_message.message = "System: " + message
+	conversation_message.message = "@@System: " + message + ""
 	conversation_message.role = "user"
 	_queue_message(conversation_message)
 
@@ -198,7 +198,7 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 ## Append a reply message to our history, assuming it's from the assistant.
 func _append_agent_reply_to_history(message : String):
 	var msg := ConversationMessage.new()
-	msg.role = "agent"
+	msg.role = "assistant"
 	msg.message = message
 	_conversation_history.push_back(msg)
 func _append_agent_action_to_history(action : String):
@@ -238,7 +238,7 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 
 	var self_funcs_to_ignore : Array[String] = []
 	# Get our class functions so we don't worry about it
-	var t := Player2Agent.new()
+	var t := Player2AINPC.new()
 	self_funcs_to_ignore.assign(t.get_method_list().map(func (t): return t["name"]))
 	t.queue_free()
 
@@ -399,7 +399,7 @@ func _process_chat_api() -> void:
 		.replace("${status}", status)\
 		.replace("${player2_selected_character_name}", _selected_character["name"] if _selected_character else "(undefined)")\
 		.replace("${player2_selected_character_description}", _selected_character["description"] if _selected_character else "(undefined)")
-	system_msg_content += "\nMessages that start with \"User:\" are the user talking to you. Messages that start with \"System\" are INTERNAL and you should treat it as STIMULI or INFORMATION from the world, NOT speech."
+	system_msg_content += "\nMessages the user talking to you, EXCEPT when they start with \"@@System\". \"@@System\" means an INTERNAL and you should treat it as STIMULI or INFORMATION from the world, NOT speech."
 	system_msg.content = system_msg_content
 
 	var req_messages = [system_msg]

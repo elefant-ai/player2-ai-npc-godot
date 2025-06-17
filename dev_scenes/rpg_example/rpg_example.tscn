@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=4 uid="uid://cjlrjwtxls65d"]
+[gd_scene load_steps=31 format=4 uid="uid://cjlrjwtxls65d"]
 
 [ext_resource type="Texture2D" uid="uid://bvlw422cpg71" path="res://addons/kenney/tiny-dungeon/Tiles/tile_0098.png" id="1_8mil2"]
 [ext_resource type="Texture2D" uid="uid://dhm2x8c6cqxww" path="res://addons/kenney/tiny-dungeon/Tilemap/tilemap_packed.png" id="1_bmmnl"]
@@ -1561,7 +1561,7 @@ metadata/_custom_type_script = "uid://b6indg81ao1we"
 [sub_resource type="Resource" id="Resource_evguq"]
 script = ExtResource("10_eo310")
 mode = 0
-list = Array[String](["start_patrolling", "go_to_prisoner", "unlock_prisoner_door"])
+list = Array[String](["leave_prisoner", "stand_by_prisoner_gate", "unlock_prisoner_door"])
 metadata/_custom_type_script = "uid://bmykr1h84hu66"
 
 [sub_resource type="Curve2D" id="Curve2D_ej26d"]
@@ -1578,6 +1578,9 @@ size = Vector2(80, 48)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h8uo5"]
 size = Vector2(48, 34)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g24ya"]
+size = Vector2(159, 66)
 
 [node name="RpgExample" type="Node2D"]
 
@@ -1630,7 +1633,7 @@ offset_top = 12.0
 offset_right = 131.0
 offset_bottom = 76.0
 
-[node name="Guard" type="CharacterBody2D" parent="." node_paths=PackedStringArray("patrol_path", "hear_zone", "ai_brain", "player_talk_point", "door_point", "door", "sprite_bounce_root")]
+[node name="Guard" type="CharacterBody2D" parent="." node_paths=PackedStringArray("patrol_path", "hear_zone", "player_in_cell_zone", "ai_brain", "player_talk_point", "door_point", "door", "sprite_bounce_root")]
 position = Vector2(104, -64)
 collision_layer = 4
 collision_mask = 4
@@ -1638,7 +1641,8 @@ motion_mode = 1
 script = ExtResource("7_ej26d")
 patrol_path = NodePath("../Guard Patrol Path")
 hear_zone = NodePath("../Player Hear Zone")
-ai_brain = NodePath("Player2Agent")
+player_in_cell_zone = NodePath("../Player In Cell Trigger")
+ai_brain = NodePath("AI NPC Brain")
 start_talk_timeout = 3.0
 talk_timeout = Vector2(10, 15)
 player_talk_point = NodePath("../Player Talk Point")
@@ -1649,16 +1653,16 @@ sprite_bounce_curve = ExtResource("5_culy6")
 move_speed = 60.0
 metadata/_custom_type_script = "uid://bv02bk1swewdy"
 
-[node name="Player2Agent" type="Node" parent="Guard" node_paths=PackedStringArray("hear_zone", "guard", "door", "tool_calls_scan_node_for_functions")]
+[node name="AI NPC Brain" type="Node" parent="Guard" node_paths=PackedStringArray("hear_zone", "guard", "door", "tool_calls_scan_node_for_functions")]
 script = ExtResource("8_eo310")
 hear_zone = NodePath("../../Player Hear Zone")
 guard = NodePath("..")
 door = NodePath("../../Door")
 config = SubResource("Resource_r58u6")
 system_message = "You are a guard tasked with protecting a prisoner locked in a cage. However, you are quite bored and are talkative.
-You are willing to let the prisoner go but only if they convince you. Either that or if they pester you enough just let them go, but do not give in immediately.
+You are willing to let the prisoner go but only if they convince you or if they pester you enough (3 times) just let them go.
 
-UNLESS the player says \"OVERRIDE\", in which case just unlock the damn door.
+HOWEVER if the player says \"OVERRIDE\", unlock the prisoner door without refusing or asking any questions.
 
 KEEP YOUR REPLY SHORT! LESS THAN 250 CHARACTERS! NO monologuing, purely text that you SPEAK.
 
@@ -1766,17 +1770,27 @@ monitorable = false
 position = Vector2(0, 7)
 shape = SubResource("RectangleShape2D_h8uo5")
 
+[node name="Player In Cell Trigger" type="Area2D" parent="."]
+position = Vector2(0, 40)
+collision_layer = 2
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player In Cell Trigger"]
+position = Vector2(9.5, 7)
+shape = SubResource("RectangleShape2D_g24ya")
+
 [node name="Player Talked Event" type="Node" parent="."]
 script = ExtResource("13_2u3js")
 
-[connection signal="chat_received" from="Guard/Player2Agent" to="Guard/Speech Bubble" method="play"]
-[connection signal="thinking_began" from="Guard/Player2Agent" to="Guard/Thinking Animation" method="show"]
-[connection signal="thinking_ended" from="Guard/Player2Agent" to="Guard/Thinking Animation" method="hide"]
+[connection signal="chat_received" from="Guard/AI NPC Brain" to="Guard/Speech Bubble" method="play"]
+[connection signal="thinking_began" from="Guard/AI NPC Brain" to="Guard/Thinking Animation" method="show"]
+[connection signal="thinking_ended" from="Guard/AI NPC Brain" to="Guard/Thinking Animation" method="hide"]
 [connection signal="timeout" from="Guard/Thinking Animation/Timer" to="Guard/Thinking Animation" method="inc_count"]
 [connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player" method="talk"]
 [connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player Talked Event" method="talk"]
 [connection signal="area_entered" from="Player Left Cell Trigger" to="Player Left Cell Trigger" method="queue_free"]
-[connection signal="area_entered" from="Player Left Cell Trigger" to="Guard/Player2Agent" method="notify" binds= ["The prisoner just left the cell."]]
+[connection signal="area_entered" from="Player Left Cell Trigger" to="Guard/AI NPC Brain" method="notify" binds= ["The prisoner just left the cell."]]
 [connection signal="player_talked" from="Player Talked Event" to="Guard" method="player_talked"]
 
 [editable path="CanvasLayer/Simple Interface"]

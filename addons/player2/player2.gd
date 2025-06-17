@@ -7,11 +7,11 @@ const WEB_HELPER_AUTOLOAD_PATH = "res://addons/player2/helpers/web_helper.gd"
 
 func _enter_tree() -> void:
 	# Initialization of the plugin goes here.
-	add_custom_type("Player2Agent", "Player2Agent", preload("agent.gd"), preload("p2.svg"))
+	add_custom_type("Player2AINPC", "Player2AINPC", preload("agent.gd"), preload("p2.svg"))
 
 func _exit_tree() -> void:
 	# Clean-up of the plugin goes here.
-	remove_custom_type("Player2Agent")
+	remove_custom_type("Player2AINPC")
 
 func _enable_plugin() -> void:
 	add_autoload_singleton(WEB_HELPER_AUTOLOAD_NAME, WEB_HELPER_AUTOLOAD_PATH)
@@ -49,6 +49,8 @@ static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRe
 				Player2WebHelper.call_timeout(run, config.request_too_much_delay_seconds)
 				return
 			if code != 200:
+				print("chat fail!")
+				print(code)
 				on_fail.call(code)
 				return
 			print("GOT RESPONSE with code " + str(code))
@@ -57,7 +59,11 @@ static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRe
 			var result = JSON.parse_string(body)
 			on_complete.call(result)
 		,
-		on_fail
+		func(code):
+			print("chat fail!")
+			print(code)
+			if on_fail:
+				on_fail.call(code)
 		)
 
 	run.call()

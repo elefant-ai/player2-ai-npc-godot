@@ -2,14 +2,15 @@ extends Entity
 
 @export var patrol_path : Path2D
 @export var hear_zone : Area2D
-@export var ai_brain : Player2Agent
+@export var player_in_cell_zone : Area2D
+@export var ai_brain : Player2AINPC
 @export var start_talk_timeout : float
 @export var talk_timeout : Vector2
 @export var player_talk_point : Node2D
 @export var door_point : Node2D
 @export var door : Node2D
 
-enum State {PATROL, GO_TO_PRISONER, FREE_PRISONER}
+enum State {PATROL, STAND_BY_PRISONER_GATE, FREE_PRISONER}
 
 var state : State = State.PATROL
 var state_string : String:
@@ -33,9 +34,9 @@ func _set_state(target : State) -> String:
 func leave_prisoner() -> String:
 	return _set_state(State.PATROL)
 
-## Go walk up to the prisoner to talk to them
-func go_to_prisoner() -> String:
-	return _set_state(State.GO_TO_PRISONER)
+## Go walk up to the prisoner gate. If the prisoner is inside the cell, this is the only way to hear them.
+func stand_by_prisoner_gate() -> String:
+	return _set_state(State.STAND_BY_PRISONER_GATE)
 
 ## Unlock the door for the prisoner
 func unlock_prisoner_door() -> String:
@@ -65,7 +66,7 @@ func _process_patrol() -> void:
 
 	move_input = Vector2.ZERO
 
-	if delta.length() < 5:
+	if delta.length() < 1:
 		var just_hit = !_was_at_target_point
 		_was_at_target_point = true
 		# first touch
@@ -89,12 +90,23 @@ func _process_patrol() -> void:
 
 ## Called when the player talks in general (not a tool call)
 func player_talked(message : String) -> void:
+
+	if not player_in_cell_zone.has_overlapping_areas():
+		print("yeah")
+		# Player has left the cell, you can always hear.
+		ai_brain.chat(message)
+		return
+
 	if !hear_zone.overlaps_body(self):
 		ai_brain.notify("You hear a sound coming from the prison window catching your attention, it sounds like the prisoner is talking... You want to hear what the prisoner has to say.")
 	else:
 		ai_brain.chat(message)
 
 func _process_idle_talk(delta : float) -> void:
+	# If we're thinking, don't do a timer/timeout.
+	if ai_brain.thinking:
+		return
+
 	# Randomly talk
 	_talk_timer -= delta
 	if _talk_timer <= 0:
@@ -105,6 +117,8 @@ func _process_idle_talk(delta : float) -> void:
 
 func _ready() -> void:
 	_talk_timer = start_talk_timeout
+	# Reset the talk timer if we recently received a chat
+	ai_brain.chat_received.connect(_reset_talk_timer)
 
 func _process(delta: float) -> void:
 	super._process(delta)
@@ -114,7 +128,7 @@ func _process(delta: float) -> void:
 			# Dont force a patrol point
 			_force_stay_at_patrol_point = null
 			_process_idle_talk(delta)
-		State.GO_TO_PRISONER:
+		State.STAND_BY_PRISONER_GATE:
 			_force_stay_at_patrol_point = player_talk_point
 		State.FREE_PRISONER:
 			_force_stay_at_patrol_point = door_point

@@ -1,4 +1,4 @@
-extends Player2Agent
+extends Player2AINPC
 
 @export var hear_zone : Area2D
 @export var guard : PhysicsBody2D
