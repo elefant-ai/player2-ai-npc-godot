@@ -1,3 +1,5 @@
+## AI NPC using the Player 2 API.
+
 class_name Player2AINPC
 extends Node
 

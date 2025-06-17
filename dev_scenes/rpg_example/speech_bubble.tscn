@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://dojecawo8ra37"]
 
-[ext_resource type="FontFile" uid="uid://bdrrqdbw57w4l" path="res://addons/kenney/fonts/Fonts/Kenney Mini.ttf" id="1_gaw8t"]
+[ext_resource type="FontFile" uid="uid://bdrrqdbw57w4l" path="res://dev_scenes/thirdparty/kenney/fonts/Fonts/Kenney Mini.ttf" id="1_gaw8t"]
 [ext_resource type="Script" uid="uid://dsh154eai2tbn" path="res://dev_scenes/rpg_example/speech_bubble.gd" id="2_y2cti"]
 
 [sub_resource type="Theme" id="Theme_2u3js"]

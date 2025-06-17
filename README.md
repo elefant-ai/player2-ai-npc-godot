@@ -1,2 +1,2 @@
-# player2-godot
-The Official Player2 Godot Plugin
+# player2-ai-npc-godot
+The Official Player2 AI NPC Plugin for Godot
