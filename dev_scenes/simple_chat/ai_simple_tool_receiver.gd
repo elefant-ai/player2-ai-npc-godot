@@ -3,6 +3,7 @@ extends Node
 @export var billboard : Label
 @export var blink_background : ColorRect
 
+## Blinks the screen
 func blink() -> void:
 	print("blinked!")
 	var c = blink_background.color
@@ -11,9 +12,9 @@ func blink() -> void:
 
 ## Sets the switch
 ## Right now it's just on or off.
-func set_switch(state : bool):
-	print("Set switch:")
-	print(state)
+#func set_switch(state : bool):
+	#print("Set switch:")
+	#print(state)
 
 ## Gets the time in the format YYYY-MM-DDTHH:MM:SS
 func get_time() -> String:

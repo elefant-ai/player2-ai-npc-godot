@@ -38,6 +38,7 @@ static func get_health(config : Player2Config, on_complete : Callable, on_fail :
 
 static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
 	var run : Callable
+	print("chat" + JsonClassConverter.class_to_json_string(request))
 	
 	run = func():
 		Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, request, _get_headers(config),

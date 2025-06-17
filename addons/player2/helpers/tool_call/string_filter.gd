@@ -11,4 +11,4 @@ func is_allowed(value : String) -> bool:
 		return list.has(value)
 	if mode == Mode.BLACKLIST:
 		return not list.has(value)
-	return false
+	return true

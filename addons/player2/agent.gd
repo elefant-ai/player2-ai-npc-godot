@@ -6,7 +6,7 @@ extends Node
 ## The main system message for every prompt.
 ## ${player2_selected_character_name} and ${player2_selected_character_description} are sourced from the player's selected characters. Feel free to remove this if `use_player2_selected_character` is false.
 ## ${status} is the current world status that is received from a function.
-@export_multiline var system_message : String = "You are an agent that helps out the player!\n\nYour name is ${player2_selected_character_name}.\nYour description: ${player2_selected_character_description}\n\nHere is your world status:\n${status}"
+@export_multiline var system_message : String = "You are an agent that helps out the player! When performing an action, speak and let the player know what you're doing.\n\nYour name is ${player2_selected_character_name}.\nYour description: ${player2_selected_character_description}\n\nHere is your world status:\n${status}"
 @export var queue_check_interval_seconds : float = 2
 
 @export_subgroup ("Player 2 Selected Character", "use_player2_selected_character")
@@ -39,10 +39,11 @@ Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars
 ## Set this to an object to scan for functions in that object to call
 @export var tool_calls_scan_node_for_functions : Array[Node]
 ## When scanning an object, filter out or only accept the following functions.
-@export var tool_calls_scan_node_filter : StringFilter = StringFilter.new()
+@export var tool_calls_scan_node_filter : StringFilter
 ## Gives information to the Agent on how to handle using tool calls. 
-@export_multiline var tool_calls_choice : String = "Use whatever tools necessary to help the player when they need it."
+@export_multiline var tool_calls_choice : String = "Use whatever tools necessary to help the player when they need it. Talk to the player as well while doing tool calls."
 @export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
+@export_multiline var tool_calls_message_optional_arg_description : String = "You will say this while calling this function. Leave string empty to not say anything/do it quietly."
 
 var thinking: bool:
 	set(value):
@@ -82,6 +83,8 @@ var _selected_character : Dictionary
 var _selected_character_index := -1
 
 var _queue_process_timer : Timer
+
+const TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME = "MESSAGE_ARG"
 
 ## prints the client version, useful endpoint test
 func print_client_version() -> void:
@@ -195,8 +198,13 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 ## Append a reply message to our history, assuming it's from the assistant.
 func _append_agent_reply_to_history(message : String):
 	var msg := ConversationMessage.new()
-	msg.role = "assistant"
+	msg.role = "agent"
 	msg.message = message
+	_conversation_history.push_back(msg)
+func _append_agent_action_to_history(action : String):
+	var msg := ConversationMessage.new()
+	msg.role = "system"
+	msg.message = action
 	_conversation_history.push_back(msg)
 
 # TODO: Move to helper file
@@ -258,7 +266,7 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 			if f_name.begins_with("_"):
 				continue
 
-			if !tool_calls_scan_node_filter.is_allowed(f_name):
+			if tool_calls_scan_node_filter and !tool_calls_scan_node_filter.is_allowed(f_name):
 				continue
 
 			var tool_call := AIToolCall.new()
@@ -307,7 +315,15 @@ func _convert_tool_call(simple_tool_call : AIToolCall) -> Player2Schema.Tool:
 			var enum_types_t : Array[String] = arg.enum_list
 			arg_t["enum"] = enum_types_t
 		p.properties.set(arg_name, arg_t)
+		p.required.push_back(arg_name)
 		pass
+
+	# Add our optional message arg
+	var optional_message_arg_t := Dictionary()
+	optional_message_arg_t["type"] = AIToolCallParameter.arg_type_to_schema_type(AIToolCallParameter.Type.STRING)
+	optional_message_arg_t["description"] = tool_calls_message_optional_arg_description
+	p.properties.set(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME, optional_message_arg_t)
+	p.required.push_back(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
 
 	f.parameters = p
 	tool_call.function = f
@@ -340,6 +356,15 @@ func _tts_speak(reply_message : String) -> void:
 		req.voice_ids.assign(_selected_character["voice_ids"])
 
 	Player2.tts_speak(config, req)
+
+func _run_chat_internal(message : String) -> void:
+	if message and !message.is_empty():
+		_append_agent_reply_to_history(message)
+		var reply_message := message.trim_suffix("\n") 
+		chat_received.emit(reply_message)
+		if tts_enabled:
+			_tts_speak(reply_message)
+
 
 ## At an interval, process chats and send to the API if we have something queued.
 func _process_chat_api() -> void:
@@ -406,25 +431,28 @@ func _process_chat_api() -> void:
 		func(result):
 			thinking = false
 			for choice in result.choices:
+				var message_reply := ""
 				if !"message" in choice:
 					continue
 				if "content" in choice.message:
 					var reply : String = choice.message.content
-					if reply and !reply.is_empty():
-						_append_agent_reply_to_history(reply)
-						var reply_message := reply.trim_suffix("\n") 
-						chat_received.emit(reply_message)
-						if tts_enabled:
-							_tts_speak(reply_message)
+					message_reply += reply
 				# Process tool calls IF they are present
 				if 'tool_calls' in choice.message:
 					var tool_call_history_messages = []
 					for tool_call in choice.message.tool_calls:
 						var tool_name : String = tool_call.function.name
 						#tool_name = "announce"
-						var args = JSON.parse_string(tool_call.function.arguments)
+						var args : Dictionary = JSON.parse_string(tool_call.function.arguments)
 						print("Got args: ")
 						print(args)
+						if args.has(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME):
+							var tool_call_reply : String = args[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME]
+							args.erase(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
+							# For some reason content and message reply gets mixed sometimes? seems like the tool call reply goes first.
+							message_reply = tool_call_reply + message_reply
+							#if not has_content:
+								#_run_chat_internal(tool_call_reply)
 						tool_called.emit(tool_name, args)
 						if _tool_call_func_map.has(tool_name):
 							# Organize the arguments, call the function...
@@ -466,7 +494,9 @@ func _process_chat_api() -> void:
 							tool_call_history_messages.append("Called " + tool_name + " with arguments " + tool_call.function.arguments)
 					# Add the tool calls to history
 					if !tool_call_history_messages.is_empty():
-						_append_agent_reply_to_history(". ".join(tool_call_history_messages))
+						_append_agent_action_to_history(". ".join(tool_call_history_messages))
+				_run_chat_internal(message_reply)
+
 				,
 		func(error_code : int) :
 			chat_failed.emit(error_code)
@@ -474,7 +504,7 @@ func _process_chat_api() -> void:
 
 func _update_selected_character_from_endpoint() -> void:
 	Player2.get_selected_characters(config, func(result):
-		var characters : Array = result["characters"]
+		var characters : Array = result["characters"] if "characters" in result else []
 		if characters and characters.size() > 0:
 			var index = use_player2_selected_character_desired_index
 			if index >= characters.size() or index < 0:

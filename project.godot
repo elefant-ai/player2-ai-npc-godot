@@ -19,7 +19,7 @@ Player2WebHelper="*res://addons/player2/helpers/web_helper.gd"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/BubbleDialogue/plugin.cfg", "res://addons/player2/plugin.cfg")
+enabled=PackedStringArray("res://addons/player2/plugin.cfg")
 
 [input]
 
