@@ -104,7 +104,7 @@ func player_talked(message : String) -> void:
 
 func _process_idle_talk(delta : float) -> void:
 	# If we're thinking, don't do a timer/timeout.
-	if ai_brain.thinking:
+	if ai_brain and ai_brain.thinking:
 		return
 
 	# Randomly talk
@@ -118,7 +118,8 @@ func _process_idle_talk(delta : float) -> void:
 func _ready() -> void:
 	_talk_timer = start_talk_timeout
 	# Reset the talk timer if we recently received a chat
-	ai_brain.chat_received.connect(_reset_talk_timer)
+	ai_brain.chat_received.connect(func(a):
+			_reset_talk_timer())
 
 func _process(delta: float) -> void:
 	super._process(delta)

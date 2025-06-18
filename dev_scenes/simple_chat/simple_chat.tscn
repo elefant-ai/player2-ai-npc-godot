@@ -1,6 +1,6 @@
 [gd_scene load_steps=8 format=3 uid="uid://cc80o6rwn8i0u"]
 
-[ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/agent.gd" id="1_ttqlg"]
+[ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/Player2AINPC.gd" id="1_ttqlg"]
 [ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/player2_config.gd" id="2_qmjy4"]
 [ext_resource type="Script" uid="uid://r7ec3bhr4ij0" path="res://dev_scenes/simple_chat/ai_simple_tool_receiver.gd" id="4_ccetc"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/simple_interface.tscn" id="5_333ad"]
@@ -22,10 +22,9 @@ font_size = 49
 
 [node name="Test" type="Node2D"]
 
-[node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
+[node name="Player2Agent" type="Node" parent="."]
 script = ExtResource("1_ttqlg")
 config = SubResource("Resource_1wox6")
-tool_calls_scan_node_for_functions = [NodePath("../Tool Receiver")]
 tool_calls_choice = "Use whatever tools necessary to help the player when they need it. Include a content/message reply as well so you tell the player when you are doing something."
 metadata/_custom_type_script = "uid://bupnh0kqklshe"
 
@@ -66,7 +65,7 @@ autostart = true
 [connection signal="chat_received" from="Player2Agent" to="CanvasLayer/Simple Interface" method="append_line"]
 [connection signal="thinking_began" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="show"]
 [connection signal="thinking_ended" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="hide"]
-[connection signal="poked" from="CanvasLayer/Simple Interface" to="Player2Agent" method="notify" binds= ["You have been poked by the user. You may react accordingly."]]
+[connection signal="poked" from="CanvasLayer/Simple Interface" to="Player2Agent" method="notify" binds= ["You have been poked by the player, physically! ouch. Respond."]]
 [connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player2Agent" method="chat"]
 [connection signal="timeout" from="CanvasLayer/Simple Interface/Thinking Animation/Timer" to="CanvasLayer/Simple Interface/Thinking Animation" method="inc_count"]
 

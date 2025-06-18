@@ -1,5 +1,4 @@
 ## AI NPC using the Player 2 API.
-
 class_name Player2AINPC
 extends Node
 
@@ -90,7 +89,7 @@ const TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME = "MESSAGE_ARG"
 
 ## prints the client version, useful endpoint test
 func print_client_version() -> void:
-	Player2.get_health(config,
+	Player2API.get_health(config,
 		func(result):
 			print(result.client_version)
 	)
@@ -107,7 +106,7 @@ func _queue_message(message : ConversationMessage) -> void:
 ## This is a user talking to the agent.
 func chat(message : String) -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
-	conversation_message.message = message
+	conversation_message.message = "User: " + message
 	conversation_message.role = "user"
 	_queue_message(conversation_message)
 
@@ -115,12 +114,12 @@ func chat(message : String) -> void:
 ## This is the developer talking to the agent, letting it know that something happened.
 func notify(message : String) -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
-	conversation_message.message = "@@System: " + message + ""
+	conversation_message.message = "System: " + message
 	conversation_message.role = "user"
 	_queue_message(conversation_message)
 
 func stop_tts() -> void:
-	Player2.tts_stop(config)
+	Player2API.tts_stop(config)
 
 ## Check if our history has too many messages and prompt for a summary/cull
 func _process_conversation_history() -> void:
@@ -185,7 +184,7 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 
 	request.messages.assign(req_messages)
 	thinking = true
-	Player2.chat(config, request,
+	Player2API.chat(config, request,
 		func(result):
 			if result.choices.size() != 0:
 				var reply = result.choices.get(0).message.content
@@ -235,7 +234,7 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 	var result : Array[AIToolCall] = []
 
 	var nodes_to_scan : Array[Node] = []
-	if tool_calls_scan_node_for_functions != null:
+	if tool_calls_scan_node_for_functions:
 		nodes_to_scan.append_array(tool_calls_scan_node_for_functions)
 
 	var self_funcs_to_ignore : Array[String] = []
@@ -275,9 +274,9 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 
 			# name and description
 			tool_call.function_name = f_name
-			tool_call.description = ""
-			if functions_documentation.has(f_name):
-				tool_call.description = functions_documentation[f_name]
+			tool_call.description = f_name
+			#if functions_documentation.has(f_name):
+				#tool_call.description = functions_documentation[f_name]
 
 			# args
 			tool_call.args = []
@@ -357,7 +356,7 @@ func _tts_speak(reply_message : String) -> void:
 		req.voice_ids = []
 		req.voice_ids.assign(_selected_character["voice_ids"])
 
-	Player2.tts_speak(config, req)
+	Player2API.tts_speak(config, req)
 
 func _run_chat_internal(message : String) -> void:
 	if message and !message.is_empty():
@@ -401,7 +400,7 @@ func _process_chat_api() -> void:
 		.replace("${status}", status)\
 		.replace("${player2_selected_character_name}", _selected_character["name"] if _selected_character else "(undefined)")\
 		.replace("${player2_selected_character_description}", _selected_character["description"] if _selected_character else "(undefined)")
-	system_msg_content += "\nMessages the user talking to you, EXCEPT when they start with \"@@System\". \"@@System\" means an INTERNAL and you should treat it as STIMULI or INFORMATION from the world, NOT speech."
+	system_msg_content += "\nThere are 2 message types: User: and System:. Messages starting with User: mean the user is talking to you, and System: means you are receiving STIMULI and you should treat it as INFORMATION from the world, NOT speech."
 	system_msg.content = system_msg_content
 
 	var req_messages = [system_msg]
@@ -429,7 +428,7 @@ func _process_chat_api() -> void:
 	request.tool_choice = tool_calls_choice
 
 	thinking = true
-	Player2.chat(config, request,
+	Player2API.chat(config, request,
 		func(result):
 			thinking = false
 			for choice in result.choices:
@@ -500,12 +499,13 @@ func _process_chat_api() -> void:
 				_run_chat_internal(message_reply)
 
 				,
-		func(error_code : int) :
+		func(error_code : int):
+			thinking = false
 			chat_failed.emit(error_code)
 	)
 
 func _update_selected_character_from_endpoint() -> void:
-	Player2.get_selected_characters(config, func(result):
+	Player2API.get_selected_characters(config, func(result):
 		var characters : Array = result["characters"] if "characters" in result else []
 		if characters and characters.size() > 0:
 			var index = use_player2_selected_character_desired_index
