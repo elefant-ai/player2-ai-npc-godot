@@ -242,8 +242,9 @@ static func class_to_json(_class: Object, save_temp_res: bool = false, inheritan
 	var dictionary: Dictionary = {}
 	save_temp_resources_tres = save_temp_res
 	# Store the script name for reference during deserialization if inheritance exists
-	if inheritance:
-		dictionary["script_inheritance"] = _class.get_script().get_global_name()
+	# This is silly
+	#if inheritance:
+		#dictionary["script_inheritance"] = _class.get_script().get_global_name()
 	var properties: Array = _class.get_property_list()
 
 	# Iterate through each property of the class
