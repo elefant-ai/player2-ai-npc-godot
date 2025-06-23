@@ -24,13 +24,18 @@ func _ready() -> void:
 		poke_button.pressed.connect(func(): poked.emit())
 
 func send() -> void:
-	append_line(text.text)
+	append_line_user(text.text)
 	text_sent.emit(text.text)
 	text.text = ""
 	if deselect_on_send:
 		text.release_focus()
 
-func append_line(line : String) -> void:
-	print("got " + line)
+func append_line_user(line : String) -> void:
+	print("got user: " + line)
 	if chat:
-		chat.text += line + "\n"
+		chat.text += "User: " + line + "\n"
+
+func append_line_agent(line : String) -> void:
+	print("got agent: " + line)
+	if chat:
+		chat.text += "Agent: " + line + "\n"

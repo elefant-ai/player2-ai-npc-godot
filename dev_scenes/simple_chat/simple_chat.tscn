@@ -62,7 +62,7 @@ script = ExtResource("6_qmjy4")
 wait_time = 0.3
 autostart = true
 
-[connection signal="chat_received" from="Player2Agent" to="CanvasLayer/Simple Interface" method="append_line"]
+[connection signal="chat_received" from="Player2Agent" to="CanvasLayer/Simple Interface" method="append_line_agent"]
 [connection signal="thinking_began" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="show"]
 [connection signal="thinking_ended" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="hide"]
 [connection signal="poked" from="CanvasLayer/Simple Interface" to="Player2Agent" method="notify" binds= ["You have been poked by the player, physically! ouch. Respond."]]
