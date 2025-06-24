@@ -1669,6 +1669,8 @@ KEEP YOUR REPLY SHORT! LESS THAN 250 CHARACTERS! NO monologuing, purely text tha
 Here is your world status:
 ${status}"
 use_player2_selected_character = false
+tts_enabled = true
+tts_default_gender = 0
 tool_calls_scan_node_for_functions = [NodePath("..")]
 tool_calls_scan_node_filter = SubResource("Resource_evguq")
 tool_calls_choice = "Use a tool when completing a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action."
