@@ -61,6 +61,20 @@ static func tts_stop(config : Player2Config, on_fail : Callable = Callable()) ->
 	on_fail
 	)
 
+static func stt_start(config : Player2Config, request : Player2Schema.STTStartRequest, on_fail : Callable = Callable()) -> void:
+	Player2WebHelper.request(config.endpoint_stt_start, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
+	Callable(),
+	on_fail
+	)
+
+static func stt_stop(config : Player2Config, on_complete : Callable, on_fail : Callable = Callable()) -> void:
+	Player2WebHelper.request(config.endpoint_stt_stop, HTTPClient.Method.METHOD_POST, "", _get_headers(config),
+	func(body, code):
+		if on_complete:
+			on_complete.call(JSON.parse_string(body)),
+	on_fail
+	)
+
 static func get_selected_characters(config : Player2Config, on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_get_selected_characters, HTTPClient.Method.METHOD_GET, "", _get_headers(config),
 	func(body, code):

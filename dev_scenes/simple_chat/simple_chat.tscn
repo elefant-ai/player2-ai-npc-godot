@@ -14,6 +14,8 @@ endpoint_health = "http://127.0.0.1:4315/v1/health"
 endpoint_tts_speak = "http://127.0.0.1:4315/v1/tts/speak"
 endpoint_tts_stop = "http://127.0.0.1:4315/v1/tts/stop"
 endpoint_get_selected_characters = "http://127.0.0.1:4315/v1/selected_characters"
+endpoint_stt_start = "http://127.0.0.1:4315/v1/stt/start"
+endpoint_stt_stop = "http://127.0.0.1:4315/v1/stt/stop"
 request_too_much_delay_seconds = 3.0
 metadata/_custom_type_script = "uid://b6indg81ao1we"
 

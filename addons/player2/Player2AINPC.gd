@@ -2,7 +2,7 @@
 class_name Player2AINPC
 extends Node
 
-@export var config : Player2Config
+@export var config : Player2Config = Player2Config.new()
 
 ## The main system message for every prompt.
 ## ${player2_selected_character_name} and ${player2_selected_character_description} are sourced from the player's selected characters. Feel free to remove this if `use_player2_selected_character` is false.

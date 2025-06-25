@@ -30,9 +30,9 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 	print("\n\n")
 
 	# mock it
-	#on_completed.call('{"choices":[{"message":{"content":"","tool_calls":[{"function":{"arguments":"{}\n","name":"blink"},"id":"","type":""}]}}]}', 200)
-	#return
-	#on_completed.call('{"choices":[{"message":{"content":"Hello! How can I help you today?\n"}}]}', 200)
+	#if on_completed:
+		#on_completed.call('{"choices":[{"message":{"content":"Hello! How can I help you today?\n"}}]}', 200)
+		#on_completed.call('{"choices":[{"message":{"content":"","tool_calls":[{"function":{"arguments":"{}\n","name":"blink"},"id":"","type":""}]}}]}', 200)
 	#return
 
 	var http = HTTPRequest.new()

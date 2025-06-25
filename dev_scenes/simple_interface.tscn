@@ -1,11 +1,26 @@
-[gd_scene load_steps=3 format=3 uid="uid://bj2556dthmk1e"]
+[gd_scene load_steps=6 format=3 uid="uid://bj2556dthmk1e"]
 
 [ext_resource type="Script" uid="uid://4flv2qyji2mp" path="res://dev_scenes/simple_chat/ai_simple_text_interface.gd" id="1_6vno8"]
+[ext_resource type="Script" uid="uid://demr3r0wkqqj1" path="res://addons/player2/Player2STT.gd" id="2_wfmdp"]
+[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/player2_config.gd" id="3_e7tri"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ygx8q"]
 font_size = 156
 
-[node name="Simple Interface" type="ColorRect" node_paths=PackedStringArray("button", "text", "chat", "poke_button")]
+[sub_resource type="Resource" id="Resource_jbt0g"]
+script = ExtResource("3_e7tri")
+player2_game_key = "my_game"
+endpoint_chat = "http://127.0.0.1:4315/v1/chat/completions"
+endpoint_health = "http://127.0.0.1:4315/v1/health"
+endpoint_tts_speak = "http://127.0.0.1:4315/v1/tts/speak"
+endpoint_tts_stop = "http://127.0.0.1:4315/v1/tts/stop"
+endpoint_get_selected_characters = "http://127.0.0.1:4315/v1/selected_characters"
+endpoint_stt_start = "http://127.0.0.1:4315/v1/stt/start"
+endpoint_stt_stop = "http://127.0.0.1:4315/v1/stt/stop"
+request_too_much_delay_seconds = 3.0
+metadata/_custom_type_script = "uid://b6indg81ao1we"
+
+[node name="Simple Interface" type="ColorRect" node_paths=PackedStringArray("button", "text", "chat", "poke_button", "player2_stt")]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -18,6 +33,7 @@ button = NodePath("Button")
 text = NodePath("TextEdit")
 chat = NodePath("Label")
 poke_button = NodePath("Poke Button")
+player2_stt = NodePath("Player2STT")
 
 [node name="Button" type="Button" parent="."]
 layout_mode = 0
@@ -72,3 +88,36 @@ offset_bottom = -13.0
 grow_horizontal = 0
 action_mode = 0
 text = "Poke"
+
+[node name="Player2STT" type="Node" parent="."]
+script = ExtResource("2_wfmdp")
+config = SubResource("Resource_jbt0g")
+metadata/_custom_type_script = "uid://demr3r0wkqqj1"
+
+[node name="TTS Label" type="Label" parent="Player2STT"]
+offset_left = 7.0
+offset_top = 459.0
+offset_right = 133.0
+offset_bottom = 482.0
+text = "Hold Tab to do STT"
+
+[node name="Listening Label" type="Label" parent="Player2STT"]
+visible = false
+offset_left = 190.0
+offset_top = 461.0
+offset_right = 284.0
+offset_bottom = 484.0
+text = "(Listening...)"
+
+[node name="Reply Wait Label" type="Label" parent="Player2STT"]
+visible = false
+offset_left = 190.0
+offset_top = 461.0
+offset_right = 284.0
+offset_bottom = 484.0
+text = "(Processing STT...)"
+
+[connection signal="listening_started" from="Player2STT" to="Player2STT/Listening Label" method="show"]
+[connection signal="listening_stopped" from="Player2STT" to="Player2STT/Listening Label" method="hide"]
+[connection signal="reply_wait_started" from="Player2STT" to="Player2STT/Reply Wait Label" method="show"]
+[connection signal="reply_wait_stopped" from="Player2STT" to="Player2STT/Reply Wait Label" method="hide"]
