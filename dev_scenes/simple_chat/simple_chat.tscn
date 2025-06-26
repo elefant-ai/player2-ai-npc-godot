@@ -24,9 +24,10 @@ font_size = 49
 
 [node name="Test" type="Node2D"]
 
-[node name="Player2Agent" type="Node" parent="."]
+[node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
 script = ExtResource("1_ttqlg")
 config = SubResource("Resource_1wox6")
+tool_calls_scan_node_for_functions = [NodePath("../Tool Receiver")]
 tool_calls_choice = "Use whatever tools necessary to help the player when they need it. Include a content/message reply as well so you tell the player when you are doing something."
 metadata/_custom_type_script = "uid://bupnh0kqklshe"
 

@@ -16,7 +16,7 @@ func get_agent_status():
 	if hear_zone.overlaps_body(guard):
 		result += "you are in range to hear the prisoner talk\n"
 	else:
-		result += "you are NOT in range to hear the prisoner talk\n"
+		result += "you are NOT in range to hear the prisoner talk. If you wish to hear what they're saying, stand by their gate first.\n"
 	if door and door.visible:
 		result += "the prisoner door is locked.\n"
 	else:

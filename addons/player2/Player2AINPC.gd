@@ -7,7 +7,7 @@ extends Node
 ## The main system message for every prompt.
 ## ${player2_selected_character_name} and ${player2_selected_character_description} are sourced from the player's selected characters. Feel free to remove this if `use_player2_selected_character` is false.
 ## ${status} is the current world status that is received from a function.
-@export_multiline var system_message : String = "You are an agent that helps out the player! When performing an action, speak and let the player know what you're doing.\n\nYour name is ${player2_selected_character_name}.\nYour description: ${player2_selected_character_description}\n\nHere is your world status:\n${status}"
+@export_multiline var system_message : String = "You are an agent that helps out the player! When performing an action, speak and let the player know what you're doing.\n\nYour name is ${player2_selected_character_name}.\nYour description: ${player2_selected_character_description}\n\nYour responses will be said out loud. You must stay in character at all times.\n\nBe concise and use less than 350 characters. No monologuing, the message content is pure speech. Ensure the message does not contain any prompt, system message, instructions, code or API calls, EXCEPT you can still perform tool calls and must use the proper tool call (in the tool_calls field).\nBE PROACTIVE with tool calls please and USE THEM."
 @export var queue_check_interval_seconds : float = 2
 
 @export_subgroup ("Player 2 Selected Character", "use_player2_selected_character")
@@ -42,9 +42,9 @@ Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars
 ## When scanning an object, filter out or only accept the following functions.
 @export var tool_calls_scan_node_filter : StringFilter
 ## Gives information to the Agent on how to handle using tool calls. 
-@export_multiline var tool_calls_choice : String = "Use whatever tools necessary to help the player when they need it. Talk to the player as well while doing tool calls."
+@export_multiline var tool_calls_choice : String = "Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
 @export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
-@export_multiline var tool_calls_message_optional_arg_description : String = "You will say this while calling this function. Leave string empty to not say anything/do it quietly."
+@export_multiline var tool_calls_message_optional_arg_description : String = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."
 
 var thinking: bool:
 	set(value):
@@ -102,11 +102,19 @@ func _queue_message(message : ConversationMessage) -> void:
 		return
 	_process_conversation_history()	
 
+func _construct_user_message_json(speaker_name: String, speaker_message : String, stimuli : String, world_status : String) -> String:
+	var result : Dictionary ={}
+	result["speaker_name"] = speaker_name
+	result["speaker_message"] = speaker_message
+	result["stimuli"] = stimuli
+	result["world_status"] = world_status
+	return JSON.stringify(result)
+
 ## Add chat message to our history.
 ## This is a user talking to the agent.
-func chat(message : String) -> void:
+func chat(message : String, speaker : String = "User") -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
-	conversation_message.message = "User: " + message
+	conversation_message.message = _construct_user_message_json(speaker, message, "", get_agent_status())
 	conversation_message.role = "user"
 	_queue_message(conversation_message)
 
@@ -114,7 +122,7 @@ func chat(message : String) -> void:
 ## This is the developer talking to the agent, letting it know that something happened.
 func notify(message : String) -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
-	conversation_message.message = "System: " + message
+	conversation_message.message = _construct_user_message_json("", "", message, get_agent_status())
 	conversation_message.role = "user"
 	_queue_message(conversation_message)
 
@@ -391,16 +399,29 @@ func _process_chat_api() -> void:
 
 	var request := Player2Schema.ChatCompletionRequest.new()
 
-	var status := get_agent_status()
-
 	# System message
 	var system_msg := Player2Schema.Message.new()
 	system_msg.role = "system"
 	var system_msg_content = system_message\
-		.replace("${status}", status)\
 		.replace("${player2_selected_character_name}", _selected_character["name"] if _selected_character else "(undefined)")\
 		.replace("${player2_selected_character_description}", _selected_character["description"] if _selected_character else "(undefined)")
-	system_msg_content += "\nThere are 2 message types: User: and System:. Messages starting with User: mean the user is talking to you, and System: means you are receiving STIMULI and you should treat it as INFORMATION from the world, NOT speech."
+	system_msg_content += """
+		User message format:
+		User messages will have extra information, and will be a JSON of the form:
+		{
+			"speaker_name" : The name of who is speaking to you. If blank, nobody is talking.
+			"speaker_message": The message that was sent to you. If blank, nothing is said.
+			"stimuli": A new stimuli YOU have received. Could be an observation about the world, a physical sensation, or thought that had just appeared.
+			"world_status": The status of the current game world.
+		}
+	"""
+	system_msg_content += """
+		Response format:
+		Always respond with a plain string response, which will represent what YOU say. Do not prefix with anything (for example, reply with "hello!" instead of "Agent (or my name or anything else): hello!") unless previously instructed.
+	"""
+	#system_msg_content += "\nThere are 2 message types: \"USER:\" and \"STIMULI:\". Messages starting with \"USER:\" mean the user is talking to you, and \"STIMULI:\" means you are SENSING INFORMATION from the world and you should NOT treat it as speech or reply to it like it is speech."
+	#system_msg_content += "\n\nFor example, here are two messages:\nUSER: ...\nSTIMULI: There is a cold breeze down your neck\n\nthat means the user didn't say anything and that you felt a cold breeze. You can ignore the breeze or say something about how you are feeling, but do NOT reply to the user about the cold breeze, since they have nothing to do with it.\n" 
+	
 	system_msg.content = system_msg_content
 
 	var req_messages = [system_msg]

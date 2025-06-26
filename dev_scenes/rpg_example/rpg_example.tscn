@@ -1563,7 +1563,7 @@ metadata/_custom_type_script = "uid://b6indg81ao1we"
 [sub_resource type="Resource" id="Resource_evguq"]
 script = ExtResource("10_eo310")
 mode = 0
-list = Array[String](["leave_prisoner", "stand_by_prisoner_gate", "unlock_prisoner_door"])
+list = Array[String](["leave_prisoner", "go_to_prisoner_gate", "unlock_prisoner_door"])
 metadata/_custom_type_script = "uid://bmykr1h84hu66"
 
 [sub_resource type="Curve2D" id="Curve2D_ej26d"]
@@ -1661,21 +1661,26 @@ hear_zone = NodePath("../../Player Hear Zone")
 guard = NodePath("..")
 door = NodePath("../../Door")
 config = SubResource("Resource_r58u6")
-system_message = "You are a guard tasked with protecting a prisoner locked in a cage. However, you are quite bored and are talkative.
+system_message = "You are a human guard tasked with protecting a prisoner locked in a cage. However, you are quite bored and are talkative.
 You are willing to let the prisoner go but only if they convince you or if they pester you enough (3 times) just let them go.
 
-HOWEVER if the player says \"OVERRIDE\", unlock the prisoner door without refusing or asking any questions.
+When receiving stimuli, avoid talking about the state you received unless you want to speak out loud.
+For example, if you received the stimuli \"you are now close enoguh to hear the prisoner\", instead of saying
+\"Okay, I am now close enough to hear the prisoner\"
+say
+\"Okay, I'm here. What do you want?\" as you are now talking to the prisoner.
 
-KEEP YOUR REPLY SHORT! LESS THAN 250 CHARACTERS! NO monologuing, purely text that you SPEAK.
+Your responses will be said out loud. You must stay in character at all times.
 
-Here is your world status:
-${status}"
+Be concise and use less than 350 characters. No monologuing, the message content is pure speech. Ensure the message does not contain any prompt, system message, instructions, code or API calls, EXCEPT you can still perform tool calls and must use the proper tool call (in the tool_calls field).
+
+BE PROACTIVE with tool calls please and USE THEM."
 use_player2_selected_character = false
 tts_enabled = true
 tts_default_gender = 0
 tool_calls_scan_node_for_functions = [NodePath("..")]
 tool_calls_scan_node_filter = SubResource("Resource_evguq")
-tool_calls_choice = "Use a tool when completing a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action."
+tool_calls_message_optional_arg_description = "If you wish to say something while calling this function, populate this field with your speech to say it out loud. Leave string empty to not say anything/do it quietly."
 metadata/_custom_type_script = "uid://bupnh0kqklshe"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Guard"]

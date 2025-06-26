@@ -35,7 +35,7 @@ func leave_prisoner() -> String:
 	return _set_state(State.PATROL)
 
 ## Go walk up to the prisoner gate. If the prisoner is inside the cell, this is the only way to hear them.
-func stand_by_prisoner_gate() -> String:
+func go_to_prisoner_gate() -> String:
 	return _set_state(State.STAND_BY_PRISONER_GATE)
 
 ## Unlock the door for the prisoner
@@ -94,13 +94,13 @@ func player_talked(message : String) -> void:
 	if not player_in_cell_zone.has_overlapping_areas():
 		print("yeah")
 		# Player has left the cell, you can always hear.
-		ai_brain.chat(message)
+		ai_brain.chat(message, "Prisoner")
 		return
 
 	if !hear_zone.overlaps_body(self):
 		ai_brain.notify("You hear a sound coming from the prison window catching your attention, it sounds like the prisoner is talking... You want to hear what the prisoner has to say.")
 	else:
-		ai_brain.chat(message)
+		ai_brain.chat(message, "Prisoner")
 
 func _process_idle_talk(delta : float) -> void:
 	# If we're thinking, don't do a timer/timeout.
