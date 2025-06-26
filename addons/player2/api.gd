@@ -25,7 +25,7 @@ static func _alert_error_fail(config : Player2Config, code : int, use_http_resul
 			HTTPRequest.RESULT_CANT_CONNECT:
 				Player2ErrorHelper.send_error(config, "Cannot connect to the Player2 Launcher!")
 			var other:
-				Player2ErrorHelper.send_error(config, "Cannot connect to the Player2 Launcher! Godot HttpResult Error Code " + str(other))
+				Player2ErrorHelper.send_error(config, "Godot HttpResult Error Code " + str(other))
 				pass
 	match (code):
 		401:
