@@ -17,10 +17,30 @@ static func get_health(config : Player2Config, on_complete : Callable, on_fail :
 	on_fail
 	)
 
+static func _alert_error_fail(config : Player2Config, code : int, use_http_result : bool = false):
+	if use_http_result:
+		match (code):
+			HTTPRequest.RESULT_SUCCESS:
+				return
+			HTTPRequest.RESULT_CANT_CONNECT:
+				Player2ErrorHelper.send_error(config, "Cannot connect to the Player2 Launcher!")
+			var other:
+				Player2ErrorHelper.send_error(config, "Cannot connect to the Player2 Launcher! Godot HttpResult Error Code " + str(other))
+				pass
+	match (code):
+		401:
+			Player2ErrorHelper.send_error(config, "User is not authenticated in the Player2 Launcher!")
+		402:
+			Player2ErrorHelper.send_error(config, "Insufficient credits to complete request.")
+		500:
+			Player2ErrorHelper.send_error(config, "Internal server error.")
+
+
 static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
 	var run : Callable
 	print("chat" + JsonClassConverter.class_to_json_string(request))
 	
+
 	run = func():
 		Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
 		func(body, code):
@@ -32,7 +52,9 @@ static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRe
 			if code != 200:
 				print("chat fail!")
 				print(code)
-				on_fail.call(code)
+				_alert_error_fail(config, code)
+				if on_fail:
+					on_fail.call(code)
 				return
 			print("GOT RESPONSE with code " + str(code))
 			print(body)
@@ -43,6 +65,7 @@ static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRe
 		func(code):
 			print("chat fail!")
 			print(code)
+			_alert_error_fail(config, code, true)
 			if on_fail:
 				on_fail.call(code)
 		)
@@ -51,34 +74,53 @@ static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRe
 
 static func tts_speak(config : Player2Config, request : Player2Schema.TTSRequest, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_tts_speak, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
-	Callable(),
-	on_fail
+	func(body, code):
+		_alert_error_fail(config, code),
+	func(code):
+		_alert_error_fail(config, code, true)
+		if on_fail:
+			on_fail.call(code)
 	)
 
 static func tts_stop(config : Player2Config, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_tts_stop, HTTPClient.Method.METHOD_POST, "", _get_headers(config),
-	Callable(),
-	on_fail
+	func(body, code):
+		_alert_error_fail(config, code),
+	func(code):
+		_alert_error_fail(config, code, true)
+		if on_fail:
+			on_fail.call(code)
 	)
 
 static func stt_start(config : Player2Config, request : Player2Schema.STTStartRequest, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_stt_start, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
-	Callable(),
-	on_fail
+	func(body, code):
+		_alert_error_fail(config, code),
+	func(code):
+		_alert_error_fail(config, code, true)
+		if on_fail:
+			on_fail.call(code)
 	)
 
 static func stt_stop(config : Player2Config, on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_stt_stop, HTTPClient.Method.METHOD_POST, "", _get_headers(config),
 	func(body, code):
 		if on_complete:
-			on_complete.call(JSON.parse_string(body)),
-	on_fail
+			on_complete.call(JSON.parse_string(body))
+			_alert_error_fail(config, code),
+	func(code):
+		_alert_error_fail(config, code, true)
+		if on_fail:
+			on_fail.call(code)
 	)
 
 static func get_selected_characters(config : Player2Config, on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_get_selected_characters, HTTPClient.Method.METHOD_GET, "", _get_headers(config),
 	func(body, code):
 		on_complete.call(JSON.parse_string(body))
-		,
-	on_fail
+		_alert_error_fail(config, code),
+	func(code):
+		_alert_error_fail(config, code, true)
+		if on_fail:
+			on_fail.call(code)
 	)

@@ -9,6 +9,7 @@
 [sub_resource type="Resource" id="Resource_1wox6"]
 script = ExtResource("2_qmjy4")
 player2_game_key = "my_game"
+error_log_ui = true
 endpoint_chat = "http://127.0.0.1:4315/v1/chat/completions"
 endpoint_health = "http://127.0.0.1:4315/v1/health"
 endpoint_tts_speak = "http://127.0.0.1:4315/v1/tts/speak"

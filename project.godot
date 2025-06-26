@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.4", "Forward Plus")
 [autoload]
 
 Player2WebHelper="*res://addons/player2/helpers/web_helper.gd"
+Player2ErrorHelper="*res://addons/player2/helpers/error_helper.tscn"
 
 [editor_plugins]
 
