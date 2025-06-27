@@ -1695,9 +1695,9 @@ texture = ExtResource("6_6yvuh")
 
 [node name="Speech Bubble" parent="Guard" instance=ExtResource("12_r58u6")]
 offset_left = -128.0
-offset_top = -80.0
+offset_top = -134.0
 offset_right = 128.0
-offset_bottom = -16.0
+offset_bottom = -6.0
 
 [node name="Thinking Animation" type="Label" parent="Guard"]
 visible = false

@@ -9,7 +9,7 @@ default_font_size = 0
 
 [node name="Speech Bubble" type="TextEdit"]
 texture_filter = 1
-custom_minimum_size = Vector2(256, 64)
+custom_minimum_size = Vector2(256, 128)
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
