@@ -32,7 +32,9 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 	# mock it
 	#if on_completed:
 		#on_completed.call('{"choices":[{"message":{"content":"Hello! How can I help you today?\n"}}]}', 200)
+		#on_completed.call('{"choices": [{"finish_reason": "tool_calls","index": 0,"message": {"content": "","role": "assistant","tool_calls": [{"function": {"arguments": "{}","name": "blink"},"id": "tool_call_25bdd34724c0","type": "function"}]}}],"created": 1751055674,"id": "62df2ff4-fb24-4e2e-9ed9-0a261c5033f1","model": "elefant-ai-200b-fp8","object": "chat.completion","usage": {"completion_tokens": 6,"prompt_tokens": 628,"total_tokens": 634}}', 200)
 		#on_completed.call('{"choices":[{"message":{"content":"","tool_calls":[{"function":{"arguments":"{}\n","name":"blink"},"id":"","type":""}]}}]}', 200)
+		#on_completed.call('{ "choices": [{ "finish_reason": "stop", "index": 0.0, "message": { "content": "```json\n{\n  \"reason\": \"The user asked me to blink the screen. I will call the blink function.\",\n  \"message\": \"Sure, I can do that!\",\n  \"function\": \"blink\",\n  \"args\": {}\n}\n```", "role": "assistant" } }], "created": 1751056169.0, "id": "cd5a3180-5d08-4a3d-9274-5693f15657f7", "model": "elefant-ai-200b-fp8", "object": "chat.completion", "usage": { "completion_tokens": 57.0, "prompt_tokens": 654.0, "total_tokens": 711.0 } }', 200)
 	#return
 
 	var http = HTTPRequest.new()

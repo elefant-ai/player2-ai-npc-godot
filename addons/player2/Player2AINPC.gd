@@ -42,6 +42,9 @@ Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars
 ## When scanning an object, filter out or only accept the following functions.
 @export var tool_calls_scan_node_filter : StringFilter
 ## Gives information to the Agent on how to handle using tool calls. 
+# TODO: Add this back in to give devs the choice, and CONDITIONALLY SERIALIZE tool calls if this is false.
+const use_tool_call_json = false
+#@export var use_tool_call_json : bool = false
 @export_multiline var tool_calls_choice : String = "Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
 @export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
 @export_multiline var tool_calls_message_optional_arg_description : String = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."
@@ -206,6 +209,8 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 
 ## Append a reply message to our history, assuming it's from the assistant.
 func _append_agent_reply_to_history(message : String):
+	if !message or message.is_empty():
+		return
 	var msg := ConversationMessage.new()
 	msg.role = "assistant"
 	msg.message = message
@@ -339,12 +344,17 @@ func _convert_tool_call(simple_tool_call : AIToolCall) -> Player2Schema.Tool:
 
 	return tool_call
 
-## Generate our tool call schema.
-func _generate_tools() -> Array[Player2Schema.Tool]:
-
+## Generate our tool calls
+func _generate_manual_tools() -> Array[AIToolCall]:
 	var our_tools : Array[AIToolCall] = []
 	our_tools.append_array(get_manual_tool_calls(_tool_call_func_map))
 	our_tools.append_array(_scan_funcs_for_tools())
+	return our_tools
+
+## Generate our schema tool calls
+func _generate_schema_tools() -> Array[Player2Schema.Tool]:
+
+	var our_tools : Array[AIToolCall] = _generate_manual_tools()
 
 	var result : Array[Player2Schema.Tool] = []
 	result.assign(our_tools.map(_convert_tool_call))
@@ -368,11 +378,53 @@ func _tts_speak(reply_message : String) -> void:
 
 func _run_chat_internal(message : String) -> void:
 	if message and !message.is_empty():
-		_append_agent_reply_to_history(message)
 		var reply_message := message.trim_suffix("\n") 
 		chat_received.emit(reply_message)
 		if tts_enabled:
 			_tts_speak(reply_message)
+
+func _process_tool_call_reply(tool_call_reply : Array[AIToolCallReply]) -> void:
+	pass
+
+func _tool_call_json_to_tool_call_reply(tool_call_json : Array) -> Array[AIToolCallReply]:
+	var result : Array[AIToolCallReply] = []
+	for tool_call : Dictionary in tool_call_json:
+		var tool_call_reply := AIToolCallReply.new()
+		var tool_name : String = tool_call.function.name
+
+		tool_call_reply.function_name = tool_name
+
+		#tool_name = "announce"
+		var args : Dictionary = JSON.parse_string(tool_call.function.arguments)
+		print("Got args: ")
+		print(args)
+		if args.has(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME):
+			var tool_call_reply_message : String = args[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME]
+			args.erase(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
+			# For some reason content and message reply gets mixed sometimes? seems like the tool call reply goes first.
+			tool_call_reply.optional_message = tool_call_reply_message
+		tool_call_reply.args = args
+
+		result.append(tool_call_reply)
+	return result
+
+func _tool_call_non_json_content_to_tool_call_reply(reply : Dictionary) -> Array[AIToolCallReply]:
+	if !reply.has("function"):
+		return []
+	var f_name : String = reply["function"]
+	if !f_name or f_name.is_empty():
+		return []
+	var result : AIToolCallReply = AIToolCallReply.new()
+	result.function_name = f_name
+	var f_args : Dictionary = reply["args"] if reply.has("args") else {}
+	result.args = f_args
+
+	return [result]
+
+func _parse_llm_message_json(llm_raw_json : String) -> Dictionary:
+	llm_raw_json = llm_raw_json.trim_prefix("```json").trim_suffix("```").strip_edges()
+	var result = JSON.parse_string(llm_raw_json)
+	return result if result else {}
 
 
 ## At an interval, process chats and send to the API if we have something queued.
@@ -409,18 +461,72 @@ func _process_chat_api() -> void:
 		User message format:
 		User messages will have extra information, and will be a JSON of the form:
 		{
-			"speaker_name" : The name of who is speaking to you. If blank, nobody is talking.
-			"speaker_message": The message that was sent to you. If blank, nothing is said.
-			"stimuli": A new stimuli YOU have received. Could be an observation about the world, a physical sensation, or thought that had just appeared.
-			"world_status": The status of the current game world.
+			"speaker_name" : The name of who is speaking to you. If blank, nobody is talking.,
+			"speaker_message": The message that was sent to you. If blank, nothing is said.,
+			"stimuli": A new stimuli YOU have received. Could be an observation about the world, a physical sensation, or thought that had just appeared.,
+			"world_status": The status of the current game world.,
 		}
 	"""
-	system_msg_content += """
-		Response format:
-		Always respond with a plain string response, which will represent what YOU say. Do not prefix with anything (for example, reply with "hello!" instead of "Agent (or my name or anything else): hello!") unless previously instructed.
-	"""
-	#system_msg_content += "\nThere are 2 message types: \"USER:\" and \"STIMULI:\". Messages starting with \"USER:\" mean the user is talking to you, and \"STIMULI:\" means you are SENSING INFORMATION from the world and you should NOT treat it as speech or reply to it like it is speech."
-	#system_msg_content += "\n\nFor example, here are two messages:\nUSER: ...\nSTIMULI: There is a cold breeze down your neck\n\nthat means the user didn't say anything and that you felt a cold breeze. You can ignore the breeze or say something about how you are feeling, but do NOT reply to the user about the cold breeze, since they have nothing to do with it.\n" 
+	if use_tool_call_json:
+		system_msg_content += """
+			Response format:
+			Always respond with a plain string response, which will represent what YOU say. Do not prefix with anything (for example, reply with "hello!" instead of "Agent (or my name or anything else): hello!") unless previously instructed.
+		"""
+	else:
+		# Manual prompt, pass tool calls as functions.
+		var our_tools := _generate_manual_tools()
+		var functions_desc_list : Array[String] = []
+		for tool in our_tools:
+			var function_desc := ""
+			function_desc += tool.function_name
+			function_desc += "("
+			var args_desc_list : Array[String] = []
+			for arg in tool.args:
+				var arg_desc := ""
+				arg_desc += arg.name
+				arg_desc += " : "
+				if arg.type == AIToolCallParameter.Type.ENUM:
+					# Enum: possible strings
+					arg_desc += " | ".join(arg.enum_list.map(func(e): "\"" + e + "\""))
+				else:
+					# Regular type
+					arg_desc += ":" + arg.arg_type_to_schema_type(arg.type)
+				args_desc_list.append(arg_desc)
+			function_desc += ", ".join(args_desc_list)
+			function_desc += ")"
+			if tool.description and !tool.description.is_empty():
+				function_desc += ": " + tool.description
+			functions_desc_list.append(function_desc)
+
+		system_msg_content += """
+			Response format:
+			Always respond with JSON containing message, command and reason. All of these are strings, except for "args" which is a JSON dictionary of depth 1.
+			{
+				"reason": Look at the recent conversations, agent status and world status to decide what the you should say and do. Provide step-by-step reasoning while considering what is possible.,
+				"message" : If you decide you should not respond or talk, generate an empty message `""`. Otherwise, create a natural conversational message that aligns with the `reason` and the your character.,
+				"function": The name of the function to call. If you decide to not use any function, generate an empty function `""`.,
+				"args": The arguments to pass to a function as a JSON dictionary. Some functions may accept no arguments, whereupon you should pass an empty dictionary `{}`.
+			}
+			Valid Functions:
+		"""
+		# Functions
+		system_msg_content += "\n".join(functions_desc_list)
+		system_msg_content += """
+		\n\n
+			Example interpretation of a Function (this function is NOT valid):
+			go_to(name : string, speed : number)
+			a valid response would be
+			{
+				"reason": (come up with a reason),
+				"message": (come up with a message),
+				"function": "go_to",
+				"args": {"name": "Player 1", "speed": 23.0}
+			}
+			This would call the "go_to" function with name = "Player 1" and at speed = 23.0.
+		"""
+		
+		# Double reiteration
+		system_msg_content += "\nYou must ONLY reply in JSON using the Response Format. Non-JSON String results are INVALID"
 	
 	system_msg.content = system_msg_content
 
@@ -444,9 +550,10 @@ func _process_chat_api() -> void:
 	request.messages.assign(req_messages)
 
 	# Tools
-	request.tools = []
-	request.tools = _generate_tools()
-	request.tool_choice = tool_calls_choice
+	if use_tool_call_json:
+		request.tools = []
+		request.tools = _generate_schema_tools()
+		request.tool_choice = tool_calls_choice
 
 	thinking = true
 	Player2API.chat(config, request,
@@ -456,25 +563,34 @@ func _process_chat_api() -> void:
 				var message_reply := ""
 				if !"message" in choice:
 					continue
-				if "content" in choice.message:
-					var reply : String = choice.message.content
-					message_reply += reply
-				# Process tool calls IF they are present
-				if 'tool_calls' in choice.message:
+				var tool_calls_reply : Array[AIToolCallReply]
+				if use_tool_call_json:
+					# Use openAI spec tool call (less error prone but slow)
+					if "content" in choice.message:
+						var reply : String = choice.message.content
+						message_reply += reply
+					if 'tool_calls' in choice.message:
+						tool_calls_reply = _tool_call_json_to_tool_call_reply(choice.message.tool_calls)
+				else:
+					# Use manual system, faster and more eager but could be error prone.
+					if "content" in choice.message:
+						var content_json : Dictionary = _parse_llm_message_json(choice.message.content)
+						if content_json.is_empty():
+							# Invalid input probably
+							notify("You have sent an invalid input! Please properly format your input as JSON with the specified format.")
+							return
+						if content_json.has("message"):
+							message_reply += content_json["message"]
+						tool_calls_reply = _tool_call_non_json_content_to_tool_call_reply(content_json)
+				if tool_calls_reply:
 					var tool_call_history_messages = []
-					for tool_call in choice.message.tool_calls:
-						var tool_name : String = tool_call.function.name
+					for tool_call in tool_calls_reply:
+						var tool_name := tool_call.function_name
 						#tool_name = "announce"
-						var args : Dictionary = JSON.parse_string(tool_call.function.arguments)
-						print("Got args: ")
-						print(args)
-						if args.has(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME):
-							var tool_call_reply : String = args[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME]
-							args.erase(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
-							# For some reason content and message reply gets mixed sometimes? seems like the tool call reply goes first.
-							message_reply = tool_call_reply + message_reply
-							#if not has_content:
-								#_run_chat_internal(tool_call_reply)
+						var args := tool_call.args
+						# Tool call had an optional message to it, add to it please...
+						if tool_call.optional_message:
+							message_reply = tool_call.optional_message + message_reply
 						tool_called.emit(tool_name, args)
 						if _tool_call_func_map.has(tool_name):
 							# Organize the arguments, call the function...
@@ -513,11 +629,16 @@ func _process_chat_api() -> void:
 									notify(func_result_notify_string)
 
 							# History
-							tool_call_history_messages.append("Called " + tool_name + " with arguments " + tool_call.function.arguments)
+							tool_call_history_messages.append("Called " + tool_name + " with arguments [" + ",".join(args_actual) + "]")
 					# Add the tool calls to history
 					if !tool_call_history_messages.is_empty():
 						_append_agent_action_to_history(". ".join(tool_call_history_messages))
 				_run_chat_internal(message_reply)
+				if use_tool_call_json:
+					_append_agent_reply_to_history(message_reply)
+				else:
+					# We want the WHOLE context
+					_append_agent_reply_to_history(choice.message.content)
 
 				,
 		func(error_code : int):
@@ -556,7 +677,8 @@ func _ready() -> void:
 	_queue_process_timer.start()
 
 
-	if use_player2_selected_character:
+	# TODO DO NOT PSUH ME THANKS (remove `and false`)
+	if use_player2_selected_character and false:
 		_update_selected_character_from_endpoint()
 
 func _process(delta: float) -> void:

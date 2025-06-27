@@ -7,8 +7,9 @@ class_name Player2Schema
 
 class ChatCompletionRequest extends Resource:
 	@export var messages : Array[Player2Schema.Message]
-	@export var tools : Array[Player2Schema.Tool]
-	@export var tool_choice : String
+	# TODO: Add these back in conditionally
+	#@export var tools : Array[Player2Schema.Tool]
+	#@export var tool_choice : String
 
 class ChatCompletionResponse extends Resource:
 	@export var choices : Array[Player2Schema.ResponseMessage]
@@ -16,8 +17,9 @@ class ChatCompletionResponse extends Resource:
 class Message extends Resource:
 	@export var role : String
 	@export var content : String
-	@export var tool_call_id : String
-	@export var tool_calls : Array[Player2Schema.ToolCall]
+	# TODO: Add these back in conditionally
+	#@export var tool_call_id : String
+	#@export var tool_calls : Array[Player2Schema.ToolCall]
 
 class ToolCall extends Resource:
 	@export var id : String

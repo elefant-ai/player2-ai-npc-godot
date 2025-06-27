@@ -39,7 +39,6 @@ static func _alert_error_fail(config : Player2Config, code : int, use_http_resul
 static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
 	var run : Callable
 	print("chat" + JsonClassConverter.class_to_json_string(request))
-	
 
 	run = func():
 		Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
@@ -60,6 +59,7 @@ static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRe
 			print(body)
 			#var result = JsonClassConverter.json_to_class(Player2Schema.ChatCompletionResponse, JSON.parse_string(body))
 			var result = JSON.parse_string(body)
+			print(result)
 			on_complete.call(result)
 		,
 		func(code):
