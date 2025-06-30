@@ -49,6 +49,7 @@ const use_tool_call_json = false
 @export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
 @export_multiline var tool_calls_message_optional_arg_description : String = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."
 
+## Whether the agent is thinking (coming up with a reply to a chat, stimulus, or summarizing the chat)
 var thinking: bool:
 	set(value):
 		if thinking != value:
@@ -129,6 +130,7 @@ func notify(message : String) -> void:
 	conversation_message.role = "user"
 	_queue_message(conversation_message)
 
+## Stops TTS (global)
 func stop_tts() -> void:
 	Player2API.tts_stop(config)
 
@@ -504,7 +506,7 @@ func _process_chat_api() -> void:
 			{
 				"reason": Look at the recent conversations, agent status and world status to decide what the you should say and do. Provide step-by-step reasoning while considering what is possible.,
 				"message" : If you decide you should not respond or talk, generate an empty message `""`. Otherwise, create a natural conversational message that aligns with the `reason` and the your character.,
-				"function": The name of the function to call. If you decide to not use any function, generate an empty function `""`.,
+				"function": The name of the function to call, from the list of Valid Functions only. If you decide to not use any function, generate an empty function `""`.,
 				"args": The arguments to pass to a function as a JSON dictionary. Some functions may accept no arguments, whereupon you should pass an empty dictionary `{}`.
 			}
 			Valid Functions:
@@ -513,7 +515,9 @@ func _process_chat_api() -> void:
 		system_msg_content += "\n".join(functions_desc_list)
 		system_msg_content += """
 		\n\n
-			Example interpretation of a Function (this function is NOT valid):
+		ONLY CALL FUNCTIONS FROM THE ABOVE LIST!
+		\n\n
+			Example interpretation of a Function (this function is NOT necessarily valid, unless it is in the previous Valid Functions list):
 			go_to(name : string, speed : number)
 			a valid response would be
 			{
@@ -524,7 +528,6 @@ func _process_chat_api() -> void:
 			}
 			This would call the "go_to" function with name = "Player 1" and at speed = 23.0.
 		"""
-		
 		# Double reiteration
 		system_msg_content += "\nYou must ONLY reply in JSON using the Response Format. Non-JSON String results are INVALID"
 	

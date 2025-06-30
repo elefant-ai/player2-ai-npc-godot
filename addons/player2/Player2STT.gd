@@ -7,6 +7,7 @@ extends Node
 @export var timeout : float = 10
 @export var accept_empty_input : bool = false
 
+## Whether we're currently listening for speech
 var listening: bool = false:
 	set(value):
 		if listening != value:
@@ -16,6 +17,7 @@ var listening: bool = false:
 			else:
 				listening_stopped.emit()
 
+## Whether we're waiting on the system to return text
 var waiting_on_reply: bool = false:
 	set(value):
 		if waiting_on_reply != value:
@@ -25,18 +27,23 @@ var waiting_on_reply: bool = false:
 			else:
 				reply_wait_stopped.emit()
 
+## When an STT message is received
 signal stt_received(message : String)
 
+## When we start listening for speech
 signal listening_started
+## When we stop listening for speech
 signal listening_stopped
 
+## When we start waiting for the reply text for SST
 signal reply_wait_started
+## When we finish waiting for the reply text for SST
 signal reply_wait_stopped
 
+## Begin listening for speech. If already listening, do nothing.
 func start_stt() -> void:
 	if not enabled:
 		return
-	print("(")
 	if listening:
 		return
 	if waiting_on_reply:
@@ -48,8 +55,8 @@ func start_stt() -> void:
 		listening = false
 	)
 
+## Stop listening for speech. Will query STT to receive text from received speech.
 func stop_stt() -> void:
-	print(")")
 	if not listening:
 		return
 	if waiting_on_reply:
