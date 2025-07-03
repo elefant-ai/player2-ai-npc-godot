@@ -117,6 +117,8 @@ static func stt_stop(config : Player2Config, on_complete : Callable, on_fail : C
 static func get_selected_characters(config : Player2Config, on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_get_selected_characters, HTTPClient.Method.METHOD_GET, "", _get_headers(config),
 	func(body, code):
+		print("body ASDF")
+		print(body)
 		on_complete.call(JSON.parse_string(body))
 		_alert_error_fail(config, code),
 	func(code):

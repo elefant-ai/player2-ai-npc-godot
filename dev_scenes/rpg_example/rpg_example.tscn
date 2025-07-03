@@ -1679,6 +1679,7 @@ BE PROACTIVE with tool calls please and USE THEM."
 use_player2_selected_character = false
 tts_enabled = true
 tts_default_gender = 0
+auto_store_conversation_history = false
 tool_calls_scan_node_for_functions = [NodePath("..")]
 tool_calls_scan_node_filter = SubResource("Resource_evguq")
 tool_calls_message_optional_arg_description = "If you wish to say something while calling this function, populate this field with your speech to say it out loud. Leave string empty to not say anything/do it quietly."

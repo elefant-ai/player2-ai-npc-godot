@@ -24,6 +24,9 @@ extends Node
 
 # TODO: Validate conversation_history_size > 0 and conversation_history_size > conversation_summary_buffer
 @export_subgroup("Conversation and Summary")
+## If true, will save our conversation history to godot's user:// directory and will auto load on startup from the history file.
+@export var auto_store_conversation_history : bool = true
+@export var auto_load_entry_message : String = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
 @export var conversation_history_size : int = 64
 @export var conversation_summary_buffer : int = 48
 @export_multiline var summary_message : String = \
@@ -72,10 +75,24 @@ signal chat_failed(error_code : int)
 
 var _messsage_queued : bool = false
 
+# TODO: Move this class and serialization to a helper
 class ConversationMessage:
 	@export var message : String
 	@export var role : String
-var _conversation_history : Array[ConversationMessage]
+	static func serialize_list(conversation_history  : Array[ConversationMessage]) -> String:
+		return JSON.stringify(conversation_history.map(func(m : ConversationMessage): return {"message": m.message, "role": m.role}))
+	static func deserialize_list(conversation_history_json : String) -> Array[ConversationMessage]:
+		var result : Array[ConversationMessage] = []
+		var json : Array = JSON.parse_string(conversation_history_json)
+		result.assign(json.map(func(d : Dictionary): 
+			var m := ConversationMessage.new()
+			m.role = d["role"]
+			m.message = d["message"]
+			return m
+		))
+		return result
+
+var conversation_history : Array[ConversationMessage]
 
 var _summarizing_history : bool = false
 var _current_summary : String = ""
@@ -99,12 +116,12 @@ func print_client_version() -> void:
 	)
 
 func _queue_message(message : ConversationMessage) -> void:
-	_conversation_history.push_back(message)
+	conversation_history.push_back(message)
 	_messsage_queued = true
 	if _summarizing_history:
 		# do not process conversation history, just push it
 		return
-	_process_conversation_history()	
+	_processconversation_history()	
 
 func _construct_user_message_json(speaker_name: String, speaker_message : String, stimuli : String, world_status : String) -> String:
 	var result : Dictionary ={}
@@ -113,6 +130,54 @@ func _construct_user_message_json(speaker_name: String, speaker_message : String
 	result["stimuli"] = stimuli
 	result["world_status"] = world_status
 	return JSON.stringify(result)
+
+func _get_default_conversation_history_filepath() -> String:
+	var char_name = _selected_character["name"] if _selected_character else "agent"
+	var char_desc = _selected_character["description"] if _selected_character else ""
+	var desc_hash = hash(char_desc)
+	var result = "user://HISTORY_" + char_name + "_" + str(desc_hash) + ".json"
+	print("default history path: " + result)
+	return result
+
+## Save the current conversation history to a file. Leave blank to use our default location.
+## Alternatively, read and serialize `conversation_history` manually.
+func save_conversation_history(filename : String = "") -> void:
+	if filename.is_empty():
+		filename = _get_default_conversation_history_filepath()
+
+	var serialized = ConversationMessage.serialize_list(conversation_history)
+	print("SERIALIZED")
+	print(serialized)
+
+	var file = FileAccess.open(filename, FileAccess.WRITE)
+	file.store_string(serialized)
+	file.close()
+
+## Load our conversation history from a file. Leave blank to use our default location.
+## Alternatively, set `conversation_history` manually, and for a "welcome back" message use `notify`.
+func load_conversation_history(notify_agent_for_welcome_message: bool = true, message : String = "", filename : String = "") -> void:
+	if filename.is_empty():
+		filename = _get_default_conversation_history_filepath()
+
+	if not FileAccess.file_exists(filename):
+		print("(no conversation history found at " + filename + ")")
+		return
+
+	var file = FileAccess.open(filename, FileAccess.READ)
+
+	var content := file.get_as_text()
+	file.close()
+	print("content" + content)
+
+	var deserialized : Array[ConversationMessage] = ConversationMessage.deserialize_list(content)
+	
+	conversation_history = deserialized
+
+	# Notify welcome message
+	if notify_agent_for_welcome_message:
+		if message.is_empty():
+			message = auto_load_entry_message
+		notify(message)
 
 ## Add chat message to our history.
 ## This is a user talking to the agent.
@@ -135,18 +200,18 @@ func stop_tts() -> void:
 	Player2API.tts_stop(config)
 
 ## Check if our history has too many messages and prompt for a summary/cull
-func _process_conversation_history() -> void:
+func _processconversation_history() -> void:
 
 	# Wait while we summarize please...
 	if _summarizing_history:
 		return
 
 	# max size
-	if _conversation_history.size() > conversation_history_size:
+	if conversation_history.size() > conversation_history_size:
 		print("Conversation history limit reached: Cropping and summarizing")
 		# crop conversation history
-		var to_summarize := _conversation_history.slice(0, conversation_summary_buffer)
-		_conversation_history = _conversation_history.slice(_conversation_history.size() - conversation_history_size)
+		var to_summarize := conversation_history.slice(0, conversation_summary_buffer)
+		conversation_history = conversation_history.slice(conversation_history.size() - conversation_history_size)
 
 		# summarize a fragment of the space we cropped out and push that to the start...
 		if to_summarize.size() > 0:
@@ -216,12 +281,12 @@ func _append_agent_reply_to_history(message : String):
 	var msg := ConversationMessage.new()
 	msg.role = "assistant"
 	msg.message = message
-	_conversation_history.push_back(msg)
+	conversation_history.push_back(msg)
 func _append_agent_action_to_history(action : String):
 	var msg := ConversationMessage.new()
 	msg.role = "system"
 	msg.message = action
-	_conversation_history.push_back(msg)
+	conversation_history.push_back(msg)
 
 # TODO: Move to helper file
 static func _get_tool_call_param_from_method_arg_dictionary(method_arg : Dictionary) -> AIToolCallParameter:
@@ -438,7 +503,7 @@ func _process_chat_api() -> void:
 	if thinking:
 		return
 
-	_process_conversation_history()
+	_processconversation_history()
 
 	# Additional check in case if we happened to start summarizing (just wait for it to finish)
 	if _summarizing_history:
@@ -543,7 +608,7 @@ func _process_chat_api() -> void:
 		req_messages.push_back(summary_msg)
 
 	# History
-	for conversation_element in _conversation_history:
+	for conversation_element in conversation_history:
 		var msg := Player2Schema.Message.new()
 		msg.role = conversation_element.role
 		msg.content = conversation_element.message
@@ -650,8 +715,10 @@ func _process_chat_api() -> void:
 	)
 
 func _update_selected_character_from_endpoint() -> void:
+	thinking = true
 	Player2API.get_selected_characters(config, func(result):
-		var characters : Array = result["characters"] if "characters" in result else []
+		thinking = false
+		var characters : Array = result["characters"] if (result and "characters" in result) else []
 		if characters and characters.size() > 0:
 			var index = use_player2_selected_character_desired_index
 			if index >= characters.size() or index < 0:
@@ -660,7 +727,15 @@ func _update_selected_character_from_endpoint() -> void:
 				index = randi_range(0, characters.size() - 1)
 			_selected_character = characters[index]
 			_selected_character_index = index
-		)
+			# After loaded, then we might also load our conversation history.
+			if auto_store_conversation_history:
+				load_conversation_history(),
+		func(fail_code):
+			thinking = false
+			# After loaded, then we might also load our conversation history.
+			if auto_store_conversation_history:
+				load_conversation_history(),
+	)
 
 ## Overwrite to manually define tool calls instead of relying on signals.
 ## Populate the function map with callables (function name -> callable) to automatically call a tool call function.
@@ -679,12 +754,17 @@ func _ready() -> void:
 	_queue_process_timer.timeout.connect(_process_chat_api)
 	_queue_process_timer.start()
 
-
-	# TODO DO NOT PSUH ME THANKS (remove `and false`)
-	if use_player2_selected_character and false:
+	if use_player2_selected_character:
 		_update_selected_character_from_endpoint()
+	else:
+		if auto_store_conversation_history:
+			load_conversation_history()
 
 func _process(delta: float) -> void:
-	# TODO override setter to avoid process func
+	# TODO override setter to avoid process func update
 	_queue_process_timer.wait_time = queue_check_interval_seconds
-	#_process_chat_api()
+
+func _exit_tree() -> void:
+	# Before we leave, store our conversation history.
+	if auto_store_conversation_history:
+		save_conversation_history()
