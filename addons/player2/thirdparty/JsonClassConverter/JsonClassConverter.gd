@@ -174,16 +174,17 @@ static func convert_json_to_dictionary(propert_value: Dictionary, json_dictionar
 		var json_value: Variant = json_dictionary.get(json_key)
 		var key_obj: Variant = null
 		var value_obj: Variant = null
-		if propert_value.get_typed_key_script() and typeof(json_key) == TYPE_STRING:
-			var data = JSON.parse_string(json_key)
-			if data:
-				json_key = data
+		# do not support key types (for now just strings)
+		#if propert_value.get_typed_key_script() and typeof(json_key) == TYPE_STRING:
+			#var data = JSON.parse_string(json_key)
+			#if data:
+				#json_key = data
 		if typeof(json_key) == TYPE_DICTIONARY or typeof(json_key) == TYPE_OBJECT:
 			var key_script: GDScript = null
 			if "script_inheritance" in json_key:
 				key_script = get_gdscript(json_key["script_inheritance"])
-			else:
-				key_script = load(propert_value.get_typed_key_script().get_path())
+			#else:
+				#key_script = load(propert_value.get_typed_key_script().get_path())
 			key_obj = json_to_class(key_script, json_key)
 		elif typeof(json_key) == TYPE_ARRAY:
 			key_obj = convert_json_to_array(json_key)
@@ -191,17 +192,18 @@ static func convert_json_to_dictionary(propert_value: Dictionary, json_dictionar
 			key_obj = str_to_var(json_key)
 			if !key_obj: # if null revert to json key
 				key_obj = json_key
-		
-		if propert_value.get_typed_value_script() and typeof(json_value) == TYPE_STRING:
-			var data = JSON.parse_string(json_value)
-			if data:
-				json_value = data
+
+		# do not support key types (for now just strings)
+		#if propert_value.get_typed_value_script() and typeof(json_value) == TYPE_STRING:
+			#var data = JSON.parse_string(json_value)
+			#if data:
+				#json_value = data
 		if typeof(json_value) == TYPE_DICTIONARY or typeof(json_value) == TYPE_OBJECT:
 			var value_script: GDScript = null
 			if "script_inheritance" in json_value:
 				value_script = get_gdscript(json_value["script_inheritance"])
-			else:
-				value_script = load(propert_value.get_typed_value_script().get_path())
+			#else:
+				#value_script = load(propert_value.get_typed_value_script().get_path())
 			value_obj = json_to_class(value_script, json_value)
 		elif typeof(json_value) == TYPE_ARRAY:
 			value_obj = convert_json_to_array(json_value)
@@ -211,7 +213,7 @@ static func convert_json_to_dictionary(propert_value: Dictionary, json_dictionar
 			value_obj = str_to_var(json_value)
 			if !value_obj: # if null revert to json key
 				value_obj = json_value
-		propert_value.set(key_obj, value_obj)
+		propert_value[key_obj] = value_obj
 
 #endregion
 
@@ -335,9 +337,10 @@ static func convert_array_to_json(array: Array) -> Array:
 static func convert_dictionary_to_json(dictionary: Dictionary) -> Dictionary:
 	var json_dictionary: Dictionary = {}
 	for key: Variant in dictionary.keys():
-		var parsed_key: Variant = refcounted_to_value(key, dictionary.is_typed())
-		var parsed_value: Variant = refcounted_to_value(dictionary.get(key), dictionary.is_typed())
-		json_dictionary.set(parsed_key, parsed_value)
+		var is_typed = false # dictionary.is_typed()
+		var parsed_key: Variant = refcounted_to_value(key, is_typed)
+		var parsed_value: Variant = refcounted_to_value(dictionary.get(key), is_typed)
+		json_dictionary[parsed_key] = parsed_value
 	return json_dictionary
 #endregion
 
