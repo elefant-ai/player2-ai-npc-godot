@@ -395,7 +395,7 @@ func _convert_tool_call(simple_tool_call : AIToolCall) -> Player2Schema.Tool:
 		if arg.type == AIToolCallParameter.Type.ENUM:
 			var enum_types_t : Array[String] = arg.enum_list
 			arg_t["enum"] = enum_types_t
-		p.properties.set(arg_name, arg_t)
+		p.properties[arg_name] = arg_t
 		p.required.push_back(arg_name)
 		pass
 
@@ -403,7 +403,7 @@ func _convert_tool_call(simple_tool_call : AIToolCall) -> Player2Schema.Tool:
 	var optional_message_arg_t := Dictionary()
 	optional_message_arg_t["type"] = AIToolCallParameter.arg_type_to_schema_type(AIToolCallParameter.Type.STRING)
 	optional_message_arg_t["description"] = tool_calls_message_optional_arg_description
-	p.properties.set(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME, optional_message_arg_t)
+	p.properties[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME] = optional_message_arg_t
 	p.required.push_back(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
 
 	f.parameters = p
@@ -635,14 +635,14 @@ func _process_chat_api() -> void:
 				if use_tool_call_json:
 					# Use openAI spec tool call (less error prone but slow)
 					if "content" in choice.message:
-						var reply : String = choice.message.content
+						var reply : String = choice.message["content"]
 						message_reply += reply
 					if 'tool_calls' in choice.message:
-						tool_calls_reply = _tool_call_json_to_tool_call_reply(choice.message.tool_calls)
+						tool_calls_reply = _tool_call_json_to_tool_call_reply(choice.message["tool_calls"])
 				else:
 					# Use manual system, faster and more eager but could be error prone.
 					if "content" in choice.message:
-						var content_json : Dictionary = _parse_llm_message_json(choice.message.content)
+						var content_json : Dictionary = _parse_llm_message_json(choice.message["content"])
 						if content_json.is_empty():
 							# Invalid input probably
 							notify("You have sent an invalid input! Please properly format your input as JSON with the specified format.")
@@ -668,7 +668,15 @@ func _process_chat_api() -> void:
 							if !o:
 								printerr("Failed to call tool call for function " + tool_name + " despite having a callable discovered earlier. Probably a bug!")
 								continue
-							var method_index = o.get_method_list().find_custom(func (m): return m["name"] == tool_name)
+							
+							var method_index = -1
+							var c = 0
+							for m in o.get_method_list():
+								if m["name"] == tool_name:
+									method_index = c
+									break
+								c += 1
+
 							if method_index == -1:
 								printerr("Failed to call tool call for function " + tool_name + " for an available object. Probably a bug! Functions are printed below:")
 								print(o.get_method_list())
@@ -704,9 +712,9 @@ func _process_chat_api() -> void:
 				_run_chat_internal(message_reply)
 				if use_tool_call_json:
 					_append_agent_reply_to_history(message_reply)
-				else:
+				elif "content" in choice.message:
 					# We want the WHOLE context
-					_append_agent_reply_to_history(choice.message.content)
+					_append_agent_reply_to_history(choice.message["content"])
 
 				,
 		func(error_code : int):
