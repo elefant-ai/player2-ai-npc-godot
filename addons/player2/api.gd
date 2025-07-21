@@ -35,42 +35,40 @@ static func _alert_error_fail(config : Player2Config, code : int, use_http_resul
 		500:
 			Player2ErrorHelper.send_error(config, "Internal server error.")
 
-
 static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
-	var run : Callable
 	print("chat" + JsonClassConverter.class_to_json_string(request))
 
-	run = func():
-		Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
-		func(body, code):
-			if code == 429:
-				# Too many requests, try again...
-				print("too many requests, trying again...")
-				Player2WebHelper.call_timeout(run, config.request_too_much_delay_seconds)
-				return
-			if code != 200:
-				print("chat fail!")
-				print(code)
-				_alert_error_fail(config, code)
-				if on_fail:
-					on_fail.call(code)
-				return
-			print("GOT RESPONSE with code " + str(code))
-			print(body)
-			#var result = JsonClassConverter.json_to_class(Player2Schema.ChatCompletionResponse, JSON.parse_string(body))
-			var result = JSON.parse_string(body)
-			print(result)
-			on_complete.call(result)
-		,
-		func(code):
+	Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
+	func(body, code):
+		if code == 429:
+			# Too many requests, try again...
+			print("too many requests, trying again...")
+			Player2WebHelper.call_timeout(func():
+				# Call ourselves again...
+				chat(config, request, on_complete, on_fail)
+				, config.request_too_much_delay_seconds)
+			return
+		if code != 200:
 			print("chat fail!")
 			print(code)
-			_alert_error_fail(config, code, true)
+			_alert_error_fail(config, code)
 			if on_fail:
 				on_fail.call(code)
-		)
-
-	run.call()
+			return
+		print("GOT RESPONSE with code " + str(code))
+		print(body)
+		#var result = JsonClassConverter.json_to_class(Player2Schema.ChatCompletionResponse, JSON.parse_string(body))
+		var result = JSON.parse_string(body)
+		print(result)
+		on_complete.call(result)
+	,
+	func(code):
+		print("chat fail!")
+		print(code)
+		_alert_error_fail(config, code, true)
+		if on_fail:
+			on_fail.call(code)
+	)
 
 static func tts_speak(config : Player2Config, request : Player2Schema.TTSRequest, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_tts_speak, HTTPClient.Method.METHOD_POST, request, _get_headers(config),

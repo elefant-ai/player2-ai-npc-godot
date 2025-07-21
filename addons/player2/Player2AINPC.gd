@@ -121,7 +121,7 @@ func _queue_message(message : ConversationMessage) -> void:
 	if _summarizing_history:
 		# do not process conversation history, just push it
 		return
-	_processconversation_history()	
+	_processconversation_history()
 
 func _construct_user_message_json(speaker_name: String, speaker_message : String, stimuli : String, world_status : String) -> String:
 	var result : Dictionary ={}

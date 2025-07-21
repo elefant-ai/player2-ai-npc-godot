@@ -66,9 +66,10 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 
 func call_timeout(call : Callable, timeout : float) -> void:
 	var t = Timer.new()
+	t.autostart = false
 	t.timeout.connect(func():
 		call.call()
 		t.queue_free())
-	t.start(timeout)
 	add_child(t)
+	t.start(timeout)
 	pass
