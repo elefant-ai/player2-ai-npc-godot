@@ -22,7 +22,6 @@ func _ready() -> void:
 			if event is InputEventKey:
 				# STT key, ignore and just type
 				if event.keycode == stt_keycode:
-					print("ASDF")
 					text.text = ""
 					text.accept_event()
 					text.release_focus()
