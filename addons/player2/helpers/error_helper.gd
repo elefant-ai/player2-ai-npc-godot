@@ -4,7 +4,7 @@ signal error(error : String)
 
 @onready var error_container : Node = $ScrollContainer/VBoxContainer
 
-func send_error(config : Player2Config, error : String) -> void:
+func send_error(config : Player2APIConfig, error : String) -> void:
 	self.error.emit(error)
 	if config.error_log_ui:
 		var label = Label.new()

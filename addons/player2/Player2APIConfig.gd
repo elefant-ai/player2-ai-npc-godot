@@ -1,4 +1,4 @@
-class_name Player2Config
+class_name Player2APIConfig
 extends Resource
 
 @export var player2_game_key = "my_game"
