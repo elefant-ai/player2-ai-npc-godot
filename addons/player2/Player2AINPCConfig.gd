@@ -4,11 +4,11 @@ extends Resource
 
 @export var api : Player2APIConfig = Player2APIConfig.new()
 
-@export_subgroup("Queue", "queue")
+@export_group("Queue", "queue")
 ## The interval to empty our queue and send a chat request (prevents spam)
 @export var queue_check_interval_seconds : float = 2
 
-@export_subgroup("System Message and Prompting", "system_message")
+@export_group("System Message and Prompting", "system_message")
 ## General behavior (how to speak)
 @export_multiline var system_message_behavior : String = "When performing an action, speak and let the player know what you're doing.\n\nYour responses will be said out loud.\n\nBe concise and use less than 350 characters. No monologuing, the message content is pure speech."
 ## Character name and description.
@@ -22,20 +22,20 @@ extends Resource
 ## This will always go at the VERY END of the system message (if you want to do that)
 @export_multiline var system_message_postfix : String = ""
 
-@export_subgroup ("Player 2 Selected Character", "use_player2_selected_character")
+@export_group ("Player 2 Selected Character", "use_player2_selected_character")
 ## If true, will grab information about the player's selected agents.
 @export var use_player2_selected_character : bool = false
 ## If there are multiple agents, pick this index. Set to -1 to automatically pick a unique agent
 @export_range(-1, 99999) var use_player2_selected_character_desired_index : int = -1
 
-@export_subgroup("Text To Speech", "tts")
+@export_group("Text To Speech", "tts")
 @export var tts_enabled : bool = false
 @export var tts_speed : float = 1
 @export var tts_default_language : Player2TTS.Language = Player2TTS.Language.en_US
 @export var tts_default_gender : Player2TTS.Gender = Player2TTS.Gender.FEMALE
 
 # TODO: Validate conversation_history_size > 0 and conversation_history_size > conversation_summary_buffer
-@export_subgroup("Conversation and Summary")
+@export_group("Conversation and Summary")
 ## If true, will save our conversation history to godot's user:// directory and will auto load on startup from the history file.
 @export var auto_store_conversation_history : bool = true
 ## If `auto_store_conversation_history` is true, this message will be sent to the NPC on login.
@@ -57,10 +57,9 @@ Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars
 ## The summary message to replace our history with
 @export_multiline var summary_prefix : String = "Summary of earlier events: ${summary}"
 
-@export_subgroup("Tool Calls", "tool_calls")
-# TODO: Add this back in to give devs the choice, and CONDITIONALLY SERIALIZE tool calls if this is false.
-const use_tool_call_json = false
-#@export var use_tool_call_json : bool = false
+@export_group("Tool Calls", "tool_calls")
+## If true, will use tool calls in the API to achieve function calls. If false, will use JSON and have the LLM decide the tool calls in its chat. Leave this to false ONLY IF this is not supported.
+@export var tool_calls_use_tool_call_api : bool = true
 ## Gives information to the Agent on how to handle using tool calls.
 @export_multiline var tool_calls_choice : String = "Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
 ## Tool calls can reply with text. This is the message that will be sent.

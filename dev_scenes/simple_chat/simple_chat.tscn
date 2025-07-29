@@ -65,6 +65,7 @@ Use natural language, not JSON. Prioritize preserving important facts, things us
 Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars.
 "
 summary_prefix = "Summary of earlier events: ${summary}"
+tool_calls_use_tool_call_api = true
 tool_calls_choice = "Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
 tool_calls_reply_message = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
 tool_calls_message_optional_arg_description = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."

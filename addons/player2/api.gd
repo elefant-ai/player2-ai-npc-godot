@@ -40,6 +40,15 @@ static func _alert_error_fail(config : Player2APIConfig, code : int, use_http_re
 static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
 	print("chat" + JsonClassConverter.class_to_json_string(request))
 
+	# Conditionally REMOVE if there are no tools/tool choice
+	var json_req = JsonClassConverter.class_to_json(request)
+	if !request.tools or request.tools.size() == 0:
+		json_req.erase("tools")
+		json_req.erase("tool_choice")
+		for m : Dictionary in request["messages"]:
+			m.erase("tool_call_id")
+			m.erase("tool_calls")
+
 	Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
 	func(body, code):
 		if code == 429:

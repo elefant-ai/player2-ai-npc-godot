@@ -3,6 +3,9 @@
 class_name Player2AINPC
 extends Node
 
+@export_tool_button("Clear Conversation History")
+var editor_tool_button_clear_conversation_history = _clear_conversation_history_tool
+
 ## More lower level configuration.
 @export var config : Player2AINPCConfig = Player2AINPCConfig.new()
 
@@ -90,26 +93,6 @@ func print_client_version() -> void:
 			print(result.client_version)
 	)
 
-func spam() -> void:
-	var request := Player2Schema.ChatCompletionRequest.new()
-	request.messages = []
-	var system_msg := Player2Schema.Message.new()
-	system_msg.role = "system"
-	system_msg.content = "you are a simple agent that replies with short messages."
-	var user_msg := Player2Schema.Message.new()
-	user_msg.role = "user"
-	user_msg.content = "Hello! What's up?"
-
-	print("SPAMMING")
-	request.messages.assign([
-		system_msg, user_msg
-	])
-
-	Player2API.chat(config.api, request, func(result):
-		print("GOT REPLY")
-)
-
-
 func _queue_message(message : ConversationMessage) -> void:
 	conversation_history.push_back(message)
 	_messsage_queued = true
@@ -127,11 +110,11 @@ func _construct_user_message_json(speaker_name: String, speaker_message : String
 	return JSON.stringify(result)
 
 func _get_default_conversation_history_filepath() -> String:
-	var char_name = _selected_character["name"] if _selected_character else "agent"
-	var char_desc = _selected_character["description"] if _selected_character else ""
+	var char_name = _selected_character["name"] if _selected_character else character_name
+	var char_desc = _selected_character["description"] if _selected_character else "" # leave blank since user might update it more rapidly
 	var desc_hash = hash(char_desc)
 	var result = "user://HISTORY_" + char_name + "_" + str(desc_hash) + ".json"
-	print("default history path: " + result)
+	#print("default history path: " + result)
 	return result
 
 ## Save the current conversation history to a file. Leave blank to use our default location.
@@ -141,18 +124,33 @@ func save_conversation_history(filename : String = "") -> void:
 		filename = _get_default_conversation_history_filepath()
 
 	var serialized = ConversationMessage.serialize_list(conversation_history)
-	print("SERIALIZED")
+	print("Saving conversation history to " + filename)
 	print(serialized)
 
 	var file = FileAccess.open(filename, FileAccess.WRITE)
 	file.store_string(serialized)
 	file.close()
 
+func _clear_conversation_history_tool():
+	clear_conversation_history()
+func clear_conversation_history(filename : String = ""):
+	if filename.is_empty():
+		filename = _get_default_conversation_history_filepath()
+	#if not DirAccess.dir_exists_absolute(filename):
+		#print("(no conversation history found at " + filename + ")")
+		#return
+	var e := DirAccess.remove_absolute(filename)
+	if e != OK:
+		print("(failed to delete conversation history at " + filename + ")")
+	else:
+		print("Successfully deleted conversation history from " + filename)
+
 ## Load our conversation history from a file. Leave blank to use our default location.
 ## Alternatively, set `conversation_history` manually, and for a "welcome back" message use `notify`.
 func load_conversation_history(notify_agent_for_welcome_message: bool = true, message : String = "", filename : String = "") -> void:
 	if filename.is_empty():
 		filename = _get_default_conversation_history_filepath()
+	print("Loading conversation history from " + filename)
 
 	if not FileAccess.file_exists(filename):
 		print("(no conversation history found at " + filename + ")")
@@ -565,7 +563,7 @@ func _process_chat_api() -> void:
 			"world_status": The status of the current game world.,
 		}
 	"""
-	if config.use_tool_call_json:
+	if config.tool_calls_use_tool_call_api:
 		system_msg_content += """
 			Response format:
 			Always respond with a plain string response, which will represent what YOU say. Do not prefix with anything (for example, reply with "hello!" instead of "Agent (or my name or anything else): hello!") unless previously instructed.
@@ -652,8 +650,7 @@ func _process_chat_api() -> void:
 	request.messages.assign(req_messages)
 
 	# Tools
-	if config.use_tool_call_json:
-		request.tools = []
+	if config.tool_calls_use_tool_call_api:
 		request.tools = _generate_schema_tools()
 		request.tool_choice = config.tool_calls_choice
 
@@ -666,7 +663,7 @@ func _process_chat_api() -> void:
 				if !"message" in choice:
 					continue
 				var tool_calls_reply : Array[AIToolCallReply]
-				if config.use_tool_call_json:
+				if config.tool_calls_use_tool_call_api:
 					# Use openAI spec tool call (less error prone but slow)
 					if "content" in choice.message:
 						var reply : String = choice.message["content"]
@@ -744,7 +741,7 @@ func _process_chat_api() -> void:
 					if !tool_call_history_messages.is_empty():
 						_append_agent_action_to_history(". ".join(tool_call_history_messages))
 				_run_chat_internal(message_reply)
-				if config.use_tool_call_json:
+				if config.tool_calls_use_tool_call_api:
 					_append_agent_reply_to_history(message_reply)
 				elif "content" in choice.message:
 					# We want the WHOLE context
@@ -789,7 +786,6 @@ func get_agent_status() -> String:
 	return ""
 
 func _get_property_list() -> Array[Dictionary]:
-	#print("Gah")
 	# TODO: Don't spam (timeout?)
 	_validate_tool_call_definitions()
 	return []
