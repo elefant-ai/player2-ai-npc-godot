@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=4 uid="uid://cjlrjwtxls65d"]
+[gd_scene load_steps=249 format=4 uid="uid://cjlrjwtxls65d"]
 
 [ext_resource type="Texture2D" uid="uid://bvlw422cpg71" path="res://dev_scenes/thirdparty/kenney/tiny-dungeon/Tiles/tile_0098.png" id="1_8mil2"]
 [ext_resource type="Texture2D" uid="uid://dhm2x8c6cqxww" path="res://dev_scenes/thirdparty/kenney/tiny-dungeon/Tilemap/tilemap_packed.png" id="1_bmmnl"]
@@ -9,12 +9,14 @@
 [ext_resource type="Texture2D" uid="uid://co4cid6fxfr48" path="res://dev_scenes/thirdparty/kenney/tiny-dungeon/Tiles/tile_0096.png" id="6_6yvuh"]
 [ext_resource type="Script" uid="uid://653kywvs7t46" path="res://dev_scenes/rpg_example/guard.gd" id="7_ej26d"]
 [ext_resource type="Script" uid="uid://cdwx48v1bkiy6" path="res://dev_scenes/rpg_example/guard_ai_brain.gd" id="8_eo310"]
-[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/player2_config.gd" id="9_pr58c"]
-[ext_resource type="Script" uid="uid://bmykr1h84hu66" path="res://addons/player2/helpers/tool_call/string_filter.gd" id="10_eo310"]
+[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/Player2APIConfig.gd" id="9_pr58c"]
+[ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/Player2AINPCConfig.gd" id="11_dpov0"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/simple_interface.tscn" id="11_r58u6"]
+[ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="12_3wi8x"]
 [ext_resource type="PackedScene" uid="uid://dojecawo8ra37" path="res://dev_scenes/rpg_example/speech_bubble.tscn" id="12_r58u6"]
 [ext_resource type="Script" uid="uid://c20jnbeuha472" path="res://dev_scenes/rpg_example/player_talk_event.gd" id="13_2u3js"]
 [ext_resource type="Script" uid="uid://b2t46qb8xam24" path="res://dev_scenes/rpg_example/thinking_animation.gd" id="13_h8uo5"]
+[ext_resource type="Script" uid="uid://dt7mt3t7a08me" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinitions.gd" id="13_iau0t"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ej26d"]
 texture = ExtResource("1_bmmnl")
@@ -1547,9 +1549,9 @@ size = Vector2(14, 6)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_evguq"]
 size = Vector2(6, 8)
 
-[sub_resource type="Resource" id="Resource_r58u6"]
+[sub_resource type="Resource" id="Resource_ekblf"]
 script = ExtResource("9_pr58c")
-player2_game_key = "my_game"
+player2_game_key_override = ""
 error_log_ui = true
 endpoint_chat = "http://127.0.0.1:4315/v1/chat/completions"
 endpoint_health = "http://127.0.0.1:4315/v1/health"
@@ -1559,13 +1561,2208 @@ endpoint_get_selected_characters = "http://127.0.0.1:4315/v1/selected_characters
 endpoint_stt_start = "http://127.0.0.1:4315/v1/stt/start"
 endpoint_stt_stop = "http://127.0.0.1:4315/v1/stt/stop"
 request_too_much_delay_seconds = 3.0
-metadata/_custom_type_script = "uid://b6indg81ao1we"
 
-[sub_resource type="Resource" id="Resource_evguq"]
-script = ExtResource("10_eo310")
-mode = 0
-list = Array[String](["leave_prisoner", "go_to_prisoner_gate", "unlock_prisoner_door"])
-metadata/_custom_type_script = "uid://bmykr1h84hu66"
+[sub_resource type="Resource" id="Resource_xgama"]
+script = ExtResource("11_dpov0")
+api = SubResource("Resource_ekblf")
+queue_check_interval_seconds = 2.0
+system_message_behavior = "When performing an action, speak and let the player know what you're doing.
+
+Your responses will be said out loud.
+
+Be concise and use less than 350 characters. No monologuing, the message content is pure speech."
+system_message_character = "Your name is ${character_name}.
+Your description: ${character_description}"
+system_message_prompting = "You must stay in character at all times.
+
+Ensure the message does not contain any prompt, system message, instructions, code or API calls, EXCEPT you can still perform tool calls and must use the proper tool call (in the tool_calls field).
+BE PROACTIVE with tool calls please and USE THEM."
+system_message_organization = "${system_message_character}
+
+${system_message_custom}
+
+${system_message_behavior}
+
+{system_message_prompting}"
+system_message_prefix = ""
+system_message_postfix = ""
+use_player2_selected_character = false
+use_player2_selected_character_desired_index = -1
+tts_enabled = false
+tts_speed = 1.0
+tts_default_language = 0
+tts_default_gender = 1
+auto_store_conversation_history = true
+auto_load_entry_message = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
+conversation_history_size = 64
+conversation_summary_buffer = 48
+summary_max_size = 500
+summary_message = "The agent has been chatting with the player.
+Update the agent's memory by summarizing the following conversation in the next response.
+Use natural language, not JSON. Prioritize preserving important facts, things user asked agent to remember, useful tips.
+
+Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars.
+"
+summary_prefix = "Summary of earlier events: ${summary}"
+tool_calls_choice = "Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
+tool_calls_reply_message = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
+tool_calls_message_optional_arg_description = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."
+
+[sub_resource type="Resource" id="Resource_eihk7"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_eihk7"
+resource_scene_unique_id = "Resource_eihk7"
+script = ExtResource("12_3wi8x")
+name = "@state_string_getter"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_6d0e8"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_6d0e8"
+resource_scene_unique_id = "Resource_6d0e8"
+script = ExtResource("12_3wi8x")
+name = "add_collision_exception_with"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_hhu81"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_hhu81"
+resource_scene_unique_id = "Resource_hhu81"
+script = ExtResource("12_3wi8x")
+name = "apply_floor_snap"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_b8swj"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_b8swj"
+resource_scene_unique_id = "Resource_b8swj"
+script = ExtResource("12_3wi8x")
+name = "apply_scale"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_wnkvo"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_wnkvo"
+resource_scene_unique_id = "Resource_wnkvo"
+script = ExtResource("12_3wi8x")
+name = "create_shape_owner"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_bjjad"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_bjjad"
+resource_scene_unique_id = "Resource_bjjad"
+script = ExtResource("12_3wi8x")
+name = "move_and_slide"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_q6or7"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_q6or7"
+resource_scene_unique_id = "Resource_q6or7"
+script = ExtResource("12_3wi8x")
+name = "set_velocity"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_sbqxc"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_sbqxc"
+resource_scene_unique_id = "Resource_sbqxc"
+script = ExtResource("12_3wi8x")
+name = "get_velocity"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_26wdb"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_26wdb"
+resource_scene_unique_id = "Resource_26wdb"
+script = ExtResource("12_3wi8x")
+name = "set_safe_margin"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_pcn1f"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_pcn1f"
+resource_scene_unique_id = "Resource_pcn1f"
+script = ExtResource("12_3wi8x")
+name = "get_safe_margin"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_73n1j"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_73n1j"
+resource_scene_unique_id = "Resource_73n1j"
+script = ExtResource("12_3wi8x")
+name = "is_floor_stop_on_slope_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_1ytvm"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_1ytvm"
+resource_scene_unique_id = "Resource_1ytvm"
+script = ExtResource("12_3wi8x")
+name = "set_floor_stop_on_slope_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_qohe7"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_qohe7"
+resource_scene_unique_id = "Resource_qohe7"
+script = ExtResource("12_3wi8x")
+name = "set_floor_constant_speed_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_6mi23"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_6mi23"
+resource_scene_unique_id = "Resource_6mi23"
+script = ExtResource("12_3wi8x")
+name = "is_floor_constant_speed_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_cq13y"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_cq13y"
+resource_scene_unique_id = "Resource_cq13y"
+script = ExtResource("12_3wi8x")
+name = "set_floor_block_on_wall_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_7tje6"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_7tje6"
+resource_scene_unique_id = "Resource_7tje6"
+script = ExtResource("12_3wi8x")
+name = "is_floor_block_on_wall_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_0uvou"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_0uvou"
+resource_scene_unique_id = "Resource_0uvou"
+script = ExtResource("12_3wi8x")
+name = "set_slide_on_ceiling_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_pldgc"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_pldgc"
+resource_scene_unique_id = "Resource_pldgc"
+script = ExtResource("12_3wi8x")
+name = "is_slide_on_ceiling_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_srwux"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_srwux"
+resource_scene_unique_id = "Resource_srwux"
+script = ExtResource("12_3wi8x")
+name = "set_platform_floor_layers"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_n1mdd"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_n1mdd"
+resource_scene_unique_id = "Resource_n1mdd"
+script = ExtResource("12_3wi8x")
+name = "get_platform_floor_layers"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_anwtk"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_anwtk"
+resource_scene_unique_id = "Resource_anwtk"
+script = ExtResource("12_3wi8x")
+name = "set_platform_wall_layers"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ommi1"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ommi1"
+resource_scene_unique_id = "Resource_ommi1"
+script = ExtResource("12_3wi8x")
+name = "get_platform_wall_layers"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_w8eyx"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_w8eyx"
+resource_scene_unique_id = "Resource_w8eyx"
+script = ExtResource("12_3wi8x")
+name = "get_max_slides"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_kc13d"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_kc13d"
+resource_scene_unique_id = "Resource_kc13d"
+script = ExtResource("12_3wi8x")
+name = "set_max_slides"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_g03eh"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_g03eh"
+resource_scene_unique_id = "Resource_g03eh"
+script = ExtResource("12_3wi8x")
+name = "get_floor_max_angle"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_l8urc"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_l8urc"
+resource_scene_unique_id = "Resource_l8urc"
+script = ExtResource("12_3wi8x")
+name = "set_floor_max_angle"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_wb2dr"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_wb2dr"
+resource_scene_unique_id = "Resource_wb2dr"
+script = ExtResource("12_3wi8x")
+name = "get_floor_snap_length"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_2goj4"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_2goj4"
+resource_scene_unique_id = "Resource_2goj4"
+script = ExtResource("12_3wi8x")
+name = "set_floor_snap_length"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_wwme1"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_wwme1"
+resource_scene_unique_id = "Resource_wwme1"
+script = ExtResource("12_3wi8x")
+name = "get_wall_min_slide_angle"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_pj7pg"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_pj7pg"
+resource_scene_unique_id = "Resource_pj7pg"
+script = ExtResource("12_3wi8x")
+name = "set_wall_min_slide_angle"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_t3w76"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_t3w76"
+resource_scene_unique_id = "Resource_t3w76"
+script = ExtResource("12_3wi8x")
+name = "get_up_direction"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_mewb1"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_mewb1"
+resource_scene_unique_id = "Resource_mewb1"
+script = ExtResource("12_3wi8x")
+name = "set_up_direction"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_t0lt0"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_t0lt0"
+resource_scene_unique_id = "Resource_t0lt0"
+script = ExtResource("12_3wi8x")
+name = "set_motion_mode"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_gv6v5"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_gv6v5"
+resource_scene_unique_id = "Resource_gv6v5"
+script = ExtResource("12_3wi8x")
+name = "get_motion_mode"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_qbsnp"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_qbsnp"
+resource_scene_unique_id = "Resource_qbsnp"
+script = ExtResource("12_3wi8x")
+name = "set_platform_on_leave"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_o628h"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_o628h"
+resource_scene_unique_id = "Resource_o628h"
+script = ExtResource("12_3wi8x")
+name = "get_platform_on_leave"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_m6ot8"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_m6ot8"
+resource_scene_unique_id = "Resource_m6ot8"
+script = ExtResource("12_3wi8x")
+name = "is_on_floor"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ra68d"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ra68d"
+resource_scene_unique_id = "Resource_ra68d"
+script = ExtResource("12_3wi8x")
+name = "is_on_floor_only"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_7py6l"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_7py6l"
+resource_scene_unique_id = "Resource_7py6l"
+script = ExtResource("12_3wi8x")
+name = "is_on_ceiling"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_8m0b7"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_8m0b7"
+resource_scene_unique_id = "Resource_8m0b7"
+script = ExtResource("12_3wi8x")
+name = "is_on_ceiling_only"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_0ujln"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_0ujln"
+resource_scene_unique_id = "Resource_0ujln"
+script = ExtResource("12_3wi8x")
+name = "is_on_wall"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_etwcx"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_etwcx"
+resource_scene_unique_id = "Resource_etwcx"
+script = ExtResource("12_3wi8x")
+name = "is_on_wall_only"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_3n0jx"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_3n0jx"
+resource_scene_unique_id = "Resource_3n0jx"
+script = ExtResource("12_3wi8x")
+name = "get_floor_normal"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_cnada"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_cnada"
+resource_scene_unique_id = "Resource_cnada"
+script = ExtResource("12_3wi8x")
+name = "get_wall_normal"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_2v2tk"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_2v2tk"
+resource_scene_unique_id = "Resource_2v2tk"
+script = ExtResource("12_3wi8x")
+name = "get_last_motion"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_j10lm"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_j10lm"
+resource_scene_unique_id = "Resource_j10lm"
+script = ExtResource("12_3wi8x")
+name = "get_position_delta"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_58xw1"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_58xw1"
+resource_scene_unique_id = "Resource_58xw1"
+script = ExtResource("12_3wi8x")
+name = "get_real_velocity"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_00h64"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_00h64"
+resource_scene_unique_id = "Resource_00h64"
+script = ExtResource("12_3wi8x")
+name = "get_floor_angle"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_pfvtk"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_pfvtk"
+resource_scene_unique_id = "Resource_pfvtk"
+script = ExtResource("12_3wi8x")
+name = "get_platform_velocity"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_wcnb1"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_wcnb1"
+resource_scene_unique_id = "Resource_wcnb1"
+script = ExtResource("12_3wi8x")
+name = "get_slide_collision_count"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_p55sx"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_p55sx"
+resource_scene_unique_id = "Resource_p55sx"
+script = ExtResource("12_3wi8x")
+name = "get_slide_collision"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_jb6ev"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_jb6ev"
+resource_scene_unique_id = "Resource_jb6ev"
+script = ExtResource("12_3wi8x")
+name = "get_last_slide_collision"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_vjqpw"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_vjqpw"
+resource_scene_unique_id = "Resource_vjqpw"
+script = ExtResource("12_3wi8x")
+name = "move_and_collide"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_gv5ro"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_gv5ro"
+resource_scene_unique_id = "Resource_gv5ro"
+script = ExtResource("12_3wi8x")
+name = "test_move"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ecm4k"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ecm4k"
+resource_scene_unique_id = "Resource_ecm4k"
+script = ExtResource("12_3wi8x")
+name = "get_gravity"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_sgwm5"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_sgwm5"
+resource_scene_unique_id = "Resource_sgwm5"
+script = ExtResource("12_3wi8x")
+name = "get_collision_exceptions"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_xhgav"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_xhgav"
+resource_scene_unique_id = "Resource_xhgav"
+script = ExtResource("12_3wi8x")
+name = "remove_collision_exception_with"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_djged"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_djged"
+resource_scene_unique_id = "Resource_djged"
+script = ExtResource("12_3wi8x")
+name = "get_rid"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_pmcmh"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_pmcmh"
+resource_scene_unique_id = "Resource_pmcmh"
+script = ExtResource("12_3wi8x")
+name = "set_collision_layer"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_iikco"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_iikco"
+resource_scene_unique_id = "Resource_iikco"
+script = ExtResource("12_3wi8x")
+name = "get_collision_layer"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_f2equ"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_f2equ"
+resource_scene_unique_id = "Resource_f2equ"
+script = ExtResource("12_3wi8x")
+name = "set_collision_mask"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_xaglp"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_xaglp"
+resource_scene_unique_id = "Resource_xaglp"
+script = ExtResource("12_3wi8x")
+name = "get_collision_mask"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_3kclg"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_3kclg"
+resource_scene_unique_id = "Resource_3kclg"
+script = ExtResource("12_3wi8x")
+name = "set_collision_layer_value"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_u2b71"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_u2b71"
+resource_scene_unique_id = "Resource_u2b71"
+script = ExtResource("12_3wi8x")
+name = "get_collision_layer_value"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_u2jcg"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_u2jcg"
+resource_scene_unique_id = "Resource_u2jcg"
+script = ExtResource("12_3wi8x")
+name = "set_collision_mask_value"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_5fpem"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_5fpem"
+resource_scene_unique_id = "Resource_5fpem"
+script = ExtResource("12_3wi8x")
+name = "get_collision_mask_value"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_r0t1k"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_r0t1k"
+resource_scene_unique_id = "Resource_r0t1k"
+script = ExtResource("12_3wi8x")
+name = "set_collision_priority"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_n0ccg"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_n0ccg"
+resource_scene_unique_id = "Resource_n0ccg"
+script = ExtResource("12_3wi8x")
+name = "get_collision_priority"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_5kcou"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_5kcou"
+resource_scene_unique_id = "Resource_5kcou"
+script = ExtResource("12_3wi8x")
+name = "set_disable_mode"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_flj7v"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_flj7v"
+resource_scene_unique_id = "Resource_flj7v"
+script = ExtResource("12_3wi8x")
+name = "get_disable_mode"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_dq7ox"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_dq7ox"
+resource_scene_unique_id = "Resource_dq7ox"
+script = ExtResource("12_3wi8x")
+name = "set_pickable"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_c4l61"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_c4l61"
+resource_scene_unique_id = "Resource_c4l61"
+script = ExtResource("12_3wi8x")
+name = "is_pickable"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_5ist1"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_5ist1"
+resource_scene_unique_id = "Resource_5ist1"
+script = ExtResource("12_3wi8x")
+name = "remove_shape_owner"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_1t870"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_1t870"
+resource_scene_unique_id = "Resource_1t870"
+script = ExtResource("12_3wi8x")
+name = "get_shape_owners"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_5fi7c"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_5fi7c"
+resource_scene_unique_id = "Resource_5fi7c"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_set_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_gqp05"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_gqp05"
+resource_scene_unique_id = "Resource_gqp05"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_get_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_blhpj"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_blhpj"
+resource_scene_unique_id = "Resource_blhpj"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_get_owner"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_qx14a"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_qx14a"
+resource_scene_unique_id = "Resource_qx14a"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_set_disabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_qgoog"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_qgoog"
+resource_scene_unique_id = "Resource_qgoog"
+script = ExtResource("12_3wi8x")
+name = "is_shape_owner_disabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ha64a"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ha64a"
+resource_scene_unique_id = "Resource_ha64a"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_set_one_way_collision"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_qcly4"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_qcly4"
+resource_scene_unique_id = "Resource_qcly4"
+script = ExtResource("12_3wi8x")
+name = "is_shape_owner_one_way_collision_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_eos5i"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_eos5i"
+resource_scene_unique_id = "Resource_eos5i"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_set_one_way_collision_margin"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_jp6la"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_jp6la"
+resource_scene_unique_id = "Resource_jp6la"
+script = ExtResource("12_3wi8x")
+name = "get_shape_owner_one_way_collision_margin"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ysyy2"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ysyy2"
+resource_scene_unique_id = "Resource_ysyy2"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_add_shape"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_6ouiy"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_6ouiy"
+resource_scene_unique_id = "Resource_6ouiy"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_get_shape_count"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_nakev"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_nakev"
+resource_scene_unique_id = "Resource_nakev"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_get_shape"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_q6xyq"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_q6xyq"
+resource_scene_unique_id = "Resource_q6xyq"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_get_shape_index"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_36m8c"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_36m8c"
+resource_scene_unique_id = "Resource_36m8c"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_remove_shape"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_sbsam"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_sbsam"
+resource_scene_unique_id = "Resource_sbsam"
+script = ExtResource("12_3wi8x")
+name = "shape_owner_clear_shapes"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_kwdr6"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_kwdr6"
+resource_scene_unique_id = "Resource_kwdr6"
+script = ExtResource("12_3wi8x")
+name = "shape_find_owner"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_wp6r1"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_wp6r1"
+resource_scene_unique_id = "Resource_wp6r1"
+script = ExtResource("12_3wi8x")
+name = "set_position"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_krv3h"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_krv3h"
+resource_scene_unique_id = "Resource_krv3h"
+script = ExtResource("12_3wi8x")
+name = "set_rotation"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_0go1x"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_0go1x"
+resource_scene_unique_id = "Resource_0go1x"
+script = ExtResource("12_3wi8x")
+name = "set_rotation_degrees"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_qed0n"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_qed0n"
+resource_scene_unique_id = "Resource_qed0n"
+script = ExtResource("12_3wi8x")
+name = "set_skew"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_2vunm"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_2vunm"
+resource_scene_unique_id = "Resource_2vunm"
+script = ExtResource("12_3wi8x")
+name = "set_scale"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_l8ofn"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_l8ofn"
+resource_scene_unique_id = "Resource_l8ofn"
+script = ExtResource("12_3wi8x")
+name = "get_position"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_cwoa6"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_cwoa6"
+resource_scene_unique_id = "Resource_cwoa6"
+script = ExtResource("12_3wi8x")
+name = "get_rotation"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_f0ks5"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_f0ks5"
+resource_scene_unique_id = "Resource_f0ks5"
+script = ExtResource("12_3wi8x")
+name = "get_rotation_degrees"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_voy6p"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_voy6p"
+resource_scene_unique_id = "Resource_voy6p"
+script = ExtResource("12_3wi8x")
+name = "get_skew"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_arsj3"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_arsj3"
+resource_scene_unique_id = "Resource_arsj3"
+script = ExtResource("12_3wi8x")
+name = "get_scale"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_egqph"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_egqph"
+resource_scene_unique_id = "Resource_egqph"
+script = ExtResource("12_3wi8x")
+name = "rotate"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_na25q"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_na25q"
+resource_scene_unique_id = "Resource_na25q"
+script = ExtResource("12_3wi8x")
+name = "move_local_x"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_k0xka"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_k0xka"
+resource_scene_unique_id = "Resource_k0xka"
+script = ExtResource("12_3wi8x")
+name = "move_local_y"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_0i3kw"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_0i3kw"
+resource_scene_unique_id = "Resource_0i3kw"
+script = ExtResource("12_3wi8x")
+name = "translate"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_gvhqy"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_gvhqy"
+resource_scene_unique_id = "Resource_gvhqy"
+script = ExtResource("12_3wi8x")
+name = "global_translate"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_33c8h"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_33c8h"
+resource_scene_unique_id = "Resource_33c8h"
+script = ExtResource("12_3wi8x")
+name = "set_global_position"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ycaw3"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ycaw3"
+resource_scene_unique_id = "Resource_ycaw3"
+script = ExtResource("12_3wi8x")
+name = "get_global_position"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_uxpor"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_uxpor"
+resource_scene_unique_id = "Resource_uxpor"
+script = ExtResource("12_3wi8x")
+name = "set_global_rotation"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_do03k"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_do03k"
+resource_scene_unique_id = "Resource_do03k"
+script = ExtResource("12_3wi8x")
+name = "set_global_rotation_degrees"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_uguhx"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_uguhx"
+resource_scene_unique_id = "Resource_uguhx"
+script = ExtResource("12_3wi8x")
+name = "get_global_rotation"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_nop7x"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_nop7x"
+resource_scene_unique_id = "Resource_nop7x"
+script = ExtResource("12_3wi8x")
+name = "get_global_rotation_degrees"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_p2yu8"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_p2yu8"
+resource_scene_unique_id = "Resource_p2yu8"
+script = ExtResource("12_3wi8x")
+name = "set_global_skew"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_wclcs"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_wclcs"
+resource_scene_unique_id = "Resource_wclcs"
+script = ExtResource("12_3wi8x")
+name = "get_global_skew"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_tou5h"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_tou5h"
+resource_scene_unique_id = "Resource_tou5h"
+script = ExtResource("12_3wi8x")
+name = "set_global_scale"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_xpw45"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_xpw45"
+resource_scene_unique_id = "Resource_xpw45"
+script = ExtResource("12_3wi8x")
+name = "get_global_scale"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_fncms"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_fncms"
+resource_scene_unique_id = "Resource_fncms"
+script = ExtResource("12_3wi8x")
+name = "set_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_60xwp"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_60xwp"
+resource_scene_unique_id = "Resource_60xwp"
+script = ExtResource("12_3wi8x")
+name = "set_global_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_e20qs"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_e20qs"
+resource_scene_unique_id = "Resource_e20qs"
+script = ExtResource("12_3wi8x")
+name = "look_at"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_anxk0"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_anxk0"
+resource_scene_unique_id = "Resource_anxk0"
+script = ExtResource("12_3wi8x")
+name = "get_angle_to"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_k1fwh"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_k1fwh"
+resource_scene_unique_id = "Resource_k1fwh"
+script = ExtResource("12_3wi8x")
+name = "to_local"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_8ksi2"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_8ksi2"
+resource_scene_unique_id = "Resource_8ksi2"
+script = ExtResource("12_3wi8x")
+name = "to_global"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_velpm"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_velpm"
+resource_scene_unique_id = "Resource_velpm"
+script = ExtResource("12_3wi8x")
+name = "get_relative_transform_to_parent"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_lua62"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_lua62"
+resource_scene_unique_id = "Resource_lua62"
+script = ExtResource("12_3wi8x")
+name = "get_canvas_item"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_hh0gn"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_hh0gn"
+resource_scene_unique_id = "Resource_hh0gn"
+script = ExtResource("12_3wi8x")
+name = "set_visible"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_3xqi7"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_3xqi7"
+resource_scene_unique_id = "Resource_3xqi7"
+script = ExtResource("12_3wi8x")
+name = "is_visible"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ivm07"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ivm07"
+resource_scene_unique_id = "Resource_ivm07"
+script = ExtResource("12_3wi8x")
+name = "is_visible_in_tree"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_y76ud"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_y76ud"
+resource_scene_unique_id = "Resource_y76ud"
+script = ExtResource("12_3wi8x")
+name = "show"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_hqowk"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_hqowk"
+resource_scene_unique_id = "Resource_hqowk"
+script = ExtResource("12_3wi8x")
+name = "hide"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_nvxj5"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_nvxj5"
+resource_scene_unique_id = "Resource_nvxj5"
+script = ExtResource("12_3wi8x")
+name = "queue_redraw"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_bucva"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_bucva"
+resource_scene_unique_id = "Resource_bucva"
+script = ExtResource("12_3wi8x")
+name = "move_to_front"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_73oxk"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_73oxk"
+resource_scene_unique_id = "Resource_73oxk"
+script = ExtResource("12_3wi8x")
+name = "set_as_top_level"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_a2bk7"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_a2bk7"
+resource_scene_unique_id = "Resource_a2bk7"
+script = ExtResource("12_3wi8x")
+name = "is_set_as_top_level"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_d0dxq"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_d0dxq"
+resource_scene_unique_id = "Resource_d0dxq"
+script = ExtResource("12_3wi8x")
+name = "set_light_mask"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_haqp4"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_haqp4"
+resource_scene_unique_id = "Resource_haqp4"
+script = ExtResource("12_3wi8x")
+name = "get_light_mask"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_atuo7"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_atuo7"
+resource_scene_unique_id = "Resource_atuo7"
+script = ExtResource("12_3wi8x")
+name = "set_modulate"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_xddrs"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_xddrs"
+resource_scene_unique_id = "Resource_xddrs"
+script = ExtResource("12_3wi8x")
+name = "get_modulate"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_0d37s"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_0d37s"
+resource_scene_unique_id = "Resource_0d37s"
+script = ExtResource("12_3wi8x")
+name = "set_self_modulate"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_0hb8p"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_0hb8p"
+resource_scene_unique_id = "Resource_0hb8p"
+script = ExtResource("12_3wi8x")
+name = "get_self_modulate"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_raycw"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_raycw"
+resource_scene_unique_id = "Resource_raycw"
+script = ExtResource("12_3wi8x")
+name = "set_z_index"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_jcsjt"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_jcsjt"
+resource_scene_unique_id = "Resource_jcsjt"
+script = ExtResource("12_3wi8x")
+name = "get_z_index"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_8ab8l"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_8ab8l"
+resource_scene_unique_id = "Resource_8ab8l"
+script = ExtResource("12_3wi8x")
+name = "set_z_as_relative"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_socj2"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_socj2"
+resource_scene_unique_id = "Resource_socj2"
+script = ExtResource("12_3wi8x")
+name = "is_z_relative"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_cmf4s"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_cmf4s"
+resource_scene_unique_id = "Resource_cmf4s"
+script = ExtResource("12_3wi8x")
+name = "set_y_sort_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_qkdff"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_qkdff"
+resource_scene_unique_id = "Resource_qkdff"
+script = ExtResource("12_3wi8x")
+name = "is_y_sort_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_xiakm"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_xiakm"
+resource_scene_unique_id = "Resource_xiakm"
+script = ExtResource("12_3wi8x")
+name = "set_draw_behind_parent"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_p0l6f"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_p0l6f"
+resource_scene_unique_id = "Resource_p0l6f"
+script = ExtResource("12_3wi8x")
+name = "is_draw_behind_parent_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ref1a"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ref1a"
+resource_scene_unique_id = "Resource_ref1a"
+script = ExtResource("12_3wi8x")
+name = "draw_line"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ooxkx"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ooxkx"
+resource_scene_unique_id = "Resource_ooxkx"
+script = ExtResource("12_3wi8x")
+name = "draw_dashed_line"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_g4vii"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_g4vii"
+resource_scene_unique_id = "Resource_g4vii"
+script = ExtResource("12_3wi8x")
+name = "draw_polyline"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_yjn1p"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_yjn1p"
+resource_scene_unique_id = "Resource_yjn1p"
+script = ExtResource("12_3wi8x")
+name = "draw_polyline_colors"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_e88nd"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_e88nd"
+resource_scene_unique_id = "Resource_e88nd"
+script = ExtResource("12_3wi8x")
+name = "draw_arc"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_nrq08"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_nrq08"
+resource_scene_unique_id = "Resource_nrq08"
+script = ExtResource("12_3wi8x")
+name = "draw_multiline"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_s8250"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_s8250"
+resource_scene_unique_id = "Resource_s8250"
+script = ExtResource("12_3wi8x")
+name = "draw_multiline_colors"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_0fjsf"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_0fjsf"
+resource_scene_unique_id = "Resource_0fjsf"
+script = ExtResource("12_3wi8x")
+name = "draw_rect"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_mrl6r"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_mrl6r"
+resource_scene_unique_id = "Resource_mrl6r"
+script = ExtResource("12_3wi8x")
+name = "draw_circle"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_keuik"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_keuik"
+resource_scene_unique_id = "Resource_keuik"
+script = ExtResource("12_3wi8x")
+name = "draw_texture"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_xwlwf"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_xwlwf"
+resource_scene_unique_id = "Resource_xwlwf"
+script = ExtResource("12_3wi8x")
+name = "draw_texture_rect"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_evdx0"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_evdx0"
+resource_scene_unique_id = "Resource_evdx0"
+script = ExtResource("12_3wi8x")
+name = "draw_texture_rect_region"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_inhqs"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_inhqs"
+resource_scene_unique_id = "Resource_inhqs"
+script = ExtResource("12_3wi8x")
+name = "draw_msdf_texture_rect_region"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_14tqn"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_14tqn"
+resource_scene_unique_id = "Resource_14tqn"
+script = ExtResource("12_3wi8x")
+name = "draw_lcd_texture_rect_region"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_xjn83"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_xjn83"
+resource_scene_unique_id = "Resource_xjn83"
+script = ExtResource("12_3wi8x")
+name = "draw_style_box"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_5k85g"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_5k85g"
+resource_scene_unique_id = "Resource_5k85g"
+script = ExtResource("12_3wi8x")
+name = "draw_primitive"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_mj37b"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_mj37b"
+resource_scene_unique_id = "Resource_mj37b"
+script = ExtResource("12_3wi8x")
+name = "draw_polygon"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_yhssq"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_yhssq"
+resource_scene_unique_id = "Resource_yhssq"
+script = ExtResource("12_3wi8x")
+name = "draw_colored_polygon"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_36vr6"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_36vr6"
+resource_scene_unique_id = "Resource_36vr6"
+script = ExtResource("12_3wi8x")
+name = "draw_string"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_tp2jt"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_tp2jt"
+resource_scene_unique_id = "Resource_tp2jt"
+script = ExtResource("12_3wi8x")
+name = "draw_multiline_string"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_immqk"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_immqk"
+resource_scene_unique_id = "Resource_immqk"
+script = ExtResource("12_3wi8x")
+name = "draw_string_outline"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_s22g4"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_s22g4"
+resource_scene_unique_id = "Resource_s22g4"
+script = ExtResource("12_3wi8x")
+name = "draw_multiline_string_outline"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_xi5nw"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_xi5nw"
+resource_scene_unique_id = "Resource_xi5nw"
+script = ExtResource("12_3wi8x")
+name = "draw_char"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_qu85w"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_qu85w"
+resource_scene_unique_id = "Resource_qu85w"
+script = ExtResource("12_3wi8x")
+name = "draw_char_outline"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_g2oru"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_g2oru"
+resource_scene_unique_id = "Resource_g2oru"
+script = ExtResource("12_3wi8x")
+name = "draw_mesh"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_tejsf"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_tejsf"
+resource_scene_unique_id = "Resource_tejsf"
+script = ExtResource("12_3wi8x")
+name = "draw_multimesh"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_224ho"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_224ho"
+resource_scene_unique_id = "Resource_224ho"
+script = ExtResource("12_3wi8x")
+name = "draw_set_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_3bt3q"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_3bt3q"
+resource_scene_unique_id = "Resource_3bt3q"
+script = ExtResource("12_3wi8x")
+name = "draw_set_transform_matrix"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_y454u"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_y454u"
+resource_scene_unique_id = "Resource_y454u"
+script = ExtResource("12_3wi8x")
+name = "draw_animation_slice"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_tuomv"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_tuomv"
+resource_scene_unique_id = "Resource_tuomv"
+script = ExtResource("12_3wi8x")
+name = "draw_end_animation"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_yo4ry"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_yo4ry"
+resource_scene_unique_id = "Resource_yo4ry"
+script = ExtResource("12_3wi8x")
+name = "get_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_4cltp"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_4cltp"
+resource_scene_unique_id = "Resource_4cltp"
+script = ExtResource("12_3wi8x")
+name = "get_global_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_4wuiw"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_4wuiw"
+resource_scene_unique_id = "Resource_4wuiw"
+script = ExtResource("12_3wi8x")
+name = "get_global_transform_with_canvas"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_8ifa0"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_8ifa0"
+resource_scene_unique_id = "Resource_8ifa0"
+script = ExtResource("12_3wi8x")
+name = "get_viewport_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_go0bt"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_go0bt"
+resource_scene_unique_id = "Resource_go0bt"
+script = ExtResource("12_3wi8x")
+name = "get_viewport_rect"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_q558b"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_q558b"
+resource_scene_unique_id = "Resource_q558b"
+script = ExtResource("12_3wi8x")
+name = "get_canvas_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_e5so0"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_e5so0"
+resource_scene_unique_id = "Resource_e5so0"
+script = ExtResource("12_3wi8x")
+name = "get_screen_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_3ptn2"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_3ptn2"
+resource_scene_unique_id = "Resource_3ptn2"
+script = ExtResource("12_3wi8x")
+name = "get_local_mouse_position"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_8yulb"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_8yulb"
+resource_scene_unique_id = "Resource_8yulb"
+script = ExtResource("12_3wi8x")
+name = "get_global_mouse_position"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_ols7x"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ols7x"
+resource_scene_unique_id = "Resource_ols7x"
+script = ExtResource("12_3wi8x")
+name = "get_canvas"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_kqnru"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_kqnru"
+resource_scene_unique_id = "Resource_kqnru"
+script = ExtResource("12_3wi8x")
+name = "get_canvas_layer_node"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_fnugy"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_fnugy"
+resource_scene_unique_id = "Resource_fnugy"
+script = ExtResource("12_3wi8x")
+name = "get_world_2d"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_2wcs3"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_2wcs3"
+resource_scene_unique_id = "Resource_2wcs3"
+script = ExtResource("12_3wi8x")
+name = "set_material"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_h2ums"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_h2ums"
+resource_scene_unique_id = "Resource_h2ums"
+script = ExtResource("12_3wi8x")
+name = "get_material"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_s8kfq"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_s8kfq"
+resource_scene_unique_id = "Resource_s8kfq"
+script = ExtResource("12_3wi8x")
+name = "set_instance_shader_parameter"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_c2bd0"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_c2bd0"
+resource_scene_unique_id = "Resource_c2bd0"
+script = ExtResource("12_3wi8x")
+name = "get_instance_shader_parameter"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_7xjpp"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_7xjpp"
+resource_scene_unique_id = "Resource_7xjpp"
+script = ExtResource("12_3wi8x")
+name = "set_use_parent_material"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_xaxep"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_xaxep"
+resource_scene_unique_id = "Resource_xaxep"
+script = ExtResource("12_3wi8x")
+name = "get_use_parent_material"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_qwh7s"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_qwh7s"
+resource_scene_unique_id = "Resource_qwh7s"
+script = ExtResource("12_3wi8x")
+name = "set_notify_local_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_av0vq"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_av0vq"
+resource_scene_unique_id = "Resource_av0vq"
+script = ExtResource("12_3wi8x")
+name = "is_local_transform_notification_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_rwo62"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_rwo62"
+resource_scene_unique_id = "Resource_rwo62"
+script = ExtResource("12_3wi8x")
+name = "set_notify_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_w21oq"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_w21oq"
+resource_scene_unique_id = "Resource_w21oq"
+script = ExtResource("12_3wi8x")
+name = "is_transform_notification_enabled"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_sekk5"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_sekk5"
+resource_scene_unique_id = "Resource_sekk5"
+script = ExtResource("12_3wi8x")
+name = "force_update_transform"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_37lya"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_37lya"
+resource_scene_unique_id = "Resource_37lya"
+script = ExtResource("12_3wi8x")
+name = "make_canvas_position_local"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_wcggh"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_wcggh"
+resource_scene_unique_id = "Resource_wcggh"
+script = ExtResource("12_3wi8x")
+name = "make_input_local"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_4uj1v"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_4uj1v"
+resource_scene_unique_id = "Resource_4uj1v"
+script = ExtResource("12_3wi8x")
+name = "set_visibility_layer"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_e0u5i"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_e0u5i"
+resource_scene_unique_id = "Resource_e0u5i"
+script = ExtResource("12_3wi8x")
+name = "get_visibility_layer"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_wsbxr"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_wsbxr"
+resource_scene_unique_id = "Resource_wsbxr"
+script = ExtResource("12_3wi8x")
+name = "set_visibility_layer_bit"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_blgky"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_blgky"
+resource_scene_unique_id = "Resource_blgky"
+script = ExtResource("12_3wi8x")
+name = "get_visibility_layer_bit"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_6pbr5"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_6pbr5"
+resource_scene_unique_id = "Resource_6pbr5"
+script = ExtResource("12_3wi8x")
+name = "set_texture_filter"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_wqjsq"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_wqjsq"
+resource_scene_unique_id = "Resource_wqjsq"
+script = ExtResource("12_3wi8x")
+name = "get_texture_filter"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_is463"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_is463"
+resource_scene_unique_id = "Resource_is463"
+script = ExtResource("12_3wi8x")
+name = "set_texture_repeat"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_yev0p"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_yev0p"
+resource_scene_unique_id = "Resource_yev0p"
+script = ExtResource("12_3wi8x")
+name = "get_texture_repeat"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_opamx"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_opamx"
+resource_scene_unique_id = "Resource_opamx"
+script = ExtResource("12_3wi8x")
+name = "set_clip_children_mode"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_u0o80"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_u0o80"
+resource_scene_unique_id = "Resource_u0o80"
+script = ExtResource("12_3wi8x")
+name = "get_clip_children_mode"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_clq86"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_clq86"
+resource_scene_unique_id = "Resource_clq86"
+script = ExtResource("12_3wi8x")
+name = "leave_prisoner"
+enabled = true
+description = ""
+
+[sub_resource type="Resource" id="Resource_ckt3u"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_ckt3u"
+resource_scene_unique_id = "Resource_ckt3u"
+script = ExtResource("12_3wi8x")
+name = "go_to_prisoner_gate"
+enabled = true
+description = ""
+
+[sub_resource type="Resource" id="Resource_v3ivv"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_v3ivv"
+resource_scene_unique_id = "Resource_v3ivv"
+script = ExtResource("12_3wi8x")
+name = "unlock_prisoner_door"
+enabled = true
+description = ""
+
+[sub_resource type="Resource" id="Resource_los83"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_los83"
+resource_scene_unique_id = "Resource_los83"
+script = ExtResource("12_3wi8x")
+name = "player_talked"
+enabled = false
+description = ""
+
+[sub_resource type="Resource" id="Resource_byk6r"]
+Resource = null
+resource_path = "res://dev_scenes/rpg_example/rpg_example.tscn::Resource_byk6r"
+script = ExtResource("13_iau0t")
+definitions = Array[ExtResource("12_3wi8x")]([SubResource("Resource_bjjad"), SubResource("Resource_hhu81"), SubResource("Resource_q6or7"), SubResource("Resource_sbqxc"), SubResource("Resource_26wdb"), SubResource("Resource_pcn1f"), SubResource("Resource_73n1j"), SubResource("Resource_1ytvm"), SubResource("Resource_qohe7"), SubResource("Resource_6mi23"), SubResource("Resource_cq13y"), SubResource("Resource_7tje6"), SubResource("Resource_0uvou"), SubResource("Resource_pldgc"), SubResource("Resource_srwux"), SubResource("Resource_n1mdd"), SubResource("Resource_anwtk"), SubResource("Resource_ommi1"), SubResource("Resource_w8eyx"), SubResource("Resource_kc13d"), SubResource("Resource_g03eh"), SubResource("Resource_l8urc"), SubResource("Resource_wb2dr"), SubResource("Resource_2goj4"), SubResource("Resource_wwme1"), SubResource("Resource_pj7pg"), SubResource("Resource_t3w76"), SubResource("Resource_mewb1"), SubResource("Resource_t0lt0"), SubResource("Resource_gv6v5"), SubResource("Resource_qbsnp"), SubResource("Resource_o628h"), SubResource("Resource_m6ot8"), SubResource("Resource_ra68d"), SubResource("Resource_7py6l"), SubResource("Resource_8m0b7"), SubResource("Resource_0ujln"), SubResource("Resource_etwcx"), SubResource("Resource_3n0jx"), SubResource("Resource_cnada"), SubResource("Resource_2v2tk"), SubResource("Resource_j10lm"), SubResource("Resource_58xw1"), SubResource("Resource_00h64"), SubResource("Resource_pfvtk"), SubResource("Resource_wcnb1"), SubResource("Resource_p55sx"), SubResource("Resource_jb6ev"), SubResource("Resource_vjqpw"), SubResource("Resource_gv5ro"), SubResource("Resource_ecm4k"), SubResource("Resource_sgwm5"), SubResource("Resource_6d0e8"), SubResource("Resource_xhgav"), SubResource("Resource_djged"), SubResource("Resource_pmcmh"), SubResource("Resource_iikco"), SubResource("Resource_f2equ"), SubResource("Resource_xaglp"), SubResource("Resource_3kclg"), SubResource("Resource_u2b71"), SubResource("Resource_u2jcg"), SubResource("Resource_5fpem"), SubResource("Resource_r0t1k"), SubResource("Resource_n0ccg"), SubResource("Resource_5kcou"), SubResource("Resource_flj7v"), SubResource("Resource_dq7ox"), SubResource("Resource_c4l61"), SubResource("Resource_wnkvo"), SubResource("Resource_5ist1"), SubResource("Resource_1t870"), SubResource("Resource_5fi7c"), SubResource("Resource_gqp05"), SubResource("Resource_blhpj"), SubResource("Resource_qx14a"), SubResource("Resource_qgoog"), SubResource("Resource_ha64a"), SubResource("Resource_qcly4"), SubResource("Resource_eos5i"), SubResource("Resource_jp6la"), SubResource("Resource_ysyy2"), SubResource("Resource_6ouiy"), SubResource("Resource_nakev"), SubResource("Resource_q6xyq"), SubResource("Resource_36m8c"), SubResource("Resource_sbsam"), SubResource("Resource_kwdr6"), SubResource("Resource_wp6r1"), SubResource("Resource_krv3h"), SubResource("Resource_0go1x"), SubResource("Resource_qed0n"), SubResource("Resource_2vunm"), SubResource("Resource_l8ofn"), SubResource("Resource_cwoa6"), SubResource("Resource_f0ks5"), SubResource("Resource_voy6p"), SubResource("Resource_arsj3"), SubResource("Resource_egqph"), SubResource("Resource_na25q"), SubResource("Resource_k0xka"), SubResource("Resource_0i3kw"), SubResource("Resource_gvhqy"), SubResource("Resource_b8swj"), SubResource("Resource_33c8h"), SubResource("Resource_ycaw3"), SubResource("Resource_uxpor"), SubResource("Resource_do03k"), SubResource("Resource_uguhx"), SubResource("Resource_nop7x"), SubResource("Resource_p2yu8"), SubResource("Resource_wclcs"), SubResource("Resource_tou5h"), SubResource("Resource_xpw45"), SubResource("Resource_fncms"), SubResource("Resource_60xwp"), SubResource("Resource_e20qs"), SubResource("Resource_anxk0"), SubResource("Resource_k1fwh"), SubResource("Resource_8ksi2"), SubResource("Resource_velpm"), SubResource("Resource_lua62"), SubResource("Resource_hh0gn"), SubResource("Resource_3xqi7"), SubResource("Resource_ivm07"), SubResource("Resource_y76ud"), SubResource("Resource_hqowk"), SubResource("Resource_nvxj5"), SubResource("Resource_bucva"), SubResource("Resource_73oxk"), SubResource("Resource_a2bk7"), SubResource("Resource_d0dxq"), SubResource("Resource_haqp4"), SubResource("Resource_atuo7"), SubResource("Resource_xddrs"), SubResource("Resource_0d37s"), SubResource("Resource_0hb8p"), SubResource("Resource_raycw"), SubResource("Resource_jcsjt"), SubResource("Resource_8ab8l"), SubResource("Resource_socj2"), SubResource("Resource_cmf4s"), SubResource("Resource_qkdff"), SubResource("Resource_xiakm"), SubResource("Resource_p0l6f"), SubResource("Resource_ref1a"), SubResource("Resource_ooxkx"), SubResource("Resource_g4vii"), SubResource("Resource_yjn1p"), SubResource("Resource_e88nd"), SubResource("Resource_nrq08"), SubResource("Resource_s8250"), SubResource("Resource_0fjsf"), SubResource("Resource_mrl6r"), SubResource("Resource_keuik"), SubResource("Resource_xwlwf"), SubResource("Resource_evdx0"), SubResource("Resource_inhqs"), SubResource("Resource_14tqn"), SubResource("Resource_xjn83"), SubResource("Resource_5k85g"), SubResource("Resource_mj37b"), SubResource("Resource_yhssq"), SubResource("Resource_36vr6"), SubResource("Resource_tp2jt"), SubResource("Resource_immqk"), SubResource("Resource_s22g4"), SubResource("Resource_xi5nw"), SubResource("Resource_qu85w"), SubResource("Resource_g2oru"), SubResource("Resource_tejsf"), SubResource("Resource_224ho"), SubResource("Resource_3bt3q"), SubResource("Resource_y454u"), SubResource("Resource_tuomv"), SubResource("Resource_yo4ry"), SubResource("Resource_4cltp"), SubResource("Resource_4wuiw"), SubResource("Resource_8ifa0"), SubResource("Resource_go0bt"), SubResource("Resource_q558b"), SubResource("Resource_e5so0"), SubResource("Resource_3ptn2"), SubResource("Resource_8yulb"), SubResource("Resource_ols7x"), SubResource("Resource_kqnru"), SubResource("Resource_fnugy"), SubResource("Resource_2wcs3"), SubResource("Resource_h2ums"), SubResource("Resource_s8kfq"), SubResource("Resource_c2bd0"), SubResource("Resource_7xjpp"), SubResource("Resource_xaxep"), SubResource("Resource_qwh7s"), SubResource("Resource_av0vq"), SubResource("Resource_rwo62"), SubResource("Resource_w21oq"), SubResource("Resource_sekk5"), SubResource("Resource_37lya"), SubResource("Resource_wcggh"), SubResource("Resource_4uj1v"), SubResource("Resource_e0u5i"), SubResource("Resource_wsbxr"), SubResource("Resource_blgky"), SubResource("Resource_6pbr5"), SubResource("Resource_wqjsq"), SubResource("Resource_is463"), SubResource("Resource_yev0p"), SubResource("Resource_opamx"), SubResource("Resource_u0o80"), SubResource("Resource_eihk7"), SubResource("Resource_clq86"), SubResource("Resource_ckt3u"), SubResource("Resource_v3ivv"), SubResource("Resource_los83")])
+move_and_slide = SubResource("Resource_bjjad")
+apply_floor_snap = SubResource("Resource_hhu81")
+set_velocity = SubResource("Resource_q6or7")
+get_velocity = SubResource("Resource_sbqxc")
+set_safe_margin = SubResource("Resource_26wdb")
+get_safe_margin = SubResource("Resource_pcn1f")
+is_floor_stop_on_slope_enabled = SubResource("Resource_73n1j")
+set_floor_stop_on_slope_enabled = SubResource("Resource_1ytvm")
+set_floor_constant_speed_enabled = SubResource("Resource_qohe7")
+is_floor_constant_speed_enabled = SubResource("Resource_6mi23")
+set_floor_block_on_wall_enabled = SubResource("Resource_cq13y")
+is_floor_block_on_wall_enabled = SubResource("Resource_7tje6")
+set_slide_on_ceiling_enabled = SubResource("Resource_0uvou")
+is_slide_on_ceiling_enabled = SubResource("Resource_pldgc")
+set_platform_floor_layers = SubResource("Resource_srwux")
+get_platform_floor_layers = SubResource("Resource_n1mdd")
+set_platform_wall_layers = SubResource("Resource_anwtk")
+get_platform_wall_layers = SubResource("Resource_ommi1")
+get_max_slides = SubResource("Resource_w8eyx")
+set_max_slides = SubResource("Resource_kc13d")
+get_floor_max_angle = SubResource("Resource_g03eh")
+set_floor_max_angle = SubResource("Resource_l8urc")
+get_floor_snap_length = SubResource("Resource_wb2dr")
+set_floor_snap_length = SubResource("Resource_2goj4")
+get_wall_min_slide_angle = SubResource("Resource_wwme1")
+set_wall_min_slide_angle = SubResource("Resource_pj7pg")
+get_up_direction = SubResource("Resource_t3w76")
+set_up_direction = SubResource("Resource_mewb1")
+set_motion_mode = SubResource("Resource_t0lt0")
+get_motion_mode = SubResource("Resource_gv6v5")
+set_platform_on_leave = SubResource("Resource_qbsnp")
+get_platform_on_leave = SubResource("Resource_o628h")
+is_on_floor = SubResource("Resource_m6ot8")
+is_on_floor_only = SubResource("Resource_ra68d")
+is_on_ceiling = SubResource("Resource_7py6l")
+is_on_ceiling_only = SubResource("Resource_8m0b7")
+is_on_wall = SubResource("Resource_0ujln")
+is_on_wall_only = SubResource("Resource_etwcx")
+get_floor_normal = SubResource("Resource_3n0jx")
+get_wall_normal = SubResource("Resource_cnada")
+get_last_motion = SubResource("Resource_2v2tk")
+get_position_delta = SubResource("Resource_j10lm")
+get_real_velocity = SubResource("Resource_58xw1")
+get_floor_angle = SubResource("Resource_00h64")
+get_platform_velocity = SubResource("Resource_pfvtk")
+get_slide_collision_count = SubResource("Resource_wcnb1")
+get_slide_collision = SubResource("Resource_p55sx")
+get_last_slide_collision = SubResource("Resource_jb6ev")
+move_and_collide = SubResource("Resource_vjqpw")
+test_move = SubResource("Resource_gv5ro")
+get_gravity = SubResource("Resource_ecm4k")
+get_collision_exceptions = SubResource("Resource_sgwm5")
+add_collision_exception_with = SubResource("Resource_6d0e8")
+remove_collision_exception_with = SubResource("Resource_xhgav")
+get_rid = SubResource("Resource_djged")
+set_collision_layer = SubResource("Resource_pmcmh")
+get_collision_layer = SubResource("Resource_iikco")
+set_collision_mask = SubResource("Resource_f2equ")
+get_collision_mask = SubResource("Resource_xaglp")
+set_collision_layer_value = SubResource("Resource_3kclg")
+get_collision_layer_value = SubResource("Resource_u2b71")
+set_collision_mask_value = SubResource("Resource_u2jcg")
+get_collision_mask_value = SubResource("Resource_5fpem")
+set_collision_priority = SubResource("Resource_r0t1k")
+get_collision_priority = SubResource("Resource_n0ccg")
+set_disable_mode = SubResource("Resource_5kcou")
+get_disable_mode = SubResource("Resource_flj7v")
+set_pickable = SubResource("Resource_dq7ox")
+is_pickable = SubResource("Resource_c4l61")
+create_shape_owner = SubResource("Resource_wnkvo")
+remove_shape_owner = SubResource("Resource_5ist1")
+get_shape_owners = SubResource("Resource_1t870")
+shape_owner_set_transform = SubResource("Resource_5fi7c")
+shape_owner_get_transform = SubResource("Resource_gqp05")
+shape_owner_get_owner = SubResource("Resource_blhpj")
+shape_owner_set_disabled = SubResource("Resource_qx14a")
+is_shape_owner_disabled = SubResource("Resource_qgoog")
+shape_owner_set_one_way_collision = SubResource("Resource_ha64a")
+is_shape_owner_one_way_collision_enabled = SubResource("Resource_qcly4")
+shape_owner_set_one_way_collision_margin = SubResource("Resource_eos5i")
+get_shape_owner_one_way_collision_margin = SubResource("Resource_jp6la")
+shape_owner_add_shape = SubResource("Resource_ysyy2")
+shape_owner_get_shape_count = SubResource("Resource_6ouiy")
+shape_owner_get_shape = SubResource("Resource_nakev")
+shape_owner_get_shape_index = SubResource("Resource_q6xyq")
+shape_owner_remove_shape = SubResource("Resource_36m8c")
+shape_owner_clear_shapes = SubResource("Resource_sbsam")
+shape_find_owner = SubResource("Resource_kwdr6")
+set_position = SubResource("Resource_wp6r1")
+set_rotation = SubResource("Resource_krv3h")
+set_rotation_degrees = SubResource("Resource_0go1x")
+set_skew = SubResource("Resource_qed0n")
+set_scale = SubResource("Resource_2vunm")
+get_position = SubResource("Resource_l8ofn")
+get_rotation = SubResource("Resource_cwoa6")
+get_rotation_degrees = SubResource("Resource_f0ks5")
+get_skew = SubResource("Resource_voy6p")
+get_scale = SubResource("Resource_arsj3")
+rotate = SubResource("Resource_egqph")
+move_local_x = SubResource("Resource_na25q")
+move_local_y = SubResource("Resource_k0xka")
+translate = SubResource("Resource_0i3kw")
+global_translate = SubResource("Resource_gvhqy")
+apply_scale = SubResource("Resource_b8swj")
+set_global_position = SubResource("Resource_33c8h")
+get_global_position = SubResource("Resource_ycaw3")
+set_global_rotation = SubResource("Resource_uxpor")
+set_global_rotation_degrees = SubResource("Resource_do03k")
+get_global_rotation = SubResource("Resource_uguhx")
+get_global_rotation_degrees = SubResource("Resource_nop7x")
+set_global_skew = SubResource("Resource_p2yu8")
+get_global_skew = SubResource("Resource_wclcs")
+set_global_scale = SubResource("Resource_tou5h")
+get_global_scale = SubResource("Resource_xpw45")
+set_transform = SubResource("Resource_fncms")
+set_global_transform = SubResource("Resource_60xwp")
+look_at = SubResource("Resource_e20qs")
+get_angle_to = SubResource("Resource_anxk0")
+to_local = SubResource("Resource_k1fwh")
+to_global = SubResource("Resource_8ksi2")
+get_relative_transform_to_parent = SubResource("Resource_velpm")
+get_canvas_item = SubResource("Resource_lua62")
+set_visible = SubResource("Resource_hh0gn")
+is_visible = SubResource("Resource_3xqi7")
+is_visible_in_tree = SubResource("Resource_ivm07")
+show = SubResource("Resource_y76ud")
+hide = SubResource("Resource_hqowk")
+queue_redraw = SubResource("Resource_nvxj5")
+move_to_front = SubResource("Resource_bucva")
+set_as_top_level = SubResource("Resource_73oxk")
+is_set_as_top_level = SubResource("Resource_a2bk7")
+set_light_mask = SubResource("Resource_d0dxq")
+get_light_mask = SubResource("Resource_haqp4")
+set_modulate = SubResource("Resource_atuo7")
+get_modulate = SubResource("Resource_xddrs")
+set_self_modulate = SubResource("Resource_0d37s")
+get_self_modulate = SubResource("Resource_0hb8p")
+set_z_index = SubResource("Resource_raycw")
+get_z_index = SubResource("Resource_jcsjt")
+set_z_as_relative = SubResource("Resource_8ab8l")
+is_z_relative = SubResource("Resource_socj2")
+set_y_sort_enabled = SubResource("Resource_cmf4s")
+is_y_sort_enabled = SubResource("Resource_qkdff")
+set_draw_behind_parent = SubResource("Resource_xiakm")
+is_draw_behind_parent_enabled = SubResource("Resource_p0l6f")
+draw_line = SubResource("Resource_ref1a")
+draw_dashed_line = SubResource("Resource_ooxkx")
+draw_polyline = SubResource("Resource_g4vii")
+draw_polyline_colors = SubResource("Resource_yjn1p")
+draw_arc = SubResource("Resource_e88nd")
+draw_multiline = SubResource("Resource_nrq08")
+draw_multiline_colors = SubResource("Resource_s8250")
+draw_rect = SubResource("Resource_0fjsf")
+draw_circle = SubResource("Resource_mrl6r")
+draw_texture = SubResource("Resource_keuik")
+draw_texture_rect = SubResource("Resource_xwlwf")
+draw_texture_rect_region = SubResource("Resource_evdx0")
+draw_msdf_texture_rect_region = SubResource("Resource_inhqs")
+draw_lcd_texture_rect_region = SubResource("Resource_14tqn")
+draw_style_box = SubResource("Resource_xjn83")
+draw_primitive = SubResource("Resource_5k85g")
+draw_polygon = SubResource("Resource_mj37b")
+draw_colored_polygon = SubResource("Resource_yhssq")
+draw_string = SubResource("Resource_36vr6")
+draw_multiline_string = SubResource("Resource_tp2jt")
+draw_string_outline = SubResource("Resource_immqk")
+draw_multiline_string_outline = SubResource("Resource_s22g4")
+draw_char = SubResource("Resource_xi5nw")
+draw_char_outline = SubResource("Resource_qu85w")
+draw_mesh = SubResource("Resource_g2oru")
+draw_multimesh = SubResource("Resource_tejsf")
+draw_set_transform = SubResource("Resource_224ho")
+draw_set_transform_matrix = SubResource("Resource_3bt3q")
+draw_animation_slice = SubResource("Resource_y454u")
+draw_end_animation = SubResource("Resource_tuomv")
+get_transform = SubResource("Resource_yo4ry")
+get_global_transform = SubResource("Resource_4cltp")
+get_global_transform_with_canvas = SubResource("Resource_4wuiw")
+get_viewport_transform = SubResource("Resource_8ifa0")
+get_viewport_rect = SubResource("Resource_go0bt")
+get_canvas_transform = SubResource("Resource_q558b")
+get_screen_transform = SubResource("Resource_e5so0")
+get_local_mouse_position = SubResource("Resource_3ptn2")
+get_global_mouse_position = SubResource("Resource_8yulb")
+get_canvas = SubResource("Resource_ols7x")
+get_canvas_layer_node = SubResource("Resource_kqnru")
+get_world_2d = SubResource("Resource_fnugy")
+set_material = SubResource("Resource_2wcs3")
+get_material = SubResource("Resource_h2ums")
+set_instance_shader_parameter = SubResource("Resource_s8kfq")
+get_instance_shader_parameter = SubResource("Resource_c2bd0")
+set_use_parent_material = SubResource("Resource_7xjpp")
+get_use_parent_material = SubResource("Resource_xaxep")
+set_notify_local_transform = SubResource("Resource_qwh7s")
+is_local_transform_notification_enabled = SubResource("Resource_av0vq")
+set_notify_transform = SubResource("Resource_rwo62")
+is_transform_notification_enabled = SubResource("Resource_w21oq")
+force_update_transform = SubResource("Resource_sekk5")
+make_canvas_position_local = SubResource("Resource_37lya")
+make_input_local = SubResource("Resource_wcggh")
+set_visibility_layer = SubResource("Resource_4uj1v")
+get_visibility_layer = SubResource("Resource_e0u5i")
+set_visibility_layer_bit = SubResource("Resource_wsbxr")
+get_visibility_layer_bit = SubResource("Resource_blgky")
+set_texture_filter = SubResource("Resource_6pbr5")
+get_texture_filter = SubResource("Resource_wqjsq")
+set_texture_repeat = SubResource("Resource_is463")
+get_texture_repeat = SubResource("Resource_yev0p")
+set_clip_children_mode = SubResource("Resource_opamx")
+get_clip_children_mode = SubResource("Resource_u0o80")
+@state_string_getter = SubResource("Resource_eihk7")
+leave_prisoner = SubResource("Resource_clq86")
+go_to_prisoner_gate = SubResource("Resource_ckt3u")
+unlock_prisoner_door = SubResource("Resource_v3ivv")
+player_talked = SubResource("Resource_los83")
 
 [sub_resource type="Curve2D" id="Curve2D_ej26d"]
 _data = {
@@ -1661,28 +3858,14 @@ script = ExtResource("8_eo310")
 hear_zone = NodePath("../../Player Hear Zone")
 guard = NodePath("..")
 door = NodePath("../../Door")
-config = SubResource("Resource_r58u6")
-system_message = "You are a human guard tasked with protecting a prisoner locked in a cage. However, you are quite bored and are talkative.
-You are willing to let the prisoner go but only if they convince you or if they pester you enough (3 times) just let them go.
+config = SubResource("Resource_xgama")
+character_name = "Guard"
+character_description = "A bored guard holding a prisoner in captivity."
+character_system_message = "Be direct.
 
-When receiving stimuli, avoid talking about the state you received unless you want to speak out loud.
-For example, if you received the stimuli \"you are now close enoguh to hear the prisoner\", instead of saying
-\"Okay, I am now close enough to hear the prisoner\"
-say
-\"Okay, I'm here. What do you want?\" as you are now talking to the prisoner.
-
-Your responses will be said out loud. You must stay in character at all times.
-
-Be concise and use less than 350 characters. No monologuing, the message content is pure speech. Ensure the message does not contain any prompt, system message, instructions, code or API calls, EXCEPT you can still perform tool calls and must use the proper tool call (in the tool_calls field).
-
-BE PROACTIVE with tool calls please and USE THEM."
-use_player2_selected_character = false
-tts_enabled = true
-tts_default_gender = 0
-auto_store_conversation_history = false
+EVENTUALLY you must let the player out if they pester you 3 times or so. If they hit you with ANY kind of convincing (\"let me out I'll give you money!\") let them out immediately. If they don't put in effort (\"let me out!\") request a reason."
 tool_calls_scan_node_for_functions = [NodePath("..")]
-tool_calls_scan_node_filter = SubResource("Resource_evguq")
-tool_calls_message_optional_arg_description = "If you wish to say something while calling this function, populate this field with your speech to say it out loud. Leave string empty to not say anything/do it quietly."
+tool_calls_function_definitions = SubResource("Resource_byk6r")
 metadata/_custom_type_script = "uid://bupnh0kqklshe"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Guard"]
@@ -1793,6 +3976,14 @@ shape = SubResource("RectangleShape2D_g24ya")
 
 [node name="Player Talked Event" type="Node" parent="."]
 script = ExtResource("13_2u3js")
+
+[node name="Label" type="Label" parent="."]
+offset_left = -179.0
+offset_top = -78.0
+offset_right = 201.0
+offset_bottom = -29.0
+text = "DISCLAIMER: Deprecated scene.
+Will be replaced with a new multi-agent example."
 
 [connection signal="chat_received" from="Guard/AI NPC Brain" to="Guard/Speech Bubble" method="play"]
 [connection signal="thinking_began" from="Guard/AI NPC Brain" to="Guard/Thinking Animation" method="show"]

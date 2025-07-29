@@ -3,6 +3,9 @@ class_name Player2AINPCConfig
 extends Resource
 
 @export var api : Player2APIConfig = Player2APIConfig.new()
+
+@export_subgroup("Queue", "queue")
+## The interval to empty our queue and send a chat request (prevents spam)
 @export var queue_check_interval_seconds : float = 2
 
 @export_subgroup("System Message and Prompting", "system_message")
@@ -35,9 +38,15 @@ extends Resource
 @export_subgroup("Conversation and Summary")
 ## If true, will save our conversation history to godot's user:// directory and will auto load on startup from the history file.
 @export var auto_store_conversation_history : bool = true
+## If `auto_store_conversation_history` is true, this message will be sent to the NPC on login.
 @export var auto_load_entry_message : String = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
+## How many messages to hold in history before summarizing
 @export var conversation_history_size : int = 64
+## How many messages to use in our summary when summarizing
 @export var conversation_summary_buffer : int = 48
+## How many characters to limit our summary to.
+@export var summary_max_size : int = 500
+## The request prompt to create a conversation summary.
 @export_multiline var summary_message : String = \
 "The agent has been chatting with the player.
 Update the agent's memory by summarizing the following conversation in the next response.
@@ -45,14 +54,16 @@ Use natural language, not JSON. Prioritize preserving important facts, things us
 
 Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars.
 "
-@export var summary_max_size : int = 500
+## The summary message to replace our history with
 @export_multiline var summary_prefix : String = "Summary of earlier events: ${summary}"
 
 @export_subgroup("Tool Calls", "tool_calls")
-## Gives information to the Agent on how to handle using tool calls. 
 # TODO: Add this back in to give devs the choice, and CONDITIONALLY SERIALIZE tool calls if this is false.
 const use_tool_call_json = false
 #@export var use_tool_call_json : bool = false
+## Gives information to the Agent on how to handle using tool calls.
 @export_multiline var tool_calls_choice : String = "Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
+## Tool calls can reply with text. This is the message that will be sent.
 @export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
+## Tool calls may have an optional "message" field, this will be its description to help the LLM decide how to populate it.
 @export_multiline var tool_calls_message_optional_arg_description : String = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."

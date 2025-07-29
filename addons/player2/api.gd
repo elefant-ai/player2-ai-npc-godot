@@ -1,10 +1,12 @@
 class_name Player2API
 
 static func _get_headers(config : Player2APIConfig) -> Array[String]:
+	var game_key : String = ProjectSettings.get_setting("application/config/name") if config.player2_game_key_override.is_empty() else config.player2_game_key_override
+	var key = "GODOT_" + game_key.replace(" ", "_").replace(":", "_")
 	return [
 		"Content-Type: application/json; charset=utf-8",
 		"Accept: application/json; charset=utf-8",
-		"player2-game-key: " + config.player2_game_key
+		"player2-game-key: " + key
 	]
 
 static func get_health(config : Player2APIConfig, on_complete : Callable, on_fail : Callable = Callable()):

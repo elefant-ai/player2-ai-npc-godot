@@ -1,7 +1,8 @@
 class_name Player2APIConfig
 extends Resource
 
-@export var player2_game_key = "my_game"
+@export_group("Player 2 Game Key", "player2_game_key")
+@export var player2_game_key_override = ""
 
 @export_group("Error handling", "error")
 @export var error_log_ui : bool = true

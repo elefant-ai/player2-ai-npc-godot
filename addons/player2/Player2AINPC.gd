@@ -1,20 +1,31 @@
+@tool
 ## AI NPC using the Player 2 API.
 class_name Player2AINPC
 extends Node
 
+## More lower level configuration.
 @export var config : Player2AINPCConfig = Player2AINPCConfig.new()
 
 ## The main system message for every prompt.
 ## ${player2_selected_character_name} and ${player2_selected_character_description} are sourced from the player's selected characters. Feel free to remove this if `use_player2_selected_character` is false.
 ## ${status} is the current world status that is received from a function.
-@export_subgroup("Character Information", "character")
+#@export_subgroup("Character Information", "character")
+## The name of this NPC character
 @export var character_name : String = "Robot"
+## Describe who the NPC character is
 @export_multiline var character_description = "A helpful agent who is there to help out the player and be chatty with them!"
+## More specific description on how to behave.
 @export_multiline var character_system_message = "Match the player's mood. Be direct with your replies, but if the player is talkative then be talkative as well."
 
 @export_subgroup("Tool Calls", "tool_calls")
 ## Set this to an object to scan for functions in that object to call
-@export var tool_calls_scan_node_for_functions : Array[Node]
+@export var tool_calls_scan_node_for_functions : Array[Node]:
+	set(new_nodes):
+		tool_calls_scan_node_for_functions = new_nodes
+		_validate_tool_call_definitions()
+		# notify_property_list_changed()
+
+@export var tool_calls_function_definitions : ToolcallFunctionDefinitions
 
 ## Whether the agent is thinking (coming up with a reply to a chat, stimulus, or summarizing the chat)
 var thinking: bool:
@@ -292,6 +303,45 @@ static func _get_tool_call_param_from_method_arg_dictionary(method_arg : Diction
 			return null
 	return result
 
+func _scan_node_tool_call_functions(node : Node) -> Array[Dictionary]:
+	var result : Array[Dictionary] = []
+
+	if !node:
+		return result
+
+	var self_funcs_to_ignore : Array[String] = []
+	# Get our class functions so we don't worry about it
+	var t := Player2AINPC.new()
+	self_funcs_to_ignore.assign(t.get_method_list().map(func (t): return t["name"]))
+	t.queue_free()
+
+	# Ignore node root functions
+	var node_funcs_to_ignore : Array[String] = []
+	var n := Node.new()
+	node_funcs_to_ignore.assign(n.get_method_list().map(func (t): return t["name"]))
+	n.queue_free()
+	
+	var functions := node.get_method_list()
+	var is_self := node == self
+	for function in functions:
+		var f_name : String = function["name"]
+
+		# our functions or base object functions
+		if is_self:
+			if self_funcs_to_ignore.has(f_name):
+				continue
+		else:
+			if node_funcs_to_ignore.has(f_name):
+				continue
+
+		# private functions
+		if f_name.begins_with("_"):
+			continue
+
+		result.append(function)
+
+	return result
+
 # TODO: Cache this
 ## Scans functions in a provided class to consider as being tool calls
 func _scan_funcs_for_tools() -> Array[AIToolCall]:
@@ -301,47 +351,37 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 	if tool_calls_scan_node_for_functions:
 		nodes_to_scan.append_array(tool_calls_scan_node_for_functions)
 
-	var self_funcs_to_ignore : Array[String] = []
-	# Get our class functions so we don't worry about it
-	var t := Player2AINPC.new()
-	self_funcs_to_ignore.assign(t.get_method_list().map(func (t): return t["name"]))
-	t.queue_free()
-
-	var node_funcs_to_ignore : Array[String] = []
-	var n := Node.new()
-	node_funcs_to_ignore.assign(n.get_method_list().map(func (t): return t["name"]))
-	n.queue_free()
-
 	for node in nodes_to_scan:
+		
 		var functions_documentation := Player2FunctionHelper.parse_documentation(node.get_script())
-		var functions := node.get_method_list()
 		var is_self := node == self
+		var functions := _scan_node_tool_call_functions(node)
+
+		var valid_function_names = [] if (!tool_calls_function_definitions or !tool_calls_function_definitions.definitions) else tool_calls_function_definitions.definitions.filter(func(d): return d and d.enabled).map(func(d): return d.name)
+		
+		print("VALID FUNCTION NAMES")
+		print(valid_function_names)
+
 		for function in functions:
-			var f_name : String = function["name"]
+			var f_name = function["name"]
 
-			# our functions or base object functions
-			if is_self:
-				if self_funcs_to_ignore.has(f_name):
-					continue
-			else:
-				if node_funcs_to_ignore.has(f_name):
-					continue
-
-			# private functions
-			if f_name.begins_with("_"):
+			# tool call filter based on config (by default OMIT)
+			if !tool_calls_function_definitions or !tool_calls_function_definitions.definitions:
 				continue
+			var function_definition_index = tool_calls_function_definitions.definitions.find_custom(func(d): return d.name == f_name)
+			if function_definition_index == -1:
+				continue
+			var function_definition := tool_calls_function_definitions.definitions[function_definition_index]
 
-			# TODO: tool call 
-			assert(false)
-
-			#if tool_calls_scan_node_filter and !tool_calls_scan_node_filter.is_allowed(f_name):
-				#continue
+			# Configured as NOT enabled
+			if !function_definition.enabled:
+				continue
 
 			var tool_call := AIToolCall.new()
 
 			# name and description
 			tool_call.function_name = f_name
-			tool_call.description = f_name
+			tool_call.description = function_definition.description
 			#if functions_documentation.has(f_name):
 				#tool_call.description = functions_documentation[f_name]
 
@@ -463,7 +503,7 @@ func _tool_call_json_to_tool_call_reply(tool_call_json : Array) -> Array[AIToolC
 	return result
 
 func _tool_call_non_json_content_to_tool_call_reply(reply : Dictionary) -> Array[AIToolCallReply]:
-	if !reply.has("function"):
+	if !reply.has("function") or !reply["function"]:
 		return []
 	var f_name : String = reply["function"]
 	if !f_name or f_name.is_empty():
@@ -748,7 +788,51 @@ func get_manual_tool_calls(function_map : Dictionary) -> Array[AIToolCall]:
 func get_agent_status() -> String:
 	return ""
 
+func _get_property_list() -> Array[Dictionary]:
+	#print("Gah")
+	# TODO: Don't spam (timeout?)
+	_validate_tool_call_definitions()
+	return []
+
+## Make it so our tool call definitions get auto populated and modified
+func _validate_tool_call_definitions() -> void:
+	if !tool_calls_function_definitions:
+		tool_calls_function_definitions = ToolcallFunctionDefinitions.new()
+	if !tool_calls_function_definitions.definitions:
+		tool_calls_function_definitions.definitions = []
+
+	var valid_functions : Array[Dictionary] = []
+	for node in tool_calls_scan_node_for_functions:
+		valid_functions.append_array(_scan_node_tool_call_functions(node))
+	var valid_names : Array = valid_functions.map(func(d): return d["name"])
+
+	# Remove unwanted
+	var need_to_add : Array = []
+	need_to_add.append_array(valid_names)
+	var result : Array[ToolcallFunctionDefinition] = []
+	for definition in tool_calls_function_definitions.definitions:
+		var name = definition.name
+		if valid_names.has(name):
+			result.append(definition)
+			need_to_add.erase(name)
+	# Add needed
+	for name_to_add : String in need_to_add:
+		var new_definition := ToolcallFunctionDefinition.new()
+		new_definition.name = name_to_add
+		result.append(new_definition)
+
+	# Set the value
+	tool_calls_function_definitions.definitions = result
+	pass
+
+#func _validate_property(property: Dictionary) -> void:
+	#if property.name == "tool_calls_function_definitions":
+		#property.usage |= PROPERTY_USAGE_READ_ONLY
+
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		_validate_tool_call_definitions()
+		return
 	_queue_process_timer = Timer.new()
 	self.add_child(_queue_process_timer)
 	_queue_process_timer.wait_time = config.queue_check_interval_seconds
@@ -763,10 +847,14 @@ func _ready() -> void:
 			load_conversation_history()
 
 func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	# TODO override setter to avoid process func update
 	_queue_process_timer.wait_time = config.queue_check_interval_seconds
 
 func _exit_tree() -> void:
+	if Engine.is_editor_hint():
+		return
 	# Before we leave, store our conversation history.
 	if config.auto_store_conversation_history:
 		save_conversation_history()
