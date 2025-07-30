@@ -1,3 +1,5 @@
+## DEPRECATED: Should delete this.
+@tool
 extends Player2AINPC
 
 @export var hear_zone : Area2D

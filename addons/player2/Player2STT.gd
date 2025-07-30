@@ -3,7 +3,7 @@ class_name Player2STT
 extends Node
 
 @export var enabled : bool = true
-@export var config : Player2Config = Player2Config.new()
+@export var config : Player2APIConfig = Player2APIConfig.new()
 @export var timeout : float = 10
 @export var accept_empty_input : bool = false
 

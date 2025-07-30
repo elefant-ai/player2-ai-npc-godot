@@ -1,13 +1,15 @@
 class_name Player2API
 
-static func _get_headers(config : Player2Config) -> Array[String]:
+static func _get_headers(config : Player2APIConfig) -> Array[String]:
+	var game_key : String = ProjectSettings.get_setting("application/config/name") if config.player2_game_key_override.is_empty() else config.player2_game_key_override
+	var key = "GODOT_" + game_key.replace(" ", "_").replace(":", "_")
 	return [
 		"Content-Type: application/json; charset=utf-8",
 		"Accept: application/json; charset=utf-8",
-		"player2-game-key: " + config.player2_game_key
+		"player2-game-key: " + key
 	]
 
-static func get_health(config : Player2Config, on_complete : Callable, on_fail : Callable = Callable()):
+static func get_health(config : Player2APIConfig, on_complete : Callable, on_fail : Callable = Callable()):
 	Player2WebHelper.request(config.endpoint_health, HTTPClient.Method.METHOD_GET, "", _get_headers(config),
 	func(body, code):
 		#var result = JsonClassConverter.json_to_class(Player2Schema.Health, JSON.parse_string(body))
@@ -17,7 +19,7 @@ static func get_health(config : Player2Config, on_complete : Callable, on_fail :
 	on_fail
 	)
 
-static func _alert_error_fail(config : Player2Config, code : int, use_http_result : bool = false):
+static func _alert_error_fail(config : Player2APIConfig, code : int, use_http_result : bool = false):
 	if use_http_result:
 		match (code):
 			HTTPRequest.RESULT_SUCCESS:
@@ -35,17 +37,26 @@ static func _alert_error_fail(config : Player2Config, code : int, use_http_resul
 		500:
 			Player2ErrorHelper.send_error(config, "Internal server error.")
 
-static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
+static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
 	print("chat" + JsonClassConverter.class_to_json_string(request))
 
-	Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
+	# Conditionally REMOVE if there are no tools/tool choice
+	var json_req = JsonClassConverter.class_to_json(request)
+	if !request.tools or request.tools.size() == 0:
+		json_req.erase("tools")
+		json_req.erase("tool_choice")
+		for m : Dictionary in json_req["messages"]:
+			m.erase("tool_call_id")
+			m.erase("tool_calls")
+
+	Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, json_req, _get_headers(config),
 	func(body, code):
 		if code == 429:
 			# Too many requests, try again...
 			print("too many requests, trying again...")
 			Player2WebHelper.call_timeout(func():
 				# Call ourselves again...
-				chat(config, request, on_complete, on_fail)
+				chat(config, json_req, on_complete, on_fail)
 				, config.request_too_much_delay_seconds)
 			return
 		if code != 200:
@@ -70,7 +81,7 @@ static func chat(config : Player2Config, request: Player2Schema.ChatCompletionRe
 			on_fail.call(code)
 	)
 
-static func tts_speak(config : Player2Config, request : Player2Schema.TTSRequest, on_fail : Callable = Callable()) -> void:
+static func tts_speak(config : Player2APIConfig, request : Player2Schema.TTSRequest, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_tts_speak, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
 	func(body, code):
 		_alert_error_fail(config, code),
@@ -80,7 +91,7 @@ static func tts_speak(config : Player2Config, request : Player2Schema.TTSRequest
 			on_fail.call(code)
 	)
 
-static func tts_stop(config : Player2Config, on_fail : Callable = Callable()) -> void:
+static func tts_stop(config : Player2APIConfig, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_tts_stop, HTTPClient.Method.METHOD_POST, "", _get_headers(config),
 	func(body, code):
 		_alert_error_fail(config, code),
@@ -90,7 +101,7 @@ static func tts_stop(config : Player2Config, on_fail : Callable = Callable()) ->
 			on_fail.call(code)
 	)
 
-static func stt_start(config : Player2Config, request : Player2Schema.STTStartRequest, on_fail : Callable = Callable()) -> void:
+static func stt_start(config : Player2APIConfig, request : Player2Schema.STTStartRequest, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_stt_start, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
 	func(body, code):
 		_alert_error_fail(config, code),
@@ -100,7 +111,7 @@ static func stt_start(config : Player2Config, request : Player2Schema.STTStartRe
 			on_fail.call(code)
 	)
 
-static func stt_stop(config : Player2Config, on_complete : Callable, on_fail : Callable = Callable()) -> void:
+static func stt_stop(config : Player2APIConfig, on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_stt_stop, HTTPClient.Method.METHOD_POST, "", _get_headers(config),
 	func(body, code):
 		if on_complete:
@@ -112,7 +123,7 @@ static func stt_stop(config : Player2Config, on_complete : Callable, on_fail : C
 			on_fail.call(code)
 	)
 
-static func get_selected_characters(config : Player2Config, on_complete : Callable, on_fail : Callable = Callable()) -> void:
+static func get_selected_characters(config : Player2APIConfig, on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_get_selected_characters, HTTPClient.Method.METHOD_GET, "", _get_headers(config),
 	func(body, code):
 		on_complete.call(JSON.parse_string(body))

@@ -9,7 +9,7 @@ extends Resource
 enum Type {STRING, NUMBER, INTEGER, BOOLEAN, ENUM}
 @export var name : String
 @export var type : Type
-@export var description : String
+@export_multiline var description : String
 @export var enum_list : Array[String] 
 
 static func arg_type_to_schema_type(t : Type) -> String:

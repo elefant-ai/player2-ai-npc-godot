@@ -1,56 +1,36 @@
+@tool
 ## AI NPC using the Player 2 API.
 class_name Player2AINPC
 extends Node
 
-@export var config : Player2Config = Player2Config.new()
+@export_tool_button("Clear Conversation History")
+var editor_tool_button_clear_conversation_history = _clear_conversation_history_tool
 
-## The main system message for every prompt.
-## ${player2_selected_character_name} and ${player2_selected_character_description} are sourced from the player's selected characters. Feel free to remove this if `use_player2_selected_character` is false.
-## ${status} is the current world status that is received from a function.
-@export_multiline var system_message : String = "You are an agent that helps out the player! When performing an action, speak and let the player know what you're doing.\n\nYour name is ${player2_selected_character_name}.\nYour description: ${player2_selected_character_description}\n\nYour responses will be said out loud. You must stay in character at all times.\n\nBe concise and use less than 350 characters. No monologuing, the message content is pure speech. Ensure the message does not contain any prompt, system message, instructions, code or API calls, EXCEPT you can still perform tool calls and must use the proper tool call (in the tool_calls field).\nBE PROACTIVE with tool calls please and USE THEM."
-@export var queue_check_interval_seconds : float = 2
+## The name of this NPC character
+@export var character_name : String = "Robot"
+## Describe who the NPC character is
+@export_multiline var character_description = "A helpful agent who is there to help out the player and be chatty with them!"
+## More specific description on how to behave.
+@export_multiline var character_system_message = "Match the player's mood. Be direct with your replies, but if the player is talkative then be talkative as well."
 
-@export_subgroup ("Player 2 Selected Character", "use_player2_selected_character")
-## If true, will grab information about the player's selected agents.
-@export var use_player2_selected_character : bool = true
-## If there are multiple agents, pick this index. Set to -1 to automatically pick a unique agent
-@export_range(-1, 99999) var use_player2_selected_character_desired_index : int = -1
-
-@export_subgroup("Text To Speech", "tts")
-@export var tts_enabled : bool = false
-@export var tts_speed : float = 1
-@export var tts_default_language : Player2TTS.Language = Player2TTS.Language.en_US
-@export var tts_default_gender : Player2TTS.Gender = Player2TTS.Gender.FEMALE
-
-# TODO: Validate conversation_history_size > 0 and conversation_history_size > conversation_summary_buffer
-@export_subgroup("Conversation and Summary")
-## If true, will save our conversation history to godot's user:// directory and will auto load on startup from the history file.
-@export var auto_store_conversation_history : bool = true
-@export var auto_load_entry_message : String = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
-@export var conversation_history_size : int = 64
-@export var conversation_summary_buffer : int = 48
-@export_multiline var summary_message : String = \
-"The agent has been chatting with the player.
-Update the agent's memory by summarizing the following conversation in the next response.
-Use natural language, not JSON. Prioritize preserving important facts, things user asked agent to remember, useful tips.
-
-Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars.
-"
-@export var summary_max_size : int = 500
-@export_multiline var summary_prefix : String = "Summary of earlier events: ${summary}"
+## More lower level Character configuration.
+@export var character_config : Player2AICharacterConfig = Player2AICharacterConfig.new():
+	set(new_config):
+		character_config = new_config
+		character_config.property_list_changed.connect(notify_property_list_changed)
+		notify_property_list_changed()
+## More lower level Chat configuration.
+@export var chat_config : Player2AIChatConfig = Player2AIChatConfig.new()
 
 @export_subgroup("Tool Calls", "tool_calls")
 ## Set this to an object to scan for functions in that object to call
-@export var tool_calls_scan_node_for_functions : Array[Node]
-## When scanning an object, filter out or only accept the following functions.
-@export var tool_calls_scan_node_filter : StringFilter
-## Gives information to the Agent on how to handle using tool calls. 
-# TODO: Add this back in to give devs the choice, and CONDITIONALLY SERIALIZE tool calls if this is false.
-const use_tool_call_json = false
-#@export var use_tool_call_json : bool = false
-@export_multiline var tool_calls_choice : String = "Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
-@export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
-@export_multiline var tool_calls_message_optional_arg_description : String = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."
+@export var tool_calls_scan_node_for_functions : Array[Node]:
+	set(new_nodes):
+		tool_calls_scan_node_for_functions = new_nodes
+		_validate_tool_call_definitions()
+		# notify_property_list_changed()
+@export_tool_button("Rescan functions") var tool_calls_rescan_functions = _validate_tool_call_definitions
+@export var tool_calls_function_definitions : ToolcallFunctionDefinitions
 
 ## Whether the agent is thinking (coming up with a reply to a chat, stimulus, or summarizing the chat)
 var thinking: bool:
@@ -110,7 +90,7 @@ const TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME = "MESSAGE_ARG"
 
 ## prints the client version, useful endpoint test
 func print_client_version() -> void:
-	Player2API.get_health(config,
+	Player2API.get_health(chat_config.api,
 		func(result):
 			print(result.client_version)
 	)
@@ -132,11 +112,10 @@ func _construct_user_message_json(speaker_name: String, speaker_message : String
 	return JSON.stringify(result)
 
 func _get_default_conversation_history_filepath() -> String:
-	var char_name = _selected_character["name"] if _selected_character else "agent"
-	var char_desc = _selected_character["description"] if _selected_character else ""
+	var char_name = _selected_character["name"] if _selected_character else character_name
+	var char_desc = _selected_character["description"] if _selected_character else "" # leave blank since user might update it more rapidly
 	var desc_hash = hash(char_desc)
 	var result = "user://HISTORY_" + char_name + "_" + str(desc_hash) + ".json"
-	print("default history path: " + result)
 	return result
 
 ## Save the current conversation history to a file. Leave blank to use our default location.
@@ -146,18 +125,34 @@ func save_conversation_history(filename : String = "") -> void:
 		filename = _get_default_conversation_history_filepath()
 
 	var serialized = ConversationMessage.serialize_list(conversation_history)
-	print("SERIALIZED")
+	print("Saving conversation history to " + filename)
 	print(serialized)
 
 	var file = FileAccess.open(filename, FileAccess.WRITE)
 	file.store_string(serialized)
 	file.close()
 
+func _clear_conversation_history_tool():
+	clear_conversation_history()
+func clear_conversation_history(filename : String = ""):
+	if filename.is_empty():
+		filename = _get_default_conversation_history_filepath()
+	if !FileAccess.file_exists(filename):
+		print("(no conversation history found at " + filename + ")")
+	else:
+		var e := DirAccess.remove_absolute(filename)
+		if e != OK:
+			print("(failed to delete conversation history at " + filename + ". It might not be present.)")
+		else:
+			print("Successfully deleted conversation history from " + filename)
+	notify_property_list_changed()
+
 ## Load our conversation history from a file. Leave blank to use our default location.
 ## Alternatively, set `conversation_history` manually, and for a "welcome back" message use `notify`.
 func load_conversation_history(notify_agent_for_welcome_message: bool = true, message : String = "", filename : String = "") -> void:
 	if filename.is_empty():
 		filename = _get_default_conversation_history_filepath()
+	print("Loading conversation history from " + filename)
 
 	if not FileAccess.file_exists(filename):
 		print("(no conversation history found at " + filename + ")")
@@ -167,7 +162,8 @@ func load_conversation_history(notify_agent_for_welcome_message: bool = true, me
 
 	var content := file.get_as_text()
 	file.close()
-	print("content" + content)
+
+	#print("content" + content)
 
 	var deserialized : Array[ConversationMessage] = ConversationMessage.deserialize_list(content)
 	
@@ -176,7 +172,7 @@ func load_conversation_history(notify_agent_for_welcome_message: bool = true, me
 	# Notify welcome message
 	if notify_agent_for_welcome_message:
 		if message.is_empty():
-			message = auto_load_entry_message
+			message = chat_config.auto_load_entry_message
 		notify(message)
 
 ## Add chat message to our history.
@@ -197,7 +193,7 @@ func notify(message : String) -> void:
 
 ## Stops TTS (global)
 func stop_tts() -> void:
-	Player2API.tts_stop(config)
+	Player2API.tts_stop(chat_config.api)
 
 ## Check if our history has too many messages and prompt for a summary/cull
 func _processconversation_history() -> void:
@@ -207,11 +203,11 @@ func _processconversation_history() -> void:
 		return
 
 	# max size
-	if conversation_history.size() > conversation_history_size:
+	if conversation_history.size() > chat_config.conversation_history_size:
 		print("Conversation history limit reached: Cropping and summarizing")
 		# crop conversation history
-		var to_summarize := conversation_history.slice(0, conversation_summary_buffer)
-		conversation_history = conversation_history.slice(conversation_history.size() - conversation_history_size)
+		var to_summarize := conversation_history.slice(0, chat_config.conversation_summary_buffer)
+		conversation_history = conversation_history.slice(conversation_history.size() - chat_config.conversation_history_size)
 
 		# summarize a fragment of the space we cropped out and push that to the start...
 		if to_summarize.size() > 0:
@@ -222,8 +218,8 @@ func _processconversation_history() -> void:
 				func(result : String):
 					# We got our summary from the endpoint, set and move on.
 					_current_summary = result
-					if _current_summary.length() > summary_max_size:
-						_current_summary = _current_summary.substr(0, summary_max_size)
+					if _current_summary.length() > chat_config.summary_max_size:
+						_current_summary = _current_summary.substr(0, chat_config.summary_max_size)
 					_summarizing_history = false,
 				func():
 					# error! Do nothing for now.
@@ -237,7 +233,7 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 	# System message
 	var system_msg := Player2Schema.Message.new()
 	system_msg.role = "system"
-	system_msg.content = summary_message.replace("${summary_max_size}", str(summary_max_size))
+	system_msg.content = chat_config.summary_message.replace("${summary_max_size}", str(chat_config.summary_max_size))
 
 	# Get all previous messages as a log...
 	var messages_log = ""
@@ -262,7 +258,7 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 
 	request.messages.assign(req_messages)
 	thinking = true
-	Player2API.chat(config, request,
+	Player2API.chat(chat_config.api, request,
 		func(result):
 			if result.choices.size() != 0:
 				var reply = result.choices.get(0).message.content
@@ -308,6 +304,45 @@ static func _get_tool_call_param_from_method_arg_dictionary(method_arg : Diction
 			return null
 	return result
 
+func _scan_node_tool_call_functions(node : Node) -> Array[Dictionary]:
+	var result : Array[Dictionary] = []
+
+	if !node:
+		return result
+
+	var self_funcs_to_ignore : Array[String] = []
+	# Get our class functions so we don't worry about it
+	var t := Player2AINPC.new()
+	self_funcs_to_ignore.assign(t.get_method_list().map(func (t): return t["name"]))
+	t.queue_free()
+
+	# Ignore node root functions
+	var node_funcs_to_ignore : Array[String] = []
+	var n := Node.new()
+	node_funcs_to_ignore.assign(n.get_method_list().map(func (t): return t["name"]))
+	n.queue_free()
+	
+	var functions := node.get_method_list()
+	var is_self := node == self
+	for function in functions:
+		var f_name : String = function["name"]
+
+		# our functions or base object functions
+		if is_self:
+			if self_funcs_to_ignore.has(f_name):
+				continue
+		else:
+			if node_funcs_to_ignore.has(f_name):
+				continue
+
+		# private functions
+		if f_name.begins_with("_"):
+			continue
+
+		result.append(function)
+
+	return result
+
 # TODO: Cache this
 ## Scans functions in a provided class to consider as being tool calls
 func _scan_funcs_for_tools() -> Array[AIToolCall]:
@@ -317,46 +352,36 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 	if tool_calls_scan_node_for_functions:
 		nodes_to_scan.append_array(tool_calls_scan_node_for_functions)
 
-	var self_funcs_to_ignore : Array[String] = []
-	# Get our class functions so we don't worry about it
-	var t := Player2AINPC.new()
-	self_funcs_to_ignore.assign(t.get_method_list().map(func (t): return t["name"]))
-	t.queue_free()
-
-	var node_funcs_to_ignore : Array[String] = []
-	var n := Node.new()
-	node_funcs_to_ignore.assign(n.get_method_list().map(func (t): return t["name"]))
-	n.queue_free()
-
 	for node in nodes_to_scan:
-		var functions_documentation := Player2FunctionHelper.parse_documentation(node.get_script())
-		var functions := node.get_method_list()
+		
 		var is_self := node == self
+		var functions := _scan_node_tool_call_functions(node)
+
+		var valid_function_names = [] if (!tool_calls_function_definitions or !tool_calls_function_definitions.definitions) else tool_calls_function_definitions.definitions.filter(func(d): return d and d.enabled).map(func(d): return d.name)
+
+		#print("VALID FUNCTION NAMES")
+		#print(valid_function_names)
+
 		for function in functions:
-			var f_name : String = function["name"]
+			var f_name = function["name"]
 
-			# our functions or base object functions
-			if is_self:
-				if self_funcs_to_ignore.has(f_name):
-					continue
-			else:
-				if node_funcs_to_ignore.has(f_name):
-					continue
-
-			# private functions
-			if f_name.begins_with("_"):
+			# tool call filter based on chat_config (by default OMIT)
+			if !tool_calls_function_definitions or !tool_calls_function_definitions.definitions:
 				continue
+			var function_definition_index = tool_calls_function_definitions.definitions.find_custom(func(d): return d.name == f_name)
+			if function_definition_index == -1:
+				continue
+			var function_definition := tool_calls_function_definitions.definitions[function_definition_index]
 
-			if tool_calls_scan_node_filter and !tool_calls_scan_node_filter.is_allowed(f_name):
+			# Configured as NOT enabled
+			if !function_definition.enabled:
 				continue
 
 			var tool_call := AIToolCall.new()
 
 			# name and description
 			tool_call.function_name = f_name
-			tool_call.description = f_name
-			#if functions_documentation.has(f_name):
-				#tool_call.description = functions_documentation[f_name]
+			tool_call.description = function_definition.description
 
 			# args
 			tool_call.args = []
@@ -402,7 +427,7 @@ func _convert_tool_call(simple_tool_call : AIToolCall) -> Player2Schema.Tool:
 	# Add our optional message arg
 	var optional_message_arg_t := Dictionary()
 	optional_message_arg_t["type"] = AIToolCallParameter.arg_type_to_schema_type(AIToolCallParameter.Type.STRING)
-	optional_message_arg_t["description"] = tool_calls_message_optional_arg_description
+	optional_message_arg_t["description"] = chat_config.tool_calls_message_optional_arg_description
 	p.properties[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME] = optional_message_arg_t
 	p.required.push_back(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
 
@@ -432,22 +457,22 @@ func _tts_speak(reply_message : String) -> void:
 	var req := Player2Schema.TTSRequest.new()
 	req.text = reply_message
 	req.play_in_app = true
-	req.speed = tts_speed
+	req.speed = character_config.tts_speed
 	# Thankfully these are just defaults, characters override this
-	req.voice_gender = Player2TTS.Gender.find_key(tts_default_gender).to_lower()
-	req.voice_language = Player2TTS.Language.find_key(tts_default_language)
+	req.voice_gender = Player2TTS.Gender.find_key(character_config.tts_default_gender).to_lower()
+	req.voice_language = Player2TTS.Language.find_key(character_config.tts_default_language)
 	# Selected character voice ID
 	if _selected_character and _selected_character["voice_ids"] and _selected_character["voice_ids"].size() != 0:
 		req.voice_ids = []
 		req.voice_ids.assign(_selected_character["voice_ids"])
 
-	Player2API.tts_speak(config, req)
+	Player2API.tts_speak(chat_config.api, req)
 
 func _run_chat_internal(message : String) -> void:
 	if message and !message.is_empty():
 		var reply_message := message.trim_suffix("\n") 
 		chat_received.emit(reply_message)
-		if tts_enabled:
+		if character_config.tts_enabled:
 			_tts_speak(reply_message)
 
 func _process_tool_call_reply(tool_call_reply : Array[AIToolCallReply]) -> void:
@@ -476,7 +501,7 @@ func _tool_call_json_to_tool_call_reply(tool_call_json : Array) -> Array[AIToolC
 	return result
 
 func _tool_call_non_json_content_to_tool_call_reply(reply : Dictionary) -> Array[AIToolCallReply]:
-	if !reply.has("function"):
+	if !reply.has("function") or !reply["function"]:
 		return []
 	var f_name : String = reply["function"]
 	if !f_name or f_name.is_empty():
@@ -521,9 +546,13 @@ func _process_chat_api() -> void:
 	# System message
 	var system_msg := Player2Schema.Message.new()
 	system_msg.role = "system"
-	var system_msg_content = system_message\
-		.replace("${player2_selected_character_name}", _selected_character["name"] if _selected_character else "(undefined)")\
-		.replace("${player2_selected_character_description}", _selected_character["description"] if _selected_character else "(undefined)")
+	var system_msg_content = chat_config.system_message_organization\
+		.replace("${system_message_character}", chat_config.system_message_character)\
+		.replace("${system_message_custom}", character_system_message)\
+		.replace("${system_message_behavior}", chat_config.system_message_behavior)\
+		.replace("${system_message_prompting}", chat_config.system_message_prompting)\
+		.replace("${character_name}", _selected_character["name"] if _selected_character else character_name)\
+		.replace("${character_description}", _selected_character["description"] if _selected_character else character_description)
 	system_msg_content += """
 		User message format:
 		User messages will have extra information, and will be a JSON of the form:
@@ -534,7 +563,7 @@ func _process_chat_api() -> void:
 			"world_status": The status of the current game world.,
 		}
 	"""
-	if use_tool_call_json:
+	if chat_config.tool_calls_use_tool_call_api:
 		system_msg_content += """
 			Response format:
 			Always respond with a plain string response, which will represent what YOU say. Do not prefix with anything (for example, reply with "hello!" instead of "Agent (or my name or anything else): hello!") unless previously instructed.
@@ -595,7 +624,10 @@ func _process_chat_api() -> void:
 		"""
 		# Double reiteration
 		system_msg_content += "\nYou must ONLY reply in JSON using the Response Format. Non-JSON String results are INVALID"
-	
+
+	# prefix & postfix
+	system_msg_content = chat_config.system_message_prefix + system_msg_content + chat_config.system_message_postfix
+
 	system_msg.content = system_msg_content
 
 	var req_messages = [system_msg]
@@ -604,7 +636,7 @@ func _process_chat_api() -> void:
 	if not _current_summary.is_empty():
 		var summary_msg := Player2Schema.Message.new()
 		summary_msg.role = "assistant"
-		summary_msg.content = summary_prefix.replace("${summary}", _current_summary)
+		summary_msg.content = chat_config.summary_prefix.replace("${summary}", _current_summary)
 		req_messages.push_back(summary_msg)
 
 	# History
@@ -618,13 +650,12 @@ func _process_chat_api() -> void:
 	request.messages.assign(req_messages)
 
 	# Tools
-	if use_tool_call_json:
-		request.tools = []
+	if chat_config.tool_calls_use_tool_call_api:
 		request.tools = _generate_schema_tools()
-		request.tool_choice = tool_calls_choice
+		request.tool_choice = chat_config.tool_calls_choice
 
 	thinking = true
-	Player2API.chat(config, request,
+	Player2API.chat(chat_config.api, request,
 		func(result):
 			thinking = false
 			for choice in result.choices:
@@ -632,7 +663,7 @@ func _process_chat_api() -> void:
 				if !"message" in choice:
 					continue
 				var tool_calls_reply : Array[AIToolCallReply]
-				if use_tool_call_json:
+				if chat_config.tool_calls_use_tool_call_api:
 					# Use openAI spec tool call (less error prone but slow)
 					if "content" in choice.message:
 						var reply : String = choice.message["content"]
@@ -698,7 +729,7 @@ func _process_chat_api() -> void:
 							# If the function returned something then pass it to the agent.
 							if func_result:
 								var func_result_string = JsonClassConverter.class_to_json_string(func_result) if func_result is Object else func_result
-								var func_result_notify_string := tool_calls_reply_message \
+								var func_result_notify_string := chat_config.tool_calls_reply_message \
 									.replace("${tool_call_name}", tool_name) \
 									.replace("${tool_call_reply}", func_result_string)
 								if func_result_notify_string && !func_result_notify_string.is_empty():
@@ -710,7 +741,7 @@ func _process_chat_api() -> void:
 					if !tool_call_history_messages.is_empty():
 						_append_agent_action_to_history(". ".join(tool_call_history_messages))
 				_run_chat_internal(message_reply)
-				if use_tool_call_json:
+				if chat_config.tool_calls_use_tool_call_api:
 					_append_agent_reply_to_history(message_reply)
 				elif "content" in choice.message:
 					# We want the WHOLE context
@@ -724,11 +755,11 @@ func _process_chat_api() -> void:
 
 func _update_selected_character_from_endpoint() -> void:
 	thinking = true
-	Player2API.get_selected_characters(config, func(result):
+	Player2API.get_selected_characters(chat_config.api, func(result):
 		thinking = false
 		var characters : Array = result["characters"] if (result and "characters" in result) else []
 		if characters and characters.size() > 0:
-			var index = use_player2_selected_character_desired_index
+			var index = character_config.use_player2_selected_character_desired_index
 			if index >= characters.size() or index < 0:
 				# Invalid index, find a valid one.
 				# TODO: get a random index from the least available agents, so we actually fill it up one by one.
@@ -736,12 +767,12 @@ func _update_selected_character_from_endpoint() -> void:
 			_selected_character = characters[index]
 			_selected_character_index = index
 			# After loaded, then we might also load our conversation history.
-			if auto_store_conversation_history:
+			if chat_config.auto_store_conversation_history:
 				load_conversation_history(),
 		func(fail_code):
 			thinking = false
 			# After loaded, then we might also load our conversation history.
-			if auto_store_conversation_history:
+			if chat_config.auto_store_conversation_history:
 				load_conversation_history(),
 	)
 
@@ -754,25 +785,111 @@ func get_manual_tool_calls(function_map : Dictionary) -> Array[AIToolCall]:
 func get_agent_status() -> String:
 	return ""
 
+func _get_property_list() -> Array[Dictionary]:
+	# TODO: Don't spam (timeout?)
+	_validate_tool_call_definitions()
+	return []
+func _validate_property(property: Dictionary) -> void:
+	var name = property.name
+
+	# Don't show character name/description if we're using player2 selected character
+	if character_config and character_config.use_player2_selected_character:
+		if name == "character_name" or name == "character_description":
+			property.usage = PROPERTY_USAGE_NO_EDITOR
+
+	# Clear conversation history button: Appear only if we have the conversation history file present
+	#if name == "editor_tool_button_clear_conversation_history":
+		#var fpath := _get_default_conversation_history_filepath()
+		#if !FileAccess.file_exists(fpath):
+			#property.usage = PROPERTY_USAGE_NO_EDITOR
+
+func _property_can_revert(property: StringName) -> bool:
+	return property == "chat_config" or property == "character_config"
+
+func _property_get_revert(property: StringName) -> Variant:
+	if property == "chat_config":
+		return Player2AIChatConfig.new()
+	if property == "character_config":
+		return Player2AICharacterConfig.new()
+	return null
+
+## Make it so our tool call definitions get auto populated and modified
+func _validate_tool_call_definitions() -> void:
+
+	# Editor/tool only
+	if !Engine.is_editor_hint():
+		return
+
+	if !tool_calls_function_definitions:
+		tool_calls_function_definitions = ToolcallFunctionDefinitions.new()
+	if !tool_calls_function_definitions.definitions:
+		tool_calls_function_definitions.definitions = []
+
+	var valid_functions : Array[Dictionary] = []
+	var comment_descriptions : Dictionary = {}
+
+	for node in tool_calls_scan_node_for_functions:
+		# Documentation: Parse comments
+		var documentation := Player2FunctionHelper.parse_documentation(node.get_script())
+		for f in _scan_node_tool_call_functions(node):
+			if documentation.has(f.name):
+				if comment_descriptions.has(f.name):
+					print("Duplicate function name for description detected: " + f.name + " for node " + node.name)
+				comment_descriptions[f.name] = documentation[f.name]
+
+			# append function
+			valid_functions.append(f)
+	var valid_names : Array = valid_functions.map(func(d): return d["name"])
+
+	# Add function definitions, keep old data and preserve order
+	var result : Array[ToolcallFunctionDefinition] = []
+	for name_to_add : String in valid_names:
+		# Do we already have something?
+		var definition : ToolcallFunctionDefinition = null
+		# Try to find existing
+		for existing_definition in tool_calls_function_definitions.definitions:
+			if existing_definition.name == name_to_add:
+				definition = existing_definition
+				break
+		if !definition:
+			definition = ToolcallFunctionDefinition.new()
+		definition.name = name_to_add
+		definition.description = "" if !comment_descriptions.has(definition.name) else comment_descriptions[definition.name]
+		result.append(definition)
+
+	# Set the value
+	tool_calls_function_definitions.definitions = result
+	tool_calls_function_definitions.notify_property_list_changed()
+	pass
+
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		_validate_tool_call_definitions()
+		if character_config:
+			character_config.property_list_changed.connect(notify_property_list_changed)
+		return
 	_queue_process_timer = Timer.new()
 	self.add_child(_queue_process_timer)
-	_queue_process_timer.wait_time = queue_check_interval_seconds
+	_queue_process_timer.wait_time = chat_config.queue_check_interval_seconds
 	_queue_process_timer.one_shot = false
 	_queue_process_timer.timeout.connect(_process_chat_api)
 	_queue_process_timer.start()
 
-	if use_player2_selected_character:
+	if character_config.use_player2_selected_character:
 		_update_selected_character_from_endpoint()
 	else:
-		if auto_store_conversation_history:
+		if chat_config.auto_store_conversation_history:
 			load_conversation_history()
 
 func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	# TODO override setter to avoid process func update
-	_queue_process_timer.wait_time = queue_check_interval_seconds
+	_queue_process_timer.wait_time = chat_config.queue_check_interval_seconds
 
 func _exit_tree() -> void:
+	if Engine.is_editor_hint():
+		return
 	# Before we leave, store our conversation history.
-	if auto_store_conversation_history:
+	if chat_config.auto_store_conversation_history:
 		save_conversation_history()
