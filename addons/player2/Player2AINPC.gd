@@ -6,19 +6,21 @@ extends Node
 @export_tool_button("Clear Conversation History")
 var editor_tool_button_clear_conversation_history = _clear_conversation_history_tool
 
-## More lower level configuration.
-@export var config : Player2AINPCConfig = Player2AINPCConfig.new()
-
-## The main system message for every prompt.
-## ${player2_selected_character_name} and ${player2_selected_character_description} are sourced from the player's selected characters. Feel free to remove this if `use_player2_selected_character` is false.
-## ${status} is the current world status that is received from a function.
-#@export_subgroup("Character Information", "character")
 ## The name of this NPC character
 @export var character_name : String = "Robot"
 ## Describe who the NPC character is
 @export_multiline var character_description = "A helpful agent who is there to help out the player and be chatty with them!"
 ## More specific description on how to behave.
 @export_multiline var character_system_message = "Match the player's mood. Be direct with your replies, but if the player is talkative then be talkative as well."
+
+## More lower level Character configuration.
+@export var character_config : Player2AICharacterConfig = Player2AICharacterConfig.new():
+	set(new_config):
+		character_config = new_config
+		character_config.property_list_changed.connect(notify_property_list_changed)
+		notify_property_list_changed()
+## More lower level Chat configuration.
+@export var chat_config : Player2AIChatConfig = Player2AIChatConfig.new()
 
 @export_subgroup("Tool Calls", "tool_calls")
 ## Set this to an object to scan for functions in that object to call
@@ -88,7 +90,7 @@ const TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME = "MESSAGE_ARG"
 
 ## prints the client version, useful endpoint test
 func print_client_version() -> void:
-	Player2API.get_health(config.api,
+	Player2API.get_health(chat_config.api,
 		func(result):
 			print(result.client_version)
 	)
@@ -114,7 +116,6 @@ func _get_default_conversation_history_filepath() -> String:
 	var char_desc = _selected_character["description"] if _selected_character else "" # leave blank since user might update it more rapidly
 	var desc_hash = hash(char_desc)
 	var result = "user://HISTORY_" + char_name + "_" + str(desc_hash) + ".json"
-	#print("default history path: " + result)
 	return result
 
 ## Save the current conversation history to a file. Leave blank to use our default location.
@@ -136,14 +137,15 @@ func _clear_conversation_history_tool():
 func clear_conversation_history(filename : String = ""):
 	if filename.is_empty():
 		filename = _get_default_conversation_history_filepath()
-	#if not DirAccess.dir_exists_absolute(filename):
-		#print("(no conversation history found at " + filename + ")")
-		#return
-	var e := DirAccess.remove_absolute(filename)
-	if e != OK:
-		print("(failed to delete conversation history at " + filename + ")")
+	if !FileAccess.file_exists(filename):
+		print("(no conversation history found at " + filename + ")")
 	else:
-		print("Successfully deleted conversation history from " + filename)
+		var e := DirAccess.remove_absolute(filename)
+		if e != OK:
+			print("(failed to delete conversation history at " + filename + ". It might not be present.)")
+		else:
+			print("Successfully deleted conversation history from " + filename)
+	notify_property_list_changed()
 
 ## Load our conversation history from a file. Leave blank to use our default location.
 ## Alternatively, set `conversation_history` manually, and for a "welcome back" message use `notify`.
@@ -160,7 +162,8 @@ func load_conversation_history(notify_agent_for_welcome_message: bool = true, me
 
 	var content := file.get_as_text()
 	file.close()
-	print("content" + content)
+
+	#print("content" + content)
 
 	var deserialized : Array[ConversationMessage] = ConversationMessage.deserialize_list(content)
 	
@@ -169,7 +172,7 @@ func load_conversation_history(notify_agent_for_welcome_message: bool = true, me
 	# Notify welcome message
 	if notify_agent_for_welcome_message:
 		if message.is_empty():
-			message = config.auto_load_entry_message
+			message = chat_config.auto_load_entry_message
 		notify(message)
 
 ## Add chat message to our history.
@@ -190,7 +193,7 @@ func notify(message : String) -> void:
 
 ## Stops TTS (global)
 func stop_tts() -> void:
-	Player2API.tts_stop(config.api)
+	Player2API.tts_stop(chat_config.api)
 
 ## Check if our history has too many messages and prompt for a summary/cull
 func _processconversation_history() -> void:
@@ -200,11 +203,11 @@ func _processconversation_history() -> void:
 		return
 
 	# max size
-	if conversation_history.size() > config.conversation_history_size:
+	if conversation_history.size() > chat_config.conversation_history_size:
 		print("Conversation history limit reached: Cropping and summarizing")
 		# crop conversation history
-		var to_summarize := conversation_history.slice(0, config.conversation_summary_buffer)
-		conversation_history = conversation_history.slice(conversation_history.size() - config.conversation_history_size)
+		var to_summarize := conversation_history.slice(0, chat_config.conversation_summary_buffer)
+		conversation_history = conversation_history.slice(conversation_history.size() - chat_config.conversation_history_size)
 
 		# summarize a fragment of the space we cropped out and push that to the start...
 		if to_summarize.size() > 0:
@@ -215,8 +218,8 @@ func _processconversation_history() -> void:
 				func(result : String):
 					# We got our summary from the endpoint, set and move on.
 					_current_summary = result
-					if _current_summary.length() > config.summary_max_size:
-						_current_summary = _current_summary.substr(0, config.summary_max_size)
+					if _current_summary.length() > chat_config.summary_max_size:
+						_current_summary = _current_summary.substr(0, chat_config.summary_max_size)
 					_summarizing_history = false,
 				func():
 					# error! Do nothing for now.
@@ -230,7 +233,7 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 	# System message
 	var system_msg := Player2Schema.Message.new()
 	system_msg.role = "system"
-	system_msg.content = config.summary_message.replace("${summary_max_size}", str(config.summary_max_size))
+	system_msg.content = chat_config.summary_message.replace("${summary_max_size}", str(chat_config.summary_max_size))
 
 	# Get all previous messages as a log...
 	var messages_log = ""
@@ -255,7 +258,7 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 
 	request.messages.assign(req_messages)
 	thinking = true
-	Player2API.chat(config.api, request,
+	Player2API.chat(chat_config.api, request,
 		func(result):
 			if result.choices.size() != 0:
 				var reply = result.choices.get(0).message.content
@@ -356,14 +359,14 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 		var functions := _scan_node_tool_call_functions(node)
 
 		var valid_function_names = [] if (!tool_calls_function_definitions or !tool_calls_function_definitions.definitions) else tool_calls_function_definitions.definitions.filter(func(d): return d and d.enabled).map(func(d): return d.name)
-		
-		print("VALID FUNCTION NAMES")
-		print(valid_function_names)
+
+		#print("VALID FUNCTION NAMES")
+		#print(valid_function_names)
 
 		for function in functions:
 			var f_name = function["name"]
 
-			# tool call filter based on config (by default OMIT)
+			# tool call filter based on chat_config (by default OMIT)
 			if !tool_calls_function_definitions or !tool_calls_function_definitions.definitions:
 				continue
 			var function_definition_index = tool_calls_function_definitions.definitions.find_custom(func(d): return d.name == f_name)
@@ -427,7 +430,7 @@ func _convert_tool_call(simple_tool_call : AIToolCall) -> Player2Schema.Tool:
 	# Add our optional message arg
 	var optional_message_arg_t := Dictionary()
 	optional_message_arg_t["type"] = AIToolCallParameter.arg_type_to_schema_type(AIToolCallParameter.Type.STRING)
-	optional_message_arg_t["description"] = config.tool_calls_message_optional_arg_description
+	optional_message_arg_t["description"] = chat_config.tool_calls_message_optional_arg_description
 	p.properties[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME] = optional_message_arg_t
 	p.required.push_back(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
 
@@ -457,22 +460,22 @@ func _tts_speak(reply_message : String) -> void:
 	var req := Player2Schema.TTSRequest.new()
 	req.text = reply_message
 	req.play_in_app = true
-	req.speed = config.tts_speed
+	req.speed = character_config.tts_speed
 	# Thankfully these are just defaults, characters override this
-	req.voice_gender = Player2TTS.Gender.find_key(config.tts_default_gender).to_lower()
-	req.voice_language = Player2TTS.Language.find_key(config.tts_default_language)
+	req.voice_gender = Player2TTS.Gender.find_key(character_config.tts_default_gender).to_lower()
+	req.voice_language = Player2TTS.Language.find_key(character_config.tts_default_language)
 	# Selected character voice ID
 	if _selected_character and _selected_character["voice_ids"] and _selected_character["voice_ids"].size() != 0:
 		req.voice_ids = []
 		req.voice_ids.assign(_selected_character["voice_ids"])
 
-	Player2API.tts_speak(config.api, req)
+	Player2API.tts_speak(chat_config.api, req)
 
 func _run_chat_internal(message : String) -> void:
 	if message and !message.is_empty():
 		var reply_message := message.trim_suffix("\n") 
 		chat_received.emit(reply_message)
-		if config.tts_enabled:
+		if character_config.tts_enabled:
 			_tts_speak(reply_message)
 
 func _process_tool_call_reply(tool_call_reply : Array[AIToolCallReply]) -> void:
@@ -546,11 +549,11 @@ func _process_chat_api() -> void:
 	# System message
 	var system_msg := Player2Schema.Message.new()
 	system_msg.role = "system"
-	var system_msg_content = config.system_message_organization\
-		.replace("${system_message_character}", config.system_message_character)\
+	var system_msg_content = chat_config.system_message_organization\
+		.replace("${system_message_character}", chat_config.system_message_character)\
 		.replace("${system_message_custom}", character_system_message)\
-		.replace("${system_message_behavior}", config.system_message_behavior)\
-		.replace("${system_message_prompting}", config.system_message_prompting)\
+		.replace("${system_message_behavior}", chat_config.system_message_behavior)\
+		.replace("${system_message_prompting}", chat_config.system_message_prompting)\
 		.replace("${character_name}", _selected_character["name"] if _selected_character else character_name)\
 		.replace("${character_description}", _selected_character["description"] if _selected_character else character_description)
 	system_msg_content += """
@@ -563,7 +566,7 @@ func _process_chat_api() -> void:
 			"world_status": The status of the current game world.,
 		}
 	"""
-	if config.tool_calls_use_tool_call_api:
+	if chat_config.tool_calls_use_tool_call_api:
 		system_msg_content += """
 			Response format:
 			Always respond with a plain string response, which will represent what YOU say. Do not prefix with anything (for example, reply with "hello!" instead of "Agent (or my name or anything else): hello!") unless previously instructed.
@@ -626,7 +629,7 @@ func _process_chat_api() -> void:
 		system_msg_content += "\nYou must ONLY reply in JSON using the Response Format. Non-JSON String results are INVALID"
 
 	# prefix & postfix
-	system_msg_content = config.system_message_prefix + system_msg_content + config.system_message_postfix
+	system_msg_content = chat_config.system_message_prefix + system_msg_content + chat_config.system_message_postfix
 
 	system_msg.content = system_msg_content
 
@@ -636,7 +639,7 @@ func _process_chat_api() -> void:
 	if not _current_summary.is_empty():
 		var summary_msg := Player2Schema.Message.new()
 		summary_msg.role = "assistant"
-		summary_msg.content = config.summary_prefix.replace("${summary}", _current_summary)
+		summary_msg.content = chat_config.summary_prefix.replace("${summary}", _current_summary)
 		req_messages.push_back(summary_msg)
 
 	# History
@@ -650,12 +653,12 @@ func _process_chat_api() -> void:
 	request.messages.assign(req_messages)
 
 	# Tools
-	if config.tool_calls_use_tool_call_api:
+	if chat_config.tool_calls_use_tool_call_api:
 		request.tools = _generate_schema_tools()
-		request.tool_choice = config.tool_calls_choice
+		request.tool_choice = chat_config.tool_calls_choice
 
 	thinking = true
-	Player2API.chat(config.api, request,
+	Player2API.chat(chat_config.api, request,
 		func(result):
 			thinking = false
 			for choice in result.choices:
@@ -663,7 +666,7 @@ func _process_chat_api() -> void:
 				if !"message" in choice:
 					continue
 				var tool_calls_reply : Array[AIToolCallReply]
-				if config.tool_calls_use_tool_call_api:
+				if chat_config.tool_calls_use_tool_call_api:
 					# Use openAI spec tool call (less error prone but slow)
 					if "content" in choice.message:
 						var reply : String = choice.message["content"]
@@ -729,7 +732,7 @@ func _process_chat_api() -> void:
 							# If the function returned something then pass it to the agent.
 							if func_result:
 								var func_result_string = JsonClassConverter.class_to_json_string(func_result) if func_result is Object else func_result
-								var func_result_notify_string := config.tool_calls_reply_message \
+								var func_result_notify_string := chat_config.tool_calls_reply_message \
 									.replace("${tool_call_name}", tool_name) \
 									.replace("${tool_call_reply}", func_result_string)
 								if func_result_notify_string && !func_result_notify_string.is_empty():
@@ -741,7 +744,7 @@ func _process_chat_api() -> void:
 					if !tool_call_history_messages.is_empty():
 						_append_agent_action_to_history(". ".join(tool_call_history_messages))
 				_run_chat_internal(message_reply)
-				if config.tool_calls_use_tool_call_api:
+				if chat_config.tool_calls_use_tool_call_api:
 					_append_agent_reply_to_history(message_reply)
 				elif "content" in choice.message:
 					# We want the WHOLE context
@@ -755,11 +758,11 @@ func _process_chat_api() -> void:
 
 func _update_selected_character_from_endpoint() -> void:
 	thinking = true
-	Player2API.get_selected_characters(config.api, func(result):
+	Player2API.get_selected_characters(chat_config.api, func(result):
 		thinking = false
 		var characters : Array = result["characters"] if (result and "characters" in result) else []
 		if characters and characters.size() > 0:
-			var index = config.use_player2_selected_character_desired_index
+			var index = character_config.use_player2_selected_character_desired_index
 			if index >= characters.size() or index < 0:
 				# Invalid index, find a valid one.
 				# TODO: get a random index from the least available agents, so we actually fill it up one by one.
@@ -767,12 +770,12 @@ func _update_selected_character_from_endpoint() -> void:
 			_selected_character = characters[index]
 			_selected_character_index = index
 			# After loaded, then we might also load our conversation history.
-			if config.auto_store_conversation_history:
+			if chat_config.auto_store_conversation_history:
 				load_conversation_history(),
 		func(fail_code):
 			thinking = false
 			# After loaded, then we might also load our conversation history.
-			if config.auto_store_conversation_history:
+			if chat_config.auto_store_conversation_history:
 				load_conversation_history(),
 	)
 
@@ -789,6 +792,29 @@ func _get_property_list() -> Array[Dictionary]:
 	# TODO: Don't spam (timeout?)
 	_validate_tool_call_definitions()
 	return []
+func _validate_property(property: Dictionary) -> void:
+	var name = property.name
+
+	# Don't show character name/description if we're using player2 selected character
+	if character_config and character_config.use_player2_selected_character:
+		if name == "character_name" or name == "character_description":
+			property.usage = PROPERTY_USAGE_NO_EDITOR
+
+	# Clear conversation history button: Appear only if we have the conversation history file present
+	#if name == "editor_tool_button_clear_conversation_history":
+		#var fpath := _get_default_conversation_history_filepath()
+		#if !FileAccess.file_exists(fpath):
+			#property.usage = PROPERTY_USAGE_NO_EDITOR
+
+func _property_can_revert(property: StringName) -> bool:
+	return property == "chat_config" or property == "character_config"
+
+func _property_get_revert(property: StringName) -> Variant:
+	if property == "chat_config":
+		return Player2AIChatConfig.new()
+	if property == "character_config":
+		return Player2AICharacterConfig.new()
+	return null
 
 ## Make it so our tool call definitions get auto populated and modified
 func _validate_tool_call_definitions() -> void:
@@ -821,36 +847,34 @@ func _validate_tool_call_definitions() -> void:
 	tool_calls_function_definitions.definitions = result
 	pass
 
-#func _validate_property(property: Dictionary) -> void:
-	#if property.name == "tool_calls_function_definitions":
-		#property.usage |= PROPERTY_USAGE_READ_ONLY
-
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		_validate_tool_call_definitions()
+		if character_config:
+			character_config.property_list_changed.connect(notify_property_list_changed)
 		return
 	_queue_process_timer = Timer.new()
 	self.add_child(_queue_process_timer)
-	_queue_process_timer.wait_time = config.queue_check_interval_seconds
+	_queue_process_timer.wait_time = chat_config.queue_check_interval_seconds
 	_queue_process_timer.one_shot = false
 	_queue_process_timer.timeout.connect(_process_chat_api)
 	_queue_process_timer.start()
 
-	if config.use_player2_selected_character:
+	if character_config.use_player2_selected_character:
 		_update_selected_character_from_endpoint()
 	else:
-		if config.auto_store_conversation_history:
+		if chat_config.auto_store_conversation_history:
 			load_conversation_history()
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
 	# TODO override setter to avoid process func update
-	_queue_process_timer.wait_time = config.queue_check_interval_seconds
+	_queue_process_timer.wait_time = chat_config.queue_check_interval_seconds
 
 func _exit_tree() -> void:
 	if Engine.is_editor_hint():
 		return
 	# Before we leave, store our conversation history.
-	if config.auto_store_conversation_history:
+	if chat_config.auto_store_conversation_history:
 		save_conversation_history()

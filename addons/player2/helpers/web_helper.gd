@@ -22,7 +22,13 @@ func _parse_url_and_port(path : String) -> UrlPort:
 
 func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", headers : Array[String] = [], on_completed : Callable = Callable(), on_fail : Callable = Callable()) -> void:
 
-	var string_body : String = body if body is String else JsonClassConverter.class_to_json_string(body)
+	var string_body : String
+	if body is String:
+		string_body = body
+	elif body is Dictionary:
+		string_body = JSON.stringify(body)
+	else:
+		string_body = JsonClassConverter.class_to_json_string(body)
 
 	print("HTTP REQUEST:")
 	print("\n\n")

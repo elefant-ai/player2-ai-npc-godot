@@ -1,5 +1,5 @@
 ## More general/lower level configuration with defaults that can be ignored.
-class_name Player2AINPCConfig
+class_name Player2AIChatConfig
 extends Resource
 
 @export var api : Player2APIConfig = Player2APIConfig.new()
@@ -21,18 +21,6 @@ extends Resource
 @export_multiline var system_message_prefix: String = ""
 ## This will always go at the VERY END of the system message (if you want to do that)
 @export_multiline var system_message_postfix : String = ""
-
-@export_group ("Player 2 Selected Character", "use_player2_selected_character")
-## If true, will grab information about the player's selected agents.
-@export var use_player2_selected_character : bool = false
-## If there are multiple agents, pick this index. Set to -1 to automatically pick a unique agent
-@export_range(-1, 99999) var use_player2_selected_character_desired_index : int = -1
-
-@export_group("Text To Speech", "tts")
-@export var tts_enabled : bool = false
-@export var tts_speed : float = 1
-@export var tts_default_language : Player2TTS.Language = Player2TTS.Language.en_US
-@export var tts_default_gender : Player2TTS.Gender = Player2TTS.Gender.FEMALE
 
 # TODO: Validate conversation_history_size > 0 and conversation_history_size > conversation_summary_buffer
 @export_group("Conversation and Summary")

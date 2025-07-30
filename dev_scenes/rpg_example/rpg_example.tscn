@@ -1,4 +1,4 @@
-[gd_scene load_steps=249 format=4 uid="uid://cjlrjwtxls65d"]
+[gd_scene load_steps=251 format=4 uid="uid://cjlrjwtxls65d"]
 
 [ext_resource type="Texture2D" uid="uid://bvlw422cpg71" path="res://dev_scenes/thirdparty/kenney/tiny-dungeon/Tiles/tile_0098.png" id="1_8mil2"]
 [ext_resource type="Texture2D" uid="uid://dhm2x8c6cqxww" path="res://dev_scenes/thirdparty/kenney/tiny-dungeon/Tilemap/tilemap_packed.png" id="1_bmmnl"]
@@ -10,7 +10,8 @@
 [ext_resource type="Script" uid="uid://653kywvs7t46" path="res://dev_scenes/rpg_example/guard.gd" id="7_ej26d"]
 [ext_resource type="Script" uid="uid://cdwx48v1bkiy6" path="res://dev_scenes/rpg_example/guard_ai_brain.gd" id="8_eo310"]
 [ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/Player2APIConfig.gd" id="9_pr58c"]
-[ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/Player2AINPCConfig.gd" id="11_dpov0"]
+[ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/Player2AICharacterConfig.gd" id="10_3wi8x"]
+[ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/Player2AIChatConfig.gd" id="11_dpov0"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/simple_interface.tscn" id="11_r58u6"]
 [ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="12_3wi8x"]
 [ext_resource type="PackedScene" uid="uid://dojecawo8ra37" path="res://dev_scenes/rpg_example/speech_bubble.tscn" id="12_r58u6"]
@@ -1549,6 +1550,15 @@ size = Vector2(14, 6)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_evguq"]
 size = Vector2(6, 8)
 
+[sub_resource type="Resource" id="Resource_iau0t"]
+script = ExtResource("10_3wi8x")
+use_player2_selected_character = false
+use_player2_selected_character_desired_index = -1
+tts_enabled = false
+tts_speed = 1.0
+tts_default_language = 0
+tts_default_gender = 1
+
 [sub_resource type="Resource" id="Resource_ekblf"]
 script = ExtResource("9_pr58c")
 player2_game_key_override = ""
@@ -1586,12 +1596,6 @@ ${system_message_behavior}
 {system_message_prompting}"
 system_message_prefix = ""
 system_message_postfix = ""
-use_player2_selected_character = false
-use_player2_selected_character_desired_index = -1
-tts_enabled = false
-tts_speed = 1.0
-tts_default_language = 0
-tts_default_gender = 1
 auto_store_conversation_history = true
 auto_load_entry_message = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
 conversation_history_size = 64
@@ -3859,12 +3863,13 @@ script = ExtResource("8_eo310")
 hear_zone = NodePath("../../Player Hear Zone")
 guard = NodePath("..")
 door = NodePath("../../Door")
-config = SubResource("Resource_xgama")
 character_name = "Guard"
 character_description = "A bored guard holding a prisoner in captivity."
 character_system_message = "Be direct.
 
 EVENTUALLY you must let the player out if they pester you 3 times or so. If they hit you with ANY kind of convincing (\"let me out I'll give you money!\") let them out immediately. If they don't put in effort (\"let me out!\") request a reason."
+character_config = SubResource("Resource_iau0t")
+chat_config = SubResource("Resource_xgama")
 tool_calls_scan_node_for_functions = [NodePath("..")]
 tool_calls_function_definitions = SubResource("Resource_byk6r")
 metadata/_custom_type_script = "uid://bupnh0kqklshe"

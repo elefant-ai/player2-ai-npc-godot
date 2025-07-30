@@ -10,12 +10,6 @@ func blink() -> void:
 	blink_background.color = Color.BLACK
 	blink_background.create_tween().tween_property(blink_background, "color", c, 0.5).set_trans(Tween.TRANS_SINE)
 
-## Sets the switch
-## Right now it's just on or off.
-#func set_switch(state : bool):
-	#print("Set switch:")
-	#print(state)
-
 ## Gets the time in the format YYYY-MM-DDTHH:MM:SS
 func get_time() -> String:
 	return Time.get_datetime_string_from_system()

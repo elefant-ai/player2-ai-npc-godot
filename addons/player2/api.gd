@@ -45,18 +45,18 @@ static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletio
 	if !request.tools or request.tools.size() == 0:
 		json_req.erase("tools")
 		json_req.erase("tool_choice")
-		for m : Dictionary in request["messages"]:
+		for m : Dictionary in json_req["messages"]:
 			m.erase("tool_call_id")
 			m.erase("tool_calls")
 
-	Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
+	Player2WebHelper.request(config.endpoint_chat, HTTPClient.Method.METHOD_POST, json_req, _get_headers(config),
 	func(body, code):
 		if code == 429:
 			# Too many requests, try again...
 			print("too many requests, trying again...")
 			Player2WebHelper.call_timeout(func():
 				# Call ourselves again...
-				chat(config, request, on_complete, on_fail)
+				chat(config, json_req, on_complete, on_fail)
 				, config.request_too_much_delay_seconds)
 			return
 		if code != 200:
