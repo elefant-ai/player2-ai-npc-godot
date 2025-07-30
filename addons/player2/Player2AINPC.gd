@@ -29,7 +29,7 @@ var editor_tool_button_clear_conversation_history = _clear_conversation_history_
 		tool_calls_scan_node_for_functions = new_nodes
 		_validate_tool_call_definitions()
 		# notify_property_list_changed()
-
+@export_tool_button("Rescan functions") var tool_calls_rescan_functions = _validate_tool_call_definitions
 @export var tool_calls_function_definitions : ToolcallFunctionDefinitions
 
 ## Whether the agent is thinking (coming up with a reply to a chat, stimulus, or summarizing the chat)
@@ -354,7 +354,6 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 
 	for node in nodes_to_scan:
 		
-		var functions_documentation := Player2FunctionHelper.parse_documentation(node.get_script())
 		var is_self := node == self
 		var functions := _scan_node_tool_call_functions(node)
 
@@ -383,8 +382,6 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 			# name and description
 			tool_call.function_name = f_name
 			tool_call.description = function_definition.description
-			#if functions_documentation.has(f_name):
-				#tool_call.description = functions_documentation[f_name]
 
 			# args
 			tool_call.args = []
@@ -818,33 +815,51 @@ func _property_get_revert(property: StringName) -> Variant:
 
 ## Make it so our tool call definitions get auto populated and modified
 func _validate_tool_call_definitions() -> void:
+
+	# Editor/tool only
+	if !Engine.is_editor_hint():
+		return
+
 	if !tool_calls_function_definitions:
 		tool_calls_function_definitions = ToolcallFunctionDefinitions.new()
 	if !tool_calls_function_definitions.definitions:
 		tool_calls_function_definitions.definitions = []
 
 	var valid_functions : Array[Dictionary] = []
+	var comment_descriptions : Dictionary = {}
+
 	for node in tool_calls_scan_node_for_functions:
-		valid_functions.append_array(_scan_node_tool_call_functions(node))
+		# Documentation: Parse comments
+		var documentation := Player2FunctionHelper.parse_documentation(node.get_script())
+		for f in _scan_node_tool_call_functions(node):
+			if documentation.has(f.name):
+				if comment_descriptions.has(f.name):
+					print("Duplicate function name for description detected: " + f.name + " for node " + node.name)
+				comment_descriptions[f.name] = documentation[f.name]
+
+			# append function
+			valid_functions.append(f)
 	var valid_names : Array = valid_functions.map(func(d): return d["name"])
 
-	# Remove unwanted
-	var need_to_add : Array = []
-	need_to_add.append_array(valid_names)
+	# Add function definitions, keep old data and preserve order
 	var result : Array[ToolcallFunctionDefinition] = []
-	for definition in tool_calls_function_definitions.definitions:
-		var name = definition.name
-		if valid_names.has(name):
-			result.append(definition)
-			need_to_add.erase(name)
-	# Add needed
-	for name_to_add : String in need_to_add:
-		var new_definition := ToolcallFunctionDefinition.new()
-		new_definition.name = name_to_add
-		result.append(new_definition)
+	for name_to_add : String in valid_names:
+		# Do we already have something?
+		var definition : ToolcallFunctionDefinition = null
+		# Try to find existing
+		for existing_definition in tool_calls_function_definitions.definitions:
+			if existing_definition.name == name_to_add:
+				definition = existing_definition
+				break
+		if !definition:
+			definition = ToolcallFunctionDefinition.new()
+		definition.name = name_to_add
+		definition.description = "" if !comment_descriptions.has(definition.name) else comment_descriptions[definition.name]
+		result.append(definition)
 
 	# Set the value
 	tool_calls_function_definitions.definitions = result
+	tool_calls_function_definitions.notify_property_list_changed()
 	pass
 
 func _ready() -> void:

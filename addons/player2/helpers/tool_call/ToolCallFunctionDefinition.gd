@@ -7,7 +7,8 @@ extends Resource
 	set(value):
 		enabled = value
 		notify_property_list_changed()
-@export var description : String
+## Read from the comment above the function
+@export_multiline var description : String
 
 func _validate_property(property: Dictionary) -> void:
 	if property.name == "name":
@@ -17,6 +18,7 @@ func _validate_property(property: Dictionary) -> void:
 		return
 	if enabled:
 		if property.name == "description":
+			property.usage |= PROPERTY_USAGE_READ_ONLY
 			return
 	property.usage = PROPERTY_USAGE_NO_EDITOR
 	
