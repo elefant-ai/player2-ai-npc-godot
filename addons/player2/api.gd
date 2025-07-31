@@ -56,7 +56,7 @@ static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletio
 			print("too many requests, trying again...")
 			Player2WebHelper.call_timeout(func():
 				# Call ourselves again...
-				chat(config, json_req, on_complete, on_fail)
+				chat(config, request, on_complete, on_fail)
 				, config.request_too_much_delay_seconds)
 			return
 		if code != 200:
