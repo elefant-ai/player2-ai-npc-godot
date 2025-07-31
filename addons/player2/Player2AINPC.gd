@@ -676,7 +676,10 @@ func _process_chat_api() -> void:
 						var content_json : Dictionary = _parse_llm_message_json(choice.message["content"])
 						if content_json.is_empty():
 							# Invalid input probably
-							notify("You have sent an invalid input! Please properly format your input as JSON with the specified format.")
+							print("Invalid input from LLM! Input is expected to be in a valid JSON format.")
+							Player2ErrorHelper.send_error(chat_config.api, "Invalid input from LLM, expecting JSON. See logs for input.")
+							# DO NOT notify (infinite LLM loop and wasted calls)
+							#notify("You have sent an invalid input! Please properly format your input as JSON with the specified format.")
 							return
 						if content_json.has("message"):
 							message_reply += content_json["message"]
