@@ -13,6 +13,17 @@ var editor_tool_button_clear_conversation_history = _clear_conversation_history_
 ## More specific description on how to behave.
 @export_multiline var character_system_message = "Match the player's mood. Be direct with your replies, but if the player is talkative then be talkative as well."
 
+## Text to speech audio. If not present, an audio player will be created.
+@export var tts_audio_player : Node:
+	set(value):
+		if !(value is AudioStreamPlayer or value is AudioStreamPlayer2D or value is AudioStreamPlayer3D):
+			printerr("Invalid TTS audio player provided. Must be an AudioStreamPlayer, AudioStreamPlayer2D or AudioStreamPlayer3D.")
+			return
+		if tts_audio_player:
+			tts_audio_player.finished.disconnect(_on_tts_finished)
+		tts_audio_player = value
+		tts_audio_player.finished.connect(_on_tts_finished)
+
 ## More lower level Character configuration.
 @export var character_config : Player2AICharacterConfig = Player2AICharacterConfig.new():
 	set(new_config):
@@ -52,6 +63,10 @@ signal tool_called(function_name : String, args : Dictionary)
 signal chat_received(message : String)
 ## Called when our ai agent fails a chat
 signal chat_failed(error_code : int)
+## Called when TTS is called
+signal tts_began
+## Called when TTS ends (ONLY if `use_local_audio` is set to true in character configuration)
+signal tts_ended
 
 var _messsage_queued : bool = false
 
@@ -86,7 +101,14 @@ var _selected_character_index := -1
 
 var _queue_process_timer : Timer
 
+var _tts_playing : bool
+
 const TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME = "MESSAGE_ARG"
+
+func _on_tts_finished() -> void:
+	if _tts_playing:
+		tts_ended.emit()
+		_tts_playing = false
 
 ## prints the client version, useful endpoint test
 func print_client_version() -> void:
@@ -194,6 +216,7 @@ func notify(message : String) -> void:
 ## Stops TTS (global)
 func stop_tts() -> void:
 	Player2API.tts_stop(chat_config.api)
+	_on_tts_finished()
 
 ## Check if our history has too many messages and prompt for a summary/cull
 func _processconversation_history() -> void:
@@ -454,9 +477,14 @@ func _generate_schema_tools() -> Array[Player2Schema.Tool]:
 	return result
 
 func _tts_speak(reply_message : String) -> void:
+
+	# Cancel previous TTS
+	if tts_audio_player:
+		tts_audio_player.stop()
+	_on_tts_finished()
+
 	var req := Player2Schema.TTSRequest.new()
 	req.text = reply_message
-	req.play_in_app = true
 	req.speed = character_config.tts_speed
 	# Thankfully these are just defaults, characters override this
 	req.voice_gender = Player2TTS.Gender.find_key(character_config.tts_default_gender).to_lower()
@@ -466,13 +494,37 @@ func _tts_speak(reply_message : String) -> void:
 		req.voice_ids = []
 		req.voice_ids.assign(_selected_character["voice_ids"])
 
-	Player2API.tts_speak(chat_config.api, req)
+	req.play_in_app = !character_config.tts_use_local_audio
+	req.audio_format = "mp3" # TODO: Customize? Enum?
+
+	Player2API.tts_speak(chat_config.api, req, func(data):
+		_tts_playing = true
+		tts_began.emit()
+		if character_config.tts_use_local_audio:
+			var audio_data : String = data["data"]
+			# Validation
+			if !(tts_audio_player is AudioStreamPlayer or tts_audio_player is AudioStreamPlayer2D or tts_audio_player is AudioStreamPlayer3D):
+				printerr("Invalid TTS audio player provided. Must be an AudioStreamPlayer, AudioStreamPlayer2D or AudioStreamPlayer3D. Creating default.")
+				tts_audio_player = null
+			# Ensure TTS audio player exists
+			if !tts_audio_player:
+				tts_audio_player = AudioStreamPlayer.new()
+				add_child(tts_audio_player)
+			# Decode raw bytes to audio stream
+			var decoded_bytes = Marshalls.base64_to_raw(audio_data)
+			var stream : AudioStream = AudioStreamMP3.new()
+			stream.set_data(decoded_bytes)
+			# Play this stream
+			tts_audio_player.stream = stream
+			tts_audio_player.play()
+			pass
+		)
 
 func _run_chat_internal(message : String) -> void:
 	if message and !message.is_empty():
 		var reply_message := message.trim_suffix("\n") 
 		chat_received.emit(reply_message)
-		if character_config.tts_enabled:
+		if character_config.tts_enabled and character_config.tts_use_local_audio:
 			_tts_speak(reply_message)
 
 func _process_tool_call_reply(tool_call_reply : Array[AIToolCallReply]) -> void:
@@ -798,6 +850,10 @@ func _validate_property(property: Dictionary) -> void:
 	# Don't show character name/description if we're using player2 selected character
 	if character_config and character_config.use_player2_selected_character:
 		if name == "character_name" or name == "character_description":
+			property.usage = PROPERTY_USAGE_NO_EDITOR
+
+	if character_config and (!character_config.tts_enabled or !character_config.tts_use_local_audio):
+		if name == "tts_audio_player":
 			property.usage = PROPERTY_USAGE_NO_EDITOR
 
 	# Clear conversation history button: Appear only if we have the conversation history file present

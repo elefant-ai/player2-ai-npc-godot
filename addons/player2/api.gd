@@ -81,10 +81,15 @@ static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletio
 			on_fail.call(code)
 	)
 
-static func tts_speak(config : Player2APIConfig, request : Player2Schema.TTSRequest, on_fail : Callable = Callable()) -> void:
+static func tts_speak(config : Player2APIConfig, request : Player2Schema.TTSRequest,on_complete : Callable = Callable(), on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_tts_speak, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
 	func(body, code):
-		_alert_error_fail(config, code),
+		if code == 200:
+			if on_complete:
+				var result = JSON.parse_string(body)
+				on_complete.call(result)
+		else:
+			_alert_error_fail(config, code),
 	func(code):
 		_alert_error_fail(config, code, true)
 		if on_fail:

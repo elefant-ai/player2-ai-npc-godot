@@ -65,7 +65,7 @@ class TTSRequest extends Resource:
 	@export var voice_gender : String
 	@export var voice_language : String
 	@export var voice_ids : Array[String]
-	#@export var audio_format : String
+	@export var audio_format : String
 
 class STTStartRequest extends Resource:
 	@export var timeout : float
