@@ -17,7 +17,17 @@ extends Resource
 ## Text to Speech
 @export_group("Text To Speech", "tts")
 ## Enable TTS
-@export var tts_enabled : bool = false
+@export var tts_enabled : bool = false:
+	set(val):
+		tts_enabled = val
+		# for the agent to make updates
+		notify_property_list_changed()
+## If true, plays audio through godot. If false, plays through the app.
+@export var tts_use_local_audio : bool = true:
+	set(val):
+		tts_use_local_audio = val
+		# for the agent to make updates
+		notify_property_list_changed()
 ## Speed Scale (1 is default)
 @export var tts_speed : float = 1
 ## Default TTS language (overriden if `Player 2 Selected Character` is enabled)

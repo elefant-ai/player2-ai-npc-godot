@@ -15,6 +15,7 @@ script = ExtResource("2_333ad")
 use_player2_selected_character = false
 use_player2_selected_character_desired_index = -1
 tts_enabled = false
+tts_use_local_audio = true
 tts_speed = 1.0
 tts_default_language = 0
 tts_default_gender = 1

@@ -38,7 +38,6 @@ static func _alert_error_fail(config : Player2APIConfig, code : int, use_http_re
 			Player2ErrorHelper.send_error(config, "Internal server error.")
 
 static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
-	print("chat" + JsonClassConverter.class_to_json_string(request))
 
 	# Conditionally REMOVE if there are no tools/tool choice
 	var json_req = JsonClassConverter.class_to_json(request)
@@ -56,7 +55,7 @@ static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletio
 			print("too many requests, trying again...")
 			Player2WebHelper.call_timeout(func():
 				# Call ourselves again...
-				chat(config, json_req, on_complete, on_fail)
+				chat(config, request, on_complete, on_fail)
 				, config.request_too_much_delay_seconds)
 			return
 		if code != 200:
@@ -70,7 +69,6 @@ static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletio
 		print(body)
 		#var result = JsonClassConverter.json_to_class(Player2Schema.ChatCompletionResponse, JSON.parse_string(body))
 		var result = JSON.parse_string(body)
-		print(result)
 		on_complete.call(result)
 	,
 	func(code):
@@ -81,10 +79,15 @@ static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletio
 			on_fail.call(code)
 	)
 
-static func tts_speak(config : Player2APIConfig, request : Player2Schema.TTSRequest, on_fail : Callable = Callable()) -> void:
+static func tts_speak(config : Player2APIConfig, request : Player2Schema.TTSRequest,on_complete : Callable = Callable(), on_fail : Callable = Callable()) -> void:
 	Player2WebHelper.request(config.endpoint_tts_speak, HTTPClient.Method.METHOD_POST, request, _get_headers(config),
 	func(body, code):
-		_alert_error_fail(config, code),
+		if code == 200:
+			if on_complete:
+				var result = JSON.parse_string(body)
+				on_complete.call(result)
+		else:
+			_alert_error_fail(config, code),
 	func(code):
 		_alert_error_fail(config, code, true)
 		if on_fail:
