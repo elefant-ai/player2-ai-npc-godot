@@ -74,15 +74,24 @@ var _messsage_queued : bool = false
 class ConversationMessage:
 	@export var message : String
 	@export var role : String
-	static func serialize_list(conversation_history  : Array[ConversationMessage]) -> String:
-		return JSON.stringify(conversation_history.map(func(m : ConversationMessage): return {"message": m.message, "role": m.role}))
-	static func deserialize_list(conversation_history_json : String) -> Array[ConversationMessage]:
+	@export var tool_calls_optional : Array[Dictionary]
+	static func serialize_list(conversation_history  : Array[ConversationMessage], tool_calls_api : bool = true) -> String:
+		return JSON.stringify(conversation_history.map(func(m : ConversationMessage):
+			var result = {"message": m.message, "role": m.role}
+			if tool_calls_api:
+				result["tool_calls_optional"] = m.tool_calls_optional
+			return result
+			))
+	static func deserialize_list(conversation_history_json : String, tool_calls_api : bool = true) -> Array[ConversationMessage]:
 		var result : Array[ConversationMessage] = []
 		var json : Array = JSON.parse_string(conversation_history_json)
 		result.assign(json.map(func(d : Dictionary): 
 			var m := ConversationMessage.new()
 			m.role = d["role"]
 			m.message = d["message"]
+			if tool_calls_api and "tool_calls_optional" in d:
+				m.tool_calls_optional = []
+				m.tool_calls_optional.assign(d["tool_calls_optional"])
 			return m
 		))
 		return result
@@ -146,7 +155,7 @@ func save_conversation_history(filename : String = "") -> void:
 	if filename.is_empty():
 		filename = _get_default_conversation_history_filepath()
 
-	var serialized = ConversationMessage.serialize_list(conversation_history)
+	var serialized = ConversationMessage.serialize_list(conversation_history, chat_config.tool_calls_use_tool_call_api)
 	print("Saving conversation history to " + filename)
 	print(serialized)
 
@@ -187,7 +196,7 @@ func load_conversation_history(notify_agent_for_welcome_message: bool = true, me
 
 	#print("content" + content)
 
-	var deserialized : Array[ConversationMessage] = ConversationMessage.deserialize_list(content)
+	var deserialized : Array[ConversationMessage] = ConversationMessage.deserialize_list(content, chat_config.tool_calls_use_tool_call_api)
 	
 	conversation_history = deserialized
 
@@ -294,18 +303,25 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 	)
 
 ## Append a reply message to our history, assuming it's from the assistant.
-func _append_agent_reply_to_history(message : String):
-	if !message or message.is_empty():
-		return
-	var msg := ConversationMessage.new()
-	msg.role = "assistant"
-	msg.message = message
-	conversation_history.push_back(msg)
-func _append_agent_action_to_history(action : String):
-	var msg := ConversationMessage.new()
-	msg.role = "system"
-	msg.message = action
-	conversation_history.push_back(msg)
+#func _append_agent_reply_to_history(message : String, tool_calls_json : Array[Dictionary] = []):
+	#if !message or message.is_empty():
+		#return
+	#var msg := ConversationMessage.new()
+	#msg.role = "assistant"
+	#msg.message = message
+	#msg.tool_calls_optional = tool_calls_json
+	#conversation_history.push_back(msg)
+#func _append_agent_action_to_history(message : String):
+	#var msg := ConversationMessage.new()
+	#msg.role = "developer"
+	#msg.message = message
+	#conversation_history.push_back(msg)
+#func _append_agent_tool_call_to_history(tool_calls_json: Array[Dictionary]):
+	#var msg := ConversationMessage.new()
+	#msg.role = "developer"
+	#msg.message = "Tool Call Performed"
+	#msg.tool_calls_optional = tool_calls_json
+	#conversation_history.push_back(msg)
 
 # TODO: Move to helper file
 static func _get_tool_call_param_from_method_arg_dictionary(method_arg : Dictionary) -> AIToolCallParameter:
@@ -521,14 +537,11 @@ func _tts_speak(reply_message : String) -> void:
 		)
 
 func _run_chat_internal(message : String) -> void:
-	if message and !message.is_empty():
+	if message and !message.strip_edges().is_empty():
 		var reply_message := message.trim_suffix("\n") 
 		chat_received.emit(reply_message)
 		if character_config.tts_enabled and character_config.tts_use_local_audio:
 			_tts_speak(reply_message)
-
-func _process_tool_call_reply(tool_call_reply : Array[AIToolCallReply]) -> void:
-	pass
 
 func _tool_call_json_to_tool_call_reply(tool_call_json : Array) -> Array[AIToolCallReply]:
 	var result : Array[AIToolCallReply] = []
@@ -696,6 +709,21 @@ func _process_chat_api() -> void:
 		var msg := Player2Schema.Message.new()
 		msg.role = conversation_element.role
 		msg.content = conversation_element.message
+		# tool calls: add to history if present
+		if chat_config.tool_calls_use_tool_call_api:
+			msg.tool_calls = []
+			for tool_call_json : Dictionary in conversation_element.tool_calls_optional:
+				#print("ASDF pre: " + JSON.stringify(tool_call_json))
+				var tc : Player2Schema.ToolCall = Player2Schema.ToolCall.new() # JsonClassConverter.json_to_class(Player2Schema.ToolCall, tool_call_json)
+				tc.type = tool_call_json["type"]
+				tc.id = tool_call_json["id"]
+				tc.function = Player2Schema.FunctionCall.new()
+				tc.function.name = tool_call_json["function"]["name"]
+				# json encoded as a string here
+				tc.function.arguments = tool_call_json["function"]["arguments"]
+				#print("ASDF post: " + JsonClassConverter.class_to_json_string(tc))
+				#assert(false)
+				msg.tool_calls.append(tc)
 		req_messages.push_back(msg)
 
 	request.messages = []
@@ -709,6 +737,11 @@ func _process_chat_api() -> void:
 	thinking = true
 	Player2API.chat(chat_config.api, request,
 		func(result):
+			
+			var history_to_append : Array[ConversationMessage] = []
+			var notify_function_replies : Array[String] = []
+			var functions_to_call : Array[Dictionary] = []
+
 			thinking = false
 			for choice in result.choices:
 				var message_reply := ""
@@ -736,8 +769,8 @@ func _process_chat_api() -> void:
 						if content_json.has("message"):
 							message_reply += content_json["message"]
 						tool_calls_reply = _tool_call_non_json_content_to_tool_call_reply(content_json)
+				var tool_call_history_messages = []
 				if tool_calls_reply:
-					var tool_call_history_messages = []
 					for tool_call in tool_calls_reply:
 						var tool_name := tool_call.function_name
 						#tool_name = "announce"
@@ -779,29 +812,63 @@ func _process_chat_api() -> void:
 								args_actual.append(arg_value)
 
 							# Call the function!
-							var func_result = f.callv(args_actual)
-
-							# If the function returned something then pass it to the agent.
-							if func_result:
-								var func_result_string = JsonClassConverter.class_to_json_string(func_result) if func_result is Object else func_result
-								var func_result_notify_string := chat_config.tool_calls_reply_message \
-									.replace("${tool_call_name}", tool_name) \
-									.replace("${tool_call_reply}", func_result_string)
-								if func_result_notify_string && !func_result_notify_string.is_empty():
-									notify(func_result_notify_string)
+							var func_to_call = func():
+								return f.callv(args_actual)
+							functions_to_call.append({
+								"func_to_call": func_to_call,
+								"func_name": "tool_name"
+							})
 
 							# History
 							tool_call_history_messages.append("Called " + tool_name + " with arguments [" + ",".join(args_actual) + "]")
-					# Add the tool calls to history
-					if !tool_call_history_messages.is_empty():
-						_append_agent_action_to_history(". ".join(tool_call_history_messages))
+	
+				# Agent Reply
 				_run_chat_internal(message_reply)
-				if chat_config.tool_calls_use_tool_call_api:
-					_append_agent_reply_to_history(message_reply)
-				elif "content" in choice.message:
-					# We want the WHOLE context
-					_append_agent_reply_to_history(choice.message["content"])
 
+				var agent_message := ConversationMessage.new()
+				agent_message.role = "assistant"
+				agent_message.message = message_reply
+				# Add to the tool calls json if we DO use the tool call API
+				if tool_calls_reply and chat_config.tool_calls_use_tool_call_api:
+					agent_message.tool_calls_optional = []
+					if 'message' in choice and 'tool_calls' in choice.message:
+						agent_message.tool_calls_optional.append_array(choice.message['tool_calls'])
+				history_to_append.append(agent_message)
+				
+				# Add a custom reply to notify tool call success if we DO NOT use the API
+				if tool_calls_reply and !chat_config.tool_calls_use_tool_call_api:
+					var tool_call_message := ConversationMessage.new()
+					tool_call_message.role = "assistant"
+					tool_call_message.message = ". ".join(tool_call_history_messages)
+					history_to_append.append(tool_call_message)
+
+				# Update history
+				conversation_history.append_array(history_to_append)
+
+				# Call the functions
+				for func_to_call in functions_to_call:
+					var func_result = func_to_call["func_to_call"].call()
+
+					# If the function returned something then pass it to the agent.
+					if func_result:
+						# convert func result to string
+						var func_result_string : String
+						if func_result is String:
+							func_result_string = func_result
+						elif func_result is Dictionary:
+							func_result_string = JSON.stringify(func_result)
+						else:
+							func_result_string = JsonClassConverter.class_to_json_string(func_result)
+
+						var func_result_notify_string := chat_config.tool_calls_reply_message \
+							.replace("${tool_call_name}", func_to_call["func_name"]) \
+							.replace("${tool_call_reply}", func_result_string)
+						notify_function_replies.append(func_result_notify_string)
+
+				# Notify the player if we got any replies at the end
+				notify_function_replies = notify_function_replies.filter(func(r): return r and !r.is_empty())
+				if notify_function_replies.size() != 0:
+					notify("Got replies:\n" + "\n".join(notify_function_replies))
 				,
 		func(error_code : int):
 			thinking = false

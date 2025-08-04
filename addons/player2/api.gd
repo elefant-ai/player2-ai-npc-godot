@@ -38,7 +38,6 @@ static func _alert_error_fail(config : Player2APIConfig, code : int, use_http_re
 			Player2ErrorHelper.send_error(config, "Internal server error.")
 
 static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
-	print("chat" + JsonClassConverter.class_to_json_string(request))
 
 	# Conditionally REMOVE if there are no tools/tool choice
 	var json_req = JsonClassConverter.class_to_json(request)
@@ -70,7 +69,6 @@ static func chat(config : Player2APIConfig, request: Player2Schema.ChatCompletio
 		print(body)
 		#var result = JsonClassConverter.json_to_class(Player2Schema.ChatCompletionResponse, JSON.parse_string(body))
 		var result = JSON.parse_string(body)
-		print(result)
 		on_complete.call(result)
 	,
 	func(code):
