@@ -1,5 +1,6 @@
 extends Node
 
+
 signal error(error : String)
 
 @onready var error_container : Node = $ScrollContainer/VBoxContainer

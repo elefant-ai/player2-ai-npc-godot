@@ -464,11 +464,13 @@ func _convert_tool_call(simple_tool_call : AIToolCall) -> Player2Schema.Tool:
 		pass
 
 	# Add our optional message arg
-	var optional_message_arg_t := Dictionary()
-	optional_message_arg_t["type"] = AIToolCallParameter.arg_type_to_schema_type(AIToolCallParameter.Type.STRING)
-	optional_message_arg_t["description"] = chat_config.tool_calls_message_optional_arg_description
-	p.properties[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME] = optional_message_arg_t
-	p.required.push_back(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
+	# Done because "content" field is empty otherwise
+	if chat_config.tool_calls_use_tool_call_api:
+		var optional_message_arg_t := Dictionary()
+		optional_message_arg_t["type"] = AIToolCallParameter.arg_type_to_schema_type(AIToolCallParameter.Type.STRING)
+		optional_message_arg_t["description"] = chat_config.tool_calls_message_optional_arg_description
+		p.properties[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME] = optional_message_arg_t
+		p.required.push_back(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
 
 	f.parameters = p
 	tool_call.function = f
@@ -739,7 +741,6 @@ func _process_chat_api() -> void:
 		func(result):
 			
 			var history_to_append : Array[ConversationMessage] = []
-			var notify_function_replies : Array[String] = []
 			var functions_to_call : Array[Dictionary] = []
 
 			thinking = false
@@ -775,9 +776,10 @@ func _process_chat_api() -> void:
 						var tool_name := tool_call.function_name
 						#tool_name = "announce"
 						var args := tool_call.args
-						# Tool call had an optional message to it, add to it please...
+						# Tool call had an optional message to it, just force it to avoid duplicates
 						if tool_call.optional_message:
-							message_reply = tool_call.optional_message + message_reply
+							if !tool_call.optional_message.strip_edges().is_empty():
+								message_reply = tool_call.optional_message
 						tool_called.emit(tool_name, args)
 						if _tool_call_func_map.has(tool_name):
 							# Organize the arguments, call the function...
@@ -816,7 +818,7 @@ func _process_chat_api() -> void:
 								return f.callv(args_actual)
 							functions_to_call.append({
 								"func_to_call": func_to_call,
-								"func_name": "tool_name"
+								"func_name": tool_name
 							})
 
 							# History
@@ -845,30 +847,28 @@ func _process_chat_api() -> void:
 				# Update history
 				conversation_history.append_array(history_to_append)
 
-				# Call the functions
-				for func_to_call in functions_to_call:
-					var func_result = func_to_call["func_to_call"].call()
+				# Call the functions (they may be async)
+				for func_to_call_data in functions_to_call:
+					var func_to_call = func_to_call_data["func_to_call"]
+					var func_name = func_to_call_data["func_name"]
 
-					# If the function returned something then pass it to the agent.
-					if func_result:
-						# convert func result to string
-						var func_result_string : String
-						if func_result is String:
-							func_result_string = func_result
-						elif func_result is Dictionary:
-							func_result_string = JSON.stringify(func_result)
-						else:
-							func_result_string = JsonClassConverter.class_to_json_string(func_result)
+					Player2AsyncHelper.run_await_async(func_to_call, func(func_result):
+						if func_result:
+							# convert func result to string
+							var func_result_string : String
+							if func_result is String:
+								func_result_string = func_result
+							elif func_result is Dictionary:
+								func_result_string = JSON.stringify(func_result)
+							else:
+								func_result_string = JsonClassConverter.class_to_json_string(func_result)
 
-						var func_result_notify_string := chat_config.tool_calls_reply_message \
-							.replace("${tool_call_name}", func_to_call["func_name"]) \
-							.replace("${tool_call_reply}", func_result_string)
-						notify_function_replies.append(func_result_notify_string)
-
-				# Notify the player if we got any replies at the end
-				notify_function_replies = notify_function_replies.filter(func(r): return r and !r.is_empty())
-				if notify_function_replies.size() != 0:
-					notify("Got replies:\n" + "\n".join(notify_function_replies))
+							if func_result_string and !func_result_string.is_empty():
+								var func_result_notify_string := chat_config.tool_calls_reply_message \
+									.replace("${tool_call_name}", func_name) \
+									.replace("${tool_call_reply}", func_result_string)
+								notify(func_result_notify_string)
+						)
 				,
 		func(error_code : int):
 			thinking = false
@@ -991,7 +991,7 @@ func _validate_tool_call_definitions() -> void:
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		_validate_tool_call_definitions()
-		if character_config:
+		if character_config and !character_config.property_list_changed.is_connected(notify_property_list_changed):
 			character_config.property_list_changed.connect(notify_property_list_changed)
 		return
 	_queue_process_timer = Timer.new()
