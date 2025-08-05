@@ -23,7 +23,7 @@ func announce(announcement : String) -> void:
 	print("announcing: " + announcement)
 	billboard.text = announcement
 
-## Sets the game volume
+## Sets the game volume. Currently does nothing!
 func set_volume(volume : float) -> void:
 	print("Set volume!")
 	print(volume)

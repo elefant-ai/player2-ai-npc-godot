@@ -107,7 +107,7 @@ resource_scene_unique_id = "Resource_yhwd1"
 script = ExtResource("4_ofn2n")
 name = "set_volume"
 enabled = false
-description = "Sets the game volume "
+description = "Sets the game volume. Currently does nothing! "
 
 [sub_resource type="Resource" id="Resource_jcp5b"]
 Resource = null
