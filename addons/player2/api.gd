@@ -1,8 +1,10 @@
 class_name Player2API
 
 static func _get_headers(config : Player2APIConfig) -> Array[String]:
-	var game_key : String = ProjectSettings.get_setting("application/config/name") if config.player2_game_key_override.is_empty() else config.player2_game_key_override
-	var key = "GODOT_" + game_key.replace(" ", "_").replace(":", "_")
+	var game_key = ProjectSettings.get_setting("player2/game_key")
+	if !game_key or game_key.is_empty():
+		game_key = "undefined_godot_project"
+	var key = game_key# game_key.replace(" ", "_").replace(":", "_")
 	return [
 		"Content-Type: application/json; charset=utf-8",
 		"Accept: application/json; charset=utf-8",

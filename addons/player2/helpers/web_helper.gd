@@ -78,4 +78,3 @@ func call_timeout(call : Callable, timeout : float) -> void:
 		t.queue_free())
 	add_child(t)
 	t.start(timeout)
-	pass

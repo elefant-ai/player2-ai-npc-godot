@@ -22,7 +22,6 @@ tts_default_gender = 1
 
 [sub_resource type="Resource" id="Resource_qec4n"]
 script = ExtResource("3_1eb8p")
-player2_game_key_override = ""
 error_log_ui = true
 endpoint_chat = "http://127.0.0.1:4315/v1/chat/completions"
 endpoint_health = "http://127.0.0.1:4315/v1/health"
@@ -90,7 +89,7 @@ resource_scene_unique_id = "Resource_a46nd"
 script = ExtResource("4_ofn2n")
 name = "blink"
 enabled = true
-description = "Make the background of the user's input field quickly flash black and then go back to normal. "
+description = "Make the background of the user's input field quickly flash black and then go back to normal. Notifies caller when one blink is successful. "
 
 [sub_resource type="Resource" id="Resource_2vci2"]
 Resource = null
@@ -167,9 +166,17 @@ script = ExtResource("6_qmjy4")
 wait_time = 0.3
 autostart = true
 
+[node name="TTS Indicator" type="ColorRect" parent="CanvasLayer"]
+visible = false
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0.992602, 0.638143, 0.760959, 1)
+
 [connection signal="chat_received" from="Player2Agent" to="CanvasLayer/Simple Interface" method="append_line_agent"]
 [connection signal="thinking_began" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="show"]
 [connection signal="thinking_ended" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="hide"]
+[connection signal="tts_began" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="show"]
+[connection signal="tts_ended" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="hide"]
 [connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player2Agent" method="chat"]
 [connection signal="timeout" from="CanvasLayer/Simple Interface/Thinking Animation/Timer" to="CanvasLayer/Simple Interface/Thinking Animation" method="inc_count"]
 
