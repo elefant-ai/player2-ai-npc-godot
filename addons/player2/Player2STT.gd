@@ -51,7 +51,7 @@ func start_stt() -> void:
 	listening = true
 	var req = Player2Schema.STTStartRequest.new()
 	req.timeout = timeout
-	Player2API.stt_start(config, req, func(fail_code):
+	Player2API.stt_start(req, func(fail_code):
 		listening = false
 	)
 
@@ -63,7 +63,7 @@ func stop_stt() -> void:
 		return
 	listening = false
 	waiting_on_reply = true
-	Player2API.stt_stop(config, func(reply):
+	Player2API.stt_stop(func(reply):
 		if enabled:
 			if reply.has('text'):
 				var message : String = reply.text

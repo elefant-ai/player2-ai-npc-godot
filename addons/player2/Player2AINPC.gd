@@ -121,7 +121,7 @@ func _on_tts_finished() -> void:
 
 ## prints the client version, useful endpoint test
 func print_client_version() -> void:
-	Player2API.get_health(chat_config.api,
+	Player2API.get_health(
 		func(result):
 			print(result.client_version)
 	)
@@ -224,7 +224,7 @@ func notify(message : String) -> void:
 
 ## Stops TTS (global)
 func stop_tts() -> void:
-	Player2API.tts_stop(chat_config.api)
+	Player2API.tts_stop()
 	_on_tts_finished()
 
 ## Check if our history has too many messages and prompt for a summary/cull
@@ -290,7 +290,7 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 
 	request.messages.assign(req_messages)
 	thinking = true
-	Player2API.chat(chat_config.api, request,
+	Player2API.chat(request,
 		func(result):
 			if result.choices.size() != 0:
 				var reply = result.choices.get(0).message.content
@@ -515,7 +515,7 @@ func _tts_speak(reply_message : String) -> void:
 	req.play_in_app = !character_config.tts_use_local_audio
 	req.audio_format = "mp3" # TODO: Customize? Enum?
 
-	Player2API.tts_speak(chat_config.api, req, func(data):
+	Player2API.tts_speak(req, func(data):
 		_tts_playing = true
 		tts_began.emit()
 		if character_config.tts_use_local_audio:
@@ -737,7 +737,7 @@ func _process_chat_api() -> void:
 		request.tool_choice = chat_config.tool_calls_choice
 
 	thinking = true
-	Player2API.chat(chat_config.api, request,
+	Player2API.chat(request,
 		func(result):
 			
 			var history_to_append : Array[ConversationMessage] = []
@@ -877,7 +877,7 @@ func _process_chat_api() -> void:
 
 func _update_selected_character_from_endpoint() -> void:
 	thinking = true
-	Player2API.get_selected_characters(chat_config.api, func(result):
+	Player2API.get_selected_characters(func(result):
 		thinking = false
 		var characters : Array = result["characters"] if (result and "characters" in result) else []
 		if characters and characters.size() > 0:

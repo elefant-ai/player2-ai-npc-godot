@@ -1,9 +1,11 @@
-[gd_scene load_steps=19 format=3 uid="uid://cc80o6rwn8i0u"]
+[gd_scene load_steps=23 format=3 uid="uid://cc80o6rwn8i0u"]
 
 [ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/Player2AINPC.gd" id="1_ttqlg"]
-[ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/Player2AICharacterConfig.gd" id="2_333ad"]
-[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/Player2APIConfig.gd" id="3_1eb8p"]
-[ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/Player2AIChatConfig.gd" id="4_a46nd"]
+[ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/config/Player2AICharacterConfig.gd" id="2_333ad"]
+[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/config/Player2APIConfig.gd" id="3_1eb8p"]
+[ext_resource type="Script" uid="uid://4jjipstvxd6p" path="res://addons/player2/config/Player2LocalEndpointConfig.gd" id="3_2vci2"]
+[ext_resource type="Script" uid="uid://ceh624ltng4km" path="res://addons/player2/config/Player2WebEndpointConfig.gd" id="3_a46nd"]
+[ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/config/Player2AIChatConfig.gd" id="4_a46nd"]
 [ext_resource type="Script" uid="uid://r7ec3bhr4ij0" path="res://dev_scenes/simple_chat/ai_simple_tool_receiver.gd" id="4_ccetc"]
 [ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="4_ofn2n"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/simple_interface.tscn" id="5_333ad"]
@@ -21,20 +23,36 @@ tts_default_language = 0
 tts_default_gender = 1
 
 [sub_resource type="Resource" id="Resource_qec4n"]
-script = ExtResource("3_1eb8p")
-error_log_ui = true
-endpoint_chat = "http://127.0.0.1:4315/v1/chat/completions"
-endpoint_health = "http://127.0.0.1:4315/v1/health"
-endpoint_tts_speak = "http://127.0.0.1:4315/v1/tts/speak"
-endpoint_tts_stop = "http://127.0.0.1:4315/v1/tts/stop"
-endpoint_get_selected_characters = "http://127.0.0.1:4315/v1/selected_characters"
-endpoint_stt_start = "http://127.0.0.1:4315/v1/stt/start"
-endpoint_stt_stop = "http://127.0.0.1:4315/v1/stt/stop"
-request_too_much_delay_seconds = 3.0
+script = ExtResource("3_2vci2")
+chat = "http://127.0.0.1:4315/v1/chat/completions"
+health = "http://127.0.0.1:4315/v1/health"
+tts_speak = "http://127.0.0.1:4315/v1/tts/speak"
+tts_stop = "http://127.0.0.1:4315/v1/tts/stop"
+get_selected_characters = "http://127.0.0.1:4315/v1/selected_characters"
+stt_start = "http://127.0.0.1:4315/v1/stt/start"
+stt_stop = "http://127.0.0.1:4315/v1/stt/stop"
+endpoint_check = "http://127.0.0.1:4315/v1/health"
 
 [sub_resource type="Resource" id="Resource_n21ij"]
+script = ExtResource("3_a46nd")
+chat = "https://api.player2.game/v1/chat/completions"
+health = "https://api.player2.game/v1/health"
+tts_speak = "https://api.player2.game/v1/tts/speak"
+get_selected_characters = "https://api.player2.game/v1/selected_characters"
+auth_start = "https://api.player2.game/v1/login/device/new"
+auth_poll = "https://api.player2.game/v1/login/device/token"
+endpoint_check = "https://api.player2.game"
+
+[sub_resource type="Resource" id="Resource_5sire"]
+script = ExtResource("3_1eb8p")
+error_log_ui = true
+endpoint_web = SubResource("Resource_n21ij")
+endpoint_local = SubResource("Resource_qec4n")
+request_too_much_delay_seconds = 3.0
+
+[sub_resource type="Resource" id="Resource_mieae"]
 script = ExtResource("4_a46nd")
-api = SubResource("Resource_qec4n")
+api = SubResource("Resource_5sire")
 queue_check_interval_seconds = 2.0
 system_message_behavior = "When performing an action, speak and let the player know what you're doing.
 
@@ -124,11 +142,10 @@ font_size = 49
 
 [node name="Test" type="Node2D"]
 
-[node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
+[node name="Player2Agent" type="Node" parent="."]
 script = ExtResource("1_ttqlg")
 character_config = SubResource("Resource_333ad")
-chat_config = SubResource("Resource_n21ij")
-tool_calls_scan_node_for_functions = [NodePath("../Tool Receiver")]
+chat_config = SubResource("Resource_mieae")
 tool_calls_function_definitions = SubResource("Resource_jcp5b")
 metadata/_custom_type_script = "uid://bupnh0kqklshe"
 
@@ -172,11 +189,6 @@ offset_right = 40.0
 offset_bottom = 40.0
 color = Color(0.992602, 0.638143, 0.760959, 1)
 
-[connection signal="chat_received" from="Player2Agent" to="CanvasLayer/Simple Interface" method="append_line_agent"]
-[connection signal="thinking_began" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="show"]
-[connection signal="thinking_ended" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="hide"]
-[connection signal="tts_began" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="show"]
-[connection signal="tts_ended" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="hide"]
 [connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player2Agent" method="chat"]
 [connection signal="timeout" from="CanvasLayer/Simple Interface/Thinking Animation/Timer" to="CanvasLayer/Simple Interface/Thinking Animation" method="inc_count"]
 

@@ -53,8 +53,18 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 			if on_fail != null:
 				on_fail.call(result)
 		else:
+			if response_code == 429:
+				# Too many requests, try again...
+				print("too many requests, trying again...")
+				Player2WebHelper.call_timeout(
+					func():
+						# Call ourselves again...
+						request(path, method, body, headers, on_completed, on_fail),
+					Player2APIConfig.grab().request_too_much_delay_seconds
+				)
+				return
 			if on_completed:
-				on_completed.call(body.get_string_from_utf8() if body else "", response_code)
+				on_completed.call(body.get_string_from_utf8() if body else "", response_code, headers)
 		#if on_completed_inner != null:
 			#http.request_completed.disconnect(on_completed_inner)
 		remove_child(http)
@@ -69,12 +79,3 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 		if on_fail != null:
 			on_fail.call(err)
 		return
-
-func call_timeout(call : Callable, timeout : float) -> void:
-	var t = Timer.new()
-	t.autostart = false
-	t.timeout.connect(func():
-		call.call()
-		t.queue_free())
-	add_child(t)
-	t.start(timeout)

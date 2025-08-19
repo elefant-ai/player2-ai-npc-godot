@@ -1,4 +1,5 @@
 ## More general/lower level configuration with defaults that can be ignored.
+@tool
 class_name Player2AIChatConfig
 extends Resource
 
@@ -54,3 +55,12 @@ Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars
 @export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
 ## Tool calls may have an optional "message" field, this will be its description to help the LLM decide how to populate it.
 @export_multiline var tool_calls_message_optional_arg_description : String = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."
+
+
+func _property_can_revert(property: StringName) -> bool:
+	return property == "api"
+
+func _property_get_revert(property: StringName) -> Variant:
+	if property == "api":
+		return Player2APIConfig.new()
+	return null

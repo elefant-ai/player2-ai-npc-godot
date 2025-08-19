@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://4flv2qyji2mp" path="res://dev_scenes/simple_chat/ai_simple_text_interface.gd" id="1_6vno8"]
 [ext_resource type="Script" uid="uid://demr3r0wkqqj1" path="res://addons/player2/Player2STT.gd" id="2_wfmdp"]
-[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/Player2APIConfig.gd" id="3_e7tri"]
+[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/config/Player2APIConfig.gd" id="3_e7tri"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ygx8q"]
 font_size = 156
