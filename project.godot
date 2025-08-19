@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.4", "Forward Plus")
 Player2AsyncHelper="*res://addons/player2/helpers/async_helper.gd"
 Player2ErrorHelper="*res://addons/player2/helpers/error_helper.tscn"
 Player2WebHelper="*res://addons/player2/helpers/web_helper.gd"
+Player2AuthHelper="*res://addons/player2/helpers/auth_helper.gd"
 
 [editor_plugins]
 
@@ -60,10 +61,6 @@ talk={
 
 game_key="Player_2_AI_NPC_Godot"
 client_id=""
-api=Object(Resource,"resource_local_to_scene":false,"resource_name":"","script":Resource("res://addons/player2/config/Player2APIConfig.gd"),"error_log_ui":true,"endpoint_web":Object(Resource,"resource_local_to_scene":false,"resource_name":"","script":Resource("res://addons/player2/config/Player2WebEndpointConfig.gd"),"chat":"https://api.player2.game/v1/chat/completions","health":"https://api.player2.game/v1/health","tts_speak":"https://api.player2.game/v1/tts/speak","get_selected_characters":"https://api.player2.game/v1/selected_characters","auth_start":"https://api.player2.game/v1/login/device/new","auth_poll":"https://api.player2.game/v1/login/device/token","endpoint_check":"https://api.player2.game")
-,"endpoint_local":Object(Resource,"resource_local_to_scene":false,"resource_name":"","script":Resource("res://addons/player2/config/Player2LocalEndpointConfig.gd"),"chat":"http://127.0.0.1:4315/v1/chat/completions","health":"http://127.0.0.1:4315/v1/health","tts_speak":"http://127.0.0.1:4315/v1/tts/speak","tts_stop":"http://127.0.0.1:4315/v1/tts/stop","get_selected_characters":"http://127.0.0.1:4315/v1/selected_characters","stt_start":"http://127.0.0.1:4315/v1/stt/start","stt_stop":"http://127.0.0.1:4315/v1/stt/stop","endpoint_check":"http://127.0.0.1:4315/v1/health")
-,"request_too_much_delay_seconds":3.0)
-
 
 [rendering]
 
