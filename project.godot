@@ -62,7 +62,7 @@ talk={
 [player2]
 
 game_key="Player_2_AI_NPC_Godot"
-client_id="01977e1d-cf15-7d58-a6e2-ef47fc3d9f30"
+client_id=""
 
 [rendering]
 

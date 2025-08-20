@@ -42,7 +42,7 @@ ${system_message_behavior}
 {system_message_prompting}"
 system_message_prefix = ""
 system_message_postfix = ""
-auto_store_conversation_history = false
+auto_store_conversation_history = true
 auto_load_entry_message = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
 conversation_history_size = 64
 conversation_summary_buffer = 48

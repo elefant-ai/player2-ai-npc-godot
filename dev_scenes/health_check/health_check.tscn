@@ -9,7 +9,6 @@ script = ExtResource("1_y3n4o")
 [node name="Tester" type="Node" parent="."]
 script = ExtResource("2_xyo11")
 web = true
-web_auth_key = "p2_-CkWkMsZdtOwQVEZO9upEg"
 text = "{
     \"messages\": [
         {
