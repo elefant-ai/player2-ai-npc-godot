@@ -5,6 +5,7 @@
 
 [node name="HealthCheck" type="Node2D"]
 script = ExtResource("1_y3n4o")
+run = true
 
 [node name="Tester" type="Node" parent="."]
 script = ExtResource("2_xyo11")

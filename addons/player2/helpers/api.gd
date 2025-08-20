@@ -9,6 +9,7 @@ var _source_tested : bool = false
 
 func using_web() -> bool:
 	var api = Player2APIConfig.grab()
+
 	if api.source_mode == Player2APIConfig.SourceMode.WEB_ONLY:
 		return true
 	if api.source_mode == Player2APIConfig.SourceMode.LOCAL_ONLY:
@@ -148,15 +149,24 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		# No p2 auth key, run the auth sequence
 		# TODO: Better way to get client id?
 		var client_id = ProjectSettings.get_setting("player2/client_id")
+		
+		if !client_id or client_id.is_empty():
+			var msg = "No client id defined. Please set a valid client id in the project settings under player2/client_id"
+			Player2ErrorHelper.send_error(msg)
+			# TODO: Custom code/constant of some sorts?
+			if on_fail:
+				on_fail.call(msg, -2)
+			return
 
 		# The user can cancel the process at any time with Player2AuthHelper.cancel_auth()
 		var auth_cancelled = false
 		Player2AuthHelper.auth_cancelled.connect(func():
 			if !auth_cancelled:
-				print("Player cancelled auth request. Dropping and failing.")
-				Player2ErrorHelper.send_error("Unable to connect to web after player deined auth request.")
+				var msg = "Unable to connect to web after player deined auth request."
+				Player2ErrorHelper.send_error(msg)
 				# TODO: Custom code/constant of some sorts?
-				on_fail.call(-2)
+				if on_fail:
+					on_fail.call(msg, -3)
 				auth_cancelled = true
 		)
 
@@ -228,7 +238,6 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 									on_complete.call(true),
 								func(code):
 									# Fail while polling
-									print("Connection failed. Trying again...")
 									Player2ErrorHelper.send_error("Unable to connect to web during auth polling. Trying from start...")
 									Player2AsyncHelper.call_timeout(run_again, 2)
 									on_complete.call(false)
@@ -274,7 +283,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 				_last_web_present = true
 			_alert_error_fail(code, true)
 			if on_fail:
-				on_fail.call(code)
+				on_fail.call("", code)
 	)
 
 

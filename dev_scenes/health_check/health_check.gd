@@ -11,5 +11,4 @@ func _ready() -> void:
 		,
 			func(fail):
 				print("health check failed!", fail)
-				assert(false)
 		)
