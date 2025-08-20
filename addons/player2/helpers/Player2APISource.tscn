@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://c3qd7pyhp8whk"]
+
+[ext_resource type="Script" uid="uid://chgue6ou24fx" path="res://addons/player2/helpers/api_source.gd" id="1_hu2nk"]
+[ext_resource type="Resource" uid="uid://b17boijhcsvyu" path="res://addons/player2/api_config.tres" id="2_5urvg"]
+
+[node name="Player2APISource" type="Node"]
+script = ExtResource("1_hu2nk")
+api = ExtResource("2_5urvg")

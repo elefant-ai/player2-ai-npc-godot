@@ -8,6 +8,11 @@ var _last_web_present : bool = true
 var _source_tested : bool = false
 
 func using_web() -> bool:
+	var api = Player2APIConfig.grab()
+	if api.source_mode == Player2APIConfig.SourceMode.WEB_ONLY:
+		return true
+	if api.source_mode == Player2APIConfig.SourceMode.LOCAL_ONLY:
+		return false
 	return !_last_local_present
 
 func _get_headers(web : bool) -> Array[String]:
@@ -16,7 +21,7 @@ func _get_headers(web : bool) -> Array[String]:
 	if !game_key or game_key.is_empty():
 		game_key = "undefined_godot_project"
 	var key = game_key# game_key.replace(" ", "_").replace(":", "_")
-	var result = [
+	var result : Array[String] = [
 		"Content-Type: application/json; charset=utf-8",
 		"Accept: application/json; charset=utf-8",
 		"player2-game-key: " + key
@@ -34,6 +39,8 @@ func code_success(code : int) -> bool:
 # If a web is required, establish a connection somehow (get player to open up the auth page)
 func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", on_completed : Callable = Callable(), on_fail : Callable = Callable()):
 
+	var use_web = using_web()
+
 	var run_again = func():
 		_req(path_property, method, body, on_completed, on_fail)
 
@@ -42,9 +49,16 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		# Check if successful HTTP
 		if !code_success(code):
 			# not success
-			_alert_error_fail(code)
+			# Unauthorized
+			if use_web and code == 401:
+				print("Unauthorized response. Resetting key and trying to re-auth.")
+				Player2ErrorHelper.send_error("Got Unauthorized while doing web requests, redoing auth.")
+				run_again.call()
+				return
+
+			_alert_error_fail(code, false, body)
 			if on_fail:
-				on_fail.call(code)
+				on_fail.call(body, code)
 			return
 		if on_completed:
 			# Try json, otherwise just return it...
@@ -53,11 +67,15 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		
 
 	var api := Player2APIConfig.grab()
-
-	var use_web = using_web()
+	if !api:
+		print("API config is null/not configured!")
+		Player2ErrorHelper.send_error("API config is null/not configured. Problem!")
+		assert(false)
 
 	# Source is TESTED, proceed
 	var path = api.endpoint_web.get(path_property) if use_web else api.endpoint_local.get(path_property)
+
+	print("hitting path ", path)
 
 	# If not source tested...
 	if !_source_tested:
@@ -66,7 +84,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		var try_again_if_check_failed = func(was_expecting_success : bool):
 			if !_last_local_present and !_last_web_present:
 				if was_expecting_success:
-					Player2ErrorHelper.send_error("Unable to connect to web OR local launcher. Will attempt to reconnect for a bit")
+					Player2ErrorHelper.send_error("Unable to connect to API. Will attempt to reconnect for a bit")
 				# Wait a bit and go again if we have tried both and failed
 				# TODO: Magic number
 				Player2AsyncHelper.call_timeout(run_again, 3)
@@ -74,8 +92,9 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 				# Just go immediately
 				run_again.call()
 
-		# If local, just try running.
+		# Both require some kind of short timeout check
 		if use_web:
+			print("confirming source with the web")
 			# Web
 			Player2WebHelper.request(
 				endpoint_check_url,
@@ -83,10 +102,11 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 				"",
 				_get_headers(false),
 				func(body, code, headers):
+					print("web source confirmed! proceeding with web.")
 					# We succeeded! pretend like this is normal and move on.
 					_source_tested = true
-					_last_local_present = true
-					receive_results.call(body, code, headers)
+					_last_web_present = true
+					run_again.call()
 					,
 				func(code):
 					# Web failed!
@@ -94,33 +114,37 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					_last_web_present = false
 					# Try again!
 					print("Tried finding web API but failed. Retrying...")
-					try_again_if_check_failed.call(was_assumed_present)
+					try_again_if_check_failed.call(was_assumed_present),
+				api.request_timeout_check_web
 			)
 		else:
-			# Local
-			Player2WebHelper.request(path,
-				method,
-				body,
+			print("confirming source with local")
+			Player2WebHelper.request(
+				endpoint_check_url,
+				HTTPClient.Method.METHOD_GET,
+				"",
 				_get_headers(false),
 				func(body, code, headers):
 					# We succeeded! pretend like this is normal and move on.
+					print("local source confirmed! proceeding with web.")
 					_source_tested = true
 					_last_local_present = true
-					receive_results.call(body, code, headers)
+					run_again.call()
 					,
 				func(code):
-					# Local Failed!
+					# Local failed!
 					var was_assumed_present = _last_local_present
 					_last_local_present = false
 					# Try again!
 					print("Tried finding local API but failed. Retrying...")
-					try_again_if_check_failed.call(was_assumed_present)
+					try_again_if_check_failed.call(was_assumed_present),
+				api.request_timeout_check_local
 			)
-	# do NOT continue running the request, we are doing our thing up here.
-	return
+		# do NOT continue running the request, we are doing our thing up here.
+		return
 
 	# Check for auth key
-	if use_web and _web_p2_key:
+	if use_web and _web_p2_key.is_empty():
 		# No p2 auth key, run the auth sequence
 		# TODO: Better way to get client id?
 		var client_id = ProjectSettings.get_setting("player2/client_id")
@@ -139,12 +163,14 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		# Begin validation
 		var verify_begin_req := Player2Schema.AuthStartRequest.new()
 		verify_begin_req.client_id = client_id
+		print("Beginning auth")
 		Player2WebHelper.request(
 			api.endpoint_web.auth_start,
 			HTTPClient.Method.METHOD_POST,
 			verify_begin_req,
 			_get_headers(false),
 			func(body, code, headers):
+				print("Got auth start response: ", body)
 				if auth_cancelled:
 					return
 				if code_success(code):
@@ -156,6 +182,15 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					var expires_in = result["expiresIn"]
 					var interval = result["interval"]
 					var start_time_ms = Time.get_ticks_msec()
+					
+					var poll_req := Player2Schema.AuthPollRequest.new()
+					poll_req.client_id = client_id
+					poll_req.device_code = device_code
+					poll_req.grant_type = "urn:ietf:params:oauth:grant-type:device_code"
+
+					# Start the auth verification from the verifier
+					Player2AuthHelper._run_auth_verification(verification_url)
+
 					# Poll until we get it
 					Player2AsyncHelper.call_poll(
 						func(on_complete):
@@ -164,9 +199,10 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 							Player2WebHelper.request(
 								api.endpoint_web.auth_poll,
 								HTTPClient.Method.METHOD_POST,
-								verify_begin_req,
+								poll_req,
 								_get_headers(false),
 								func(body, code, headers):
+									print("Got auth poll response: ", body)
 									if auth_cancelled:
 										return
 									if code_success(code):
@@ -186,6 +222,9 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 										on_complete.call(false)
 										return
 									print("Got " + str(code) + " (polling)")
+									if code != 400:
+										Player2ErrorHelper.send_error("Auth polling Error " + str(code) + ": " + body)
+
 									on_complete.call(true),
 								func(code):
 									# Fail while polling
@@ -200,7 +239,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					)
 				else:
 					# HTTP Failure for auth start
-					Player2ErrorHelper.send_error("Auth endpoint Error code: " + str(code))
+					Player2ErrorHelper.send_error("Auth endpoint Error code: " + str(code) + ": " + body)
 				,
 			func(code):
 				# fail auth start
@@ -218,8 +257,6 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		_get_headers(use_web),
 		receive_results,
 		func(code):
-			_alert_error_fail(code, true)
-
 			# Failure, notify if local/web is present
 			if code != HTTPRequest.RESULT_SUCCESS:
 				if use_web:
@@ -235,12 +272,13 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					Player2AsyncHelper.call_timeout(run_again, 3)
 			else:
 				_last_web_present = true
+			_alert_error_fail(code, true)
 			if on_fail:
 				on_fail.call(code)
 	)
 
 
-func _alert_error_fail(code : int, use_http_result : bool = false):
+func _alert_error_fail(code : int, use_http_result : bool = false, response_body : String = ""):
 	if use_http_result:
 		match (code):
 			HTTPRequest.RESULT_SUCCESS:
@@ -252,21 +290,20 @@ func _alert_error_fail(code : int, use_http_result : bool = false):
 				pass
 	match (code):
 		401:
-			Player2ErrorHelper.send_error("User is not authenticated in the Player2 Launcher!")
+			Player2ErrorHelper.send_error("User is not authenticated in the Player2 Launcher: " + response_body)
 		402:
-			Player2ErrorHelper.send_error("Insufficient credits to complete request.")
+			Player2ErrorHelper.send_error("Insufficient credits to complete request: " + response_body)
 		500:
-			Player2ErrorHelper.send_error("Internal server error.")
+			Player2ErrorHelper.send_error("Internal server error: " + response_body)
 
 
-func get_health(on_complete : Callable, on_fail : Callable = Callable()):
-	_req("endpoint_health", HTTPClient.Method.METHOD_GET, "",
+func get_health(on_complete : Callable = Callable(), on_fail : Callable = Callable()):
+	_req("health", HTTPClient.Method.METHOD_GET, "",
 	on_complete,
 	on_fail
 	)
 
 func chat(request: Player2Schema.ChatCompletionRequest, on_complete: Callable, on_fail: Callable = Callable()) -> void:
-
 	# Conditionally REMOVE if there are no tools/tool choice
 	var json_req = JsonClassConverter.class_to_json(request)
 	if !request.tools or request.tools.size() == 0:
@@ -276,21 +313,21 @@ func chat(request: Player2Schema.ChatCompletionRequest, on_complete: Callable, o
 			m.erase("tool_call_id")
 			m.erase("tool_calls")
 
-	_req("endpoint_chat", HTTPClient.Method.METHOD_POST, json_req,
+	_req("chat", HTTPClient.Method.METHOD_POST, json_req,
 		on_complete, on_fail
 	)
 
 func tts_speak(request : Player2Schema.TTSRequest,on_complete : Callable = Callable(), on_fail : Callable = Callable()) -> void:
-	_req("endpoint_tts_speak", HTTPClient.Method.METHOD_POST, request, on_complete, on_fail)
+	_req("tts_speak", HTTPClient.Method.METHOD_POST, request, on_complete, on_fail)
 
 func tts_stop(on_fail : Callable = Callable()) -> void:
-	_req("endpoint_tts_stop", HTTPClient.Method.METHOD_POST, "", Callable(), on_fail)
+	_req("tts_stop", HTTPClient.Method.METHOD_POST, "", Callable(), on_fail)
 
 func stt_start(request : Player2Schema.STTStartRequest, on_fail : Callable = Callable()) -> void:
-	_req("endpoint_stt_start", HTTPClient.Method.METHOD_POST, "", Callable(), on_fail)
+	_req("stt_start", HTTPClient.Method.METHOD_POST, "", Callable(), on_fail)
 
 func stt_stop(on_complete : Callable, on_fail : Callable = Callable()) -> void:
-	_req("endpoint_stt_stop", HTTPClient.Method.METHOD_POST, "", on_complete, on_fail)
+	_req("stt_stop", HTTPClient.Method.METHOD_POST, "", on_complete, on_fail)
 
 func get_selected_characters(on_complete : Callable, on_fail : Callable = Callable()) -> void:
-	_req("endpoint_get_selected_characters", HTTPClient.Method.METHOD_GET, "", on_complete, on_fail)
+	_req("get_selected_characters", HTTPClient.Method.METHOD_GET, "", on_complete, on_fail)

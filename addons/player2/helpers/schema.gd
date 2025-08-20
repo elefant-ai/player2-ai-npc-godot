@@ -72,3 +72,8 @@ class STTStartRequest extends Resource:
 
 class AuthStartRequest extends Resource:
 	@export var client_id : String
+
+class AuthPollRequest extends Resource:
+	@export var client_id : String
+	@export var device_code : String
+	@export var grant_type : String

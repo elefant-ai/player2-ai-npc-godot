@@ -62,7 +62,7 @@ signal tool_called(function_name : String, args : Dictionary)
 ## Called when our ai agent talks
 signal chat_received(message : String)
 ## Called when our ai agent fails a chat
-signal chat_failed(error_code : int)
+signal chat_failed(body : String, error_code : int)
 ## Called when TTS is called
 signal tts_began
 ## Called when TTS ends (ONLY if `use_local_audio` is set to true in character configuration)
@@ -763,7 +763,7 @@ func _process_chat_api() -> void:
 						if content_json.is_empty():
 							# Invalid input probably
 							print("Invalid input from LLM! Input is expected to be in a valid JSON format.")
-							Player2ErrorHelper.send_error(chat_config.api, "Invalid input from LLM, expecting JSON. See logs for input.")
+							Player2ErrorHelper.send_error("Invalid input from LLM, expecting JSON. See logs for input.")
 							# DO NOT notify (infinite LLM loop and wasted calls)
 							#notify("You have sent an invalid input! Please properly format your input as JSON with the specified format.")
 							return
@@ -870,7 +870,7 @@ func _process_chat_api() -> void:
 								notify(func_result_notify_string)
 						)
 				,
-		func(error_code : int):
+		func(body : String, error_code : int):
 			thinking = false
 			chat_failed.emit(error_code)
 	)
@@ -956,6 +956,8 @@ func _validate_tool_call_definitions() -> void:
 
 	for node in tool_calls_scan_node_for_functions:
 		# Documentation: Parse comments
+		if !node:
+			continue
 		var documentation := Player2FunctionHelper.parse_documentation(node.get_script())
 		for f in _scan_node_tool_call_functions(node):
 			if documentation.has(f.name):

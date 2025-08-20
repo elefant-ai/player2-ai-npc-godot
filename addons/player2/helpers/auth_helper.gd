@@ -11,9 +11,9 @@ signal auth_cancelled
 # Call this if you wish to cancel the auth sequence and deny the web API
 func cancel_auth() -> void:
 	auth_cancelled.emit()
-	pass
 
 func _run_auth_verification(verification_url : String) -> void:
+	print("RUNNING AUTH VERIFICATION")
 	open_verification_window.emit(verification_url)
 	if run_browser_verification_default:
 		# TODO: Prompt with some defaults or something?

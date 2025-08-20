@@ -3,8 +3,6 @@
 class_name Player2AIChatConfig
 extends Resource
 
-@export var api : Player2APIConfig = Player2APIConfig.new()
-
 @export_group("Queue", "queue")
 ## The interval to empty our queue and send a chat request (prevents spam)
 @export var queue_check_interval_seconds : float = 2
@@ -28,7 +26,7 @@ extends Resource
 ## If true, will save our conversation history to godot's user:// directory and will auto load on startup from the history file.
 @export var auto_store_conversation_history : bool = true
 ## If `auto_store_conversation_history` is true, this message will be sent to the NPC on login.
-@export var auto_load_entry_message : String = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
+@export_multiline var auto_load_entry_message : String = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
 ## How many messages to hold in history before summarizing
 @export var conversation_history_size : int = 64
 ## How many messages to use in our summary when summarizing

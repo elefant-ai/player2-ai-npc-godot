@@ -1,11 +1,8 @@
-[gd_scene load_steps=23 format=3 uid="uid://cc80o6rwn8i0u"]
+[gd_scene load_steps=17 format=3 uid="uid://cc80o6rwn8i0u"]
 
-[ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/Player2AINPC.gd" id="1_ttqlg"]
-[ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/config/Player2AICharacterConfig.gd" id="2_333ad"]
-[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/config/Player2APIConfig.gd" id="3_1eb8p"]
-[ext_resource type="Script" uid="uid://4jjipstvxd6p" path="res://addons/player2/config/Player2LocalEndpointConfig.gd" id="3_2vci2"]
-[ext_resource type="Script" uid="uid://ceh624ltng4km" path="res://addons/player2/config/Player2WebEndpointConfig.gd" id="3_a46nd"]
-[ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/config/Player2AIChatConfig.gd" id="4_a46nd"]
+[ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/nodes/Player2AINPC.gd" id="1_ttqlg"]
+[ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/helpers/config/Player2AICharacterConfig.gd" id="2_333ad"]
+[ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/helpers/config/Player2AIChatConfig.gd" id="4_a46nd"]
 [ext_resource type="Script" uid="uid://r7ec3bhr4ij0" path="res://dev_scenes/simple_chat/ai_simple_tool_receiver.gd" id="4_ccetc"]
 [ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="4_ofn2n"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/simple_interface.tscn" id="5_333ad"]
@@ -22,37 +19,8 @@ tts_speed = 1.0
 tts_default_language = 0
 tts_default_gender = 1
 
-[sub_resource type="Resource" id="Resource_qec4n"]
-script = ExtResource("3_2vci2")
-chat = "http://127.0.0.1:4315/v1/chat/completions"
-health = "http://127.0.0.1:4315/v1/health"
-tts_speak = "http://127.0.0.1:4315/v1/tts/speak"
-tts_stop = "http://127.0.0.1:4315/v1/tts/stop"
-get_selected_characters = "http://127.0.0.1:4315/v1/selected_characters"
-stt_start = "http://127.0.0.1:4315/v1/stt/start"
-stt_stop = "http://127.0.0.1:4315/v1/stt/stop"
-endpoint_check = "http://127.0.0.1:4315/v1/health"
-
-[sub_resource type="Resource" id="Resource_n21ij"]
-script = ExtResource("3_a46nd")
-chat = "https://api.player2.game/v1/chat/completions"
-health = "https://api.player2.game/v1/health"
-tts_speak = "https://api.player2.game/v1/tts/speak"
-get_selected_characters = "https://api.player2.game/v1/selected_characters"
-auth_start = "https://api.player2.game/v1/login/device/new"
-auth_poll = "https://api.player2.game/v1/login/device/token"
-endpoint_check = "https://api.player2.game"
-
-[sub_resource type="Resource" id="Resource_5sire"]
-script = ExtResource("3_1eb8p")
-error_log_ui = true
-endpoint_web = SubResource("Resource_n21ij")
-endpoint_local = SubResource("Resource_qec4n")
-request_too_much_delay_seconds = 3.0
-
 [sub_resource type="Resource" id="Resource_mieae"]
 script = ExtResource("4_a46nd")
-api = SubResource("Resource_5sire")
 queue_check_interval_seconds = 2.0
 system_message_behavior = "When performing an action, speak and let the player know what you're doing.
 
@@ -74,7 +42,7 @@ ${system_message_behavior}
 {system_message_prompting}"
 system_message_prefix = ""
 system_message_postfix = ""
-auto_store_conversation_history = true
+auto_store_conversation_history = false
 auto_load_entry_message = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
 conversation_history_size = 64
 conversation_summary_buffer = 48
@@ -91,37 +59,37 @@ tool_calls_choice = "Use a tool when deciding to complete a task. If you say you
 tool_calls_reply_message = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
 tool_calls_message_optional_arg_description = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."
 
+[sub_resource type="Resource" id="Resource_ccetc"]
+Resource = null
+resource_path = "res://dev_scenes/simple_chat/simple_chat.tscn::Resource_ccetc"
+resource_scene_unique_id = "Resource_ccetc"
+script = ExtResource("4_ofn2n")
+name = "announce"
+enabled = false
+description = "Set the text of a big label at the center of the screen. Label keeps this value until announce is called again. "
+
 [sub_resource type="Resource" id="Resource_1eb8p"]
 Resource = null
 resource_path = "res://dev_scenes/simple_chat/simple_chat.tscn::Resource_1eb8p"
 resource_scene_unique_id = "Resource_1eb8p"
 script = ExtResource("4_ofn2n")
-name = "announce"
+name = "blink"
 enabled = true
-description = "Set the text of a big label at the center of the screen. Label keeps this value until announce is called again. "
+description = "Make the background of the user's input field quickly flash black and then go back to normal. Notifies caller when one blink is successful. "
 
 [sub_resource type="Resource" id="Resource_a46nd"]
 Resource = null
 resource_path = "res://dev_scenes/simple_chat/simple_chat.tscn::Resource_a46nd"
 resource_scene_unique_id = "Resource_a46nd"
 script = ExtResource("4_ofn2n")
-name = "blink"
-enabled = true
-description = "Make the background of the user's input field quickly flash black and then go back to normal. Notifies caller when one blink is successful. "
+name = "get_time"
+enabled = false
+description = "Gets the time in full string format (YYYY-MM-DDTHH:MM:SS). "
 
 [sub_resource type="Resource" id="Resource_2vci2"]
 Resource = null
 resource_path = "res://dev_scenes/simple_chat/simple_chat.tscn::Resource_2vci2"
 resource_scene_unique_id = "Resource_2vci2"
-script = ExtResource("4_ofn2n")
-name = "get_time"
-enabled = true
-description = "Gets the time in full string format (YYYY-MM-DDTHH:MM:SS). "
-
-[sub_resource type="Resource" id="Resource_yhwd1"]
-Resource = null
-resource_path = "res://dev_scenes/simple_chat/simple_chat.tscn::Resource_yhwd1"
-resource_scene_unique_id = "Resource_yhwd1"
 script = ExtResource("4_ofn2n")
 name = "set_volume"
 enabled = false
@@ -131,21 +99,22 @@ description = "Sets the game volume. Currently does nothing! "
 Resource = null
 resource_path = "res://dev_scenes/simple_chat/simple_chat.tscn::Resource_jcp5b"
 script = ExtResource("5_ccetc")
-definitions = Array[ExtResource("4_ofn2n")]([SubResource("Resource_a46nd"), SubResource("Resource_2vci2"), SubResource("Resource_1eb8p"), SubResource("Resource_yhwd1")])
-blink = SubResource("Resource_a46nd")
-get_time = SubResource("Resource_2vci2")
-announce = SubResource("Resource_1eb8p")
-set_volume = SubResource("Resource_yhwd1")
+definitions = Array[ExtResource("4_ofn2n")]([SubResource("Resource_1eb8p"), SubResource("Resource_a46nd"), SubResource("Resource_ccetc"), SubResource("Resource_2vci2")])
+blink = SubResource("Resource_1eb8p")
+get_time = SubResource("Resource_a46nd")
+announce = SubResource("Resource_ccetc")
+set_volume = SubResource("Resource_2vci2")
 
 [sub_resource type="LabelSettings" id="LabelSettings_qmjy4"]
 font_size = 49
 
 [node name="Test" type="Node2D"]
 
-[node name="Player2Agent" type="Node" parent="."]
+[node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
 script = ExtResource("1_ttqlg")
 character_config = SubResource("Resource_333ad")
 chat_config = SubResource("Resource_mieae")
+tool_calls_scan_node_for_functions = [NodePath("../Tool Receiver")]
 tool_calls_function_definitions = SubResource("Resource_jcp5b")
 metadata/_custom_type_script = "uid://bupnh0kqklshe"
 
@@ -189,6 +158,11 @@ offset_right = 40.0
 offset_bottom = 40.0
 color = Color(0.992602, 0.638143, 0.760959, 1)
 
+[connection signal="chat_received" from="Player2Agent" to="CanvasLayer/Simple Interface" method="append_line_agent"]
+[connection signal="thinking_began" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="show"]
+[connection signal="thinking_ended" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="hide"]
+[connection signal="tts_began" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="show"]
+[connection signal="tts_ended" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="hide"]
 [connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player2Agent" method="chat"]
 [connection signal="timeout" from="CanvasLayer/Simple Interface/Thinking Animation/Timer" to="CanvasLayer/Simple Interface/Thinking Animation" method="inc_count"]
 

@@ -10,4 +10,5 @@ func send_error(error : String) -> void:
 	if Player2APIConfig.grab().error_log_ui:
 		var label = Label.new()
 		label.text = "Player2 ERROR: " + error
-		error_container.add_child(label)
+		if error_container:
+			error_container.add_child(label)
