@@ -24,6 +24,8 @@ func _enter_tree() -> void:
 	# Initialization of the plugin goes here.
 	add_custom_type("Player2AINPC", "Player2AINPC", preload("nodes/Player2AINPC.gd"), preload("p2.svg"))
 	add_custom_type("Player2STT", "Player2STT", preload("nodes/Player2STT.gd"), preload("p2.svg"))
+	add_custom_type("Player2TTS", "Player2TTS", preload("res://addons/player2/nodes/Player2TTS.gd"), preload("p2.svg"))
+
 	# Settings
 	# Game Key
 	if not ProjectSettings.has_setting("player2/game_key"):
@@ -67,6 +69,7 @@ func _exit_tree() -> void:
 	# Clean-up of the plugin goes here.
 	remove_custom_type("Player2AINPC")
 	remove_custom_type("Player2STT")
+	remove_custom_type("Player2TTS")
 	# Settings
 	ProjectSettings.clear("player2/game_key")
 	ProjectSettings.clear("player2/client_id")

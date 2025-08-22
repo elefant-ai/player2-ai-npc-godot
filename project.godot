@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Player 2 AI NPC Godot"
-run/main_scene="uid://cjlrjwtxls65d"
+run/main_scene="uid://cc80o6rwn8i0u"
 config/features=PackedStringArray("4.4", "Forward Plus")
 
 [audio]
@@ -29,7 +29,7 @@ Player2API="*res://addons/player2/helpers/api.gd"
 
 [editor_plugins]
 
-enabled=PackedStringArray()
+enabled=PackedStringArray("res://addons/player2/plugin.cfg")
 
 [input]
 

@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3 uid="uid://bhvydc4pv2q8k"]
+
+[ext_resource type="Script" uid="uid://flja0hiht8ej" path="res://dev_scenes/tts_test/tts_test.gd" id="1_pss7e"]
+[ext_resource type="Script" uid="uid://dy7oafpimf5sn" path="res://addons/player2/nodes/Player2TTS.gd" id="2_qmhqp"]
+[ext_resource type="Script" uid="uid://mt8gdygmb5og" path="res://addons/player2/helpers/config/Player2TTSConfig.gd" id="3_ye3im"]
+
+[sub_resource type="Resource" id="Resource_tv5bm"]
+script = ExtResource("3_ye3im")
+tts_speed = 1.0
+tts_default_language = 0
+tts_default_gender = 1
+
+[node name="TtsTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_pss7e")
+
+[node name="TextEdit" type="TextEdit" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -208.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_right = -5.0
+offset_bottom = 390.0
+grow_horizontal = 2
+text = "Speak"
+
+[node name="Player2TTS" type="Node" parent="."]
+script = ExtResource("2_qmhqp")
+config = SubResource("Resource_tv5bm")
+metadata/_custom_type_script = "uid://dy7oafpimf5sn"
+
+[node name="TalkingIndicator" type="ColorRect" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 467.0
+offset_top = 387.0
+offset_right = 507.0
+offset_bottom = 427.0
+
+[connection signal="tts_began" from="Player2TTS" to="TalkingIndicator" method="show"]
+[connection signal="tts_ended" from="Player2TTS" to="TalkingIndicator" method="hide"]
