@@ -3,8 +3,11 @@ class_name Player2STT
 extends Node
 
 @export var enabled : bool = true
-@export var timeout : float = 10
-@export var accept_empty_input : bool = false
+@export var local_timeout : float = 10
+## How long to wait from the last message to consider the message to be complete.
+@export var leftover_receive_wait_time : float = 0.5
+## We will never wait longer than this after releasing the STT button
+@export var release_max_wait_time : float = 1.5
 
 @export var audio_stream : AudioStream
 "autoplay"
@@ -13,6 +16,12 @@ const AUDIO_CAPTURE_BUS = "Player2STTAudioCaptureBus"
 var _audio_stream_player : AudioStreamPlayer
 var _audio_capture_effect : AudioEffectCapture
 var _audio_capture_buffer : StreamPeerBuffer
+var _audio_stream_transcript : String = ""
+
+var _audio_stream_running : bool
+var _audio_stream_leftover_timer : Timer
+var _audio_stream_release_timer : Timer
+var _audio_stream_leftover_timer_triggered : bool = false
 
 #var _audio_stream_playback : AudioStreamPlayback
 
@@ -78,35 +87,37 @@ func _using_web() -> bool:
 	return Player2API.using_web()
 
 func _start_stt() -> void:
-	if _using_web():
-		printerr("Web API for STT is WIP")
+	if !enabled:
 		return
+	if _using_web():
+		#printerr("Web API for STT is WIP")
+		#return
 		_start_stt_web()
 	else:
-		_start_stt_client()
+		_start_stt_local()
 
 func _stop_stt() -> void:
 	if _using_web():
-		printerr("Web API for STT is WIP")
-		return
+		#printerr("Web API for STT is WIP")
+		#return
 		_stop_stt_web()
 	else:
-		_stop_stt_client()
+		_stop_stt_local()
 
-# Client
+# Local
 
-func _start_stt_client() -> void:
+func _start_stt_local() -> void:
 	var req = Player2Schema.STTStartRequest.new()
-	req.timeout = timeout
+	req.timeout = local_timeout
 	Player2API.stt_start(req, func(fail_code):
 		listening = false
 	)
-func _stop_stt_client() -> void:
+func _stop_stt_local() -> void:
 	Player2API.stt_stop(func(reply):
 		if enabled:
 			if reply.has('text'):
 				var message : String = reply.text
-				if not message.is_empty() or accept_empty_input:
+				if not message.is_empty():
 					print("STT GOT: \"" + message + "\"")
 					stt_received.emit(message)
 			else:
@@ -120,22 +131,37 @@ func _stop_stt_client() -> void:
 # Web
 
 var _socket : WebSocketPeer
+var _stream_opened : bool
 
 ## Ensures that the audio bus is created with a capture effect
 func _ensure_audio_bus_exists() -> AudioEffectCapture:
 	var index := AudioServer.get_bus_index(AUDIO_CAPTURE_BUS)
 	if index == -1:
-		print("new bus!", AudioServer.bus_count)
 		index = AudioServer.bus_count
 		AudioServer.add_bus(index)
 		AudioServer.set_bus_name(index, AUDIO_CAPTURE_BUS)
+		# Capture (to read)
 		var capture_effect := AudioEffectCapture.new()
 		AudioServer.add_bus_effect(index, capture_effect, 0)
-		print("made bus!", AudioServer.is_bus_effect_enabled(index, 0))
+		# Amplify (to mute)
+		var amplify_effect = AudioEffectAmplify.new()
+		amplify_effect.volume_db = -100000
+		AudioServer.add_bus_effect(index, amplify_effect, 1)
 		return capture_effect
 	return AudioServer.get_bus_effect(index, 0)
 
 func _start_stt_web() -> void:
+	if _audio_stream_running:
+		print("Duplicate STT detected, cancelling the old one.")
+
+	_audio_stream_leftover_timer.stop()
+	_audio_stream_leftover_timer_triggered = false
+	_audio_stream_running = true
+	
+	_audio_stream_release_timer.stop()
+	
+	_audio_stream_transcript = ""
+
 	# If we haven't authenticated yet, don't do anything.
 	if !Player2API.established_api_connection():
 		print("Failed to establish connection. Establishing...")
@@ -150,7 +176,7 @@ func _start_stt_web() -> void:
 
 	var sample_rate : int = int(AudioServer.get_mix_rate())
 	_socket = Player2API.stt_stream_socket(sample_rate)
-	print("Creating socket")
+	_stream_opened = false
 
 	# Start recording now and adding to buffer queue
 	if audio_stream:
@@ -171,16 +197,38 @@ func _start_stt_web() -> void:
 
 
 func _stop_stt_web() -> void:
-	# TODO: send socket "complete" signal
-	pass
-	#if _socket:
-		#_socket.close()
-		#_socket = null
+	if _audio_stream_running:
+		# stop sending
+		# but keep receiving for a bit... until we haven't received something in a bit
+		_audio_stream_player.stop()
+		_audio_stream_running = false
+
+		_audio_stream_release_timer.start()
+
+func _ready() -> void:
+	
+	# Default to microphone
+	if !audio_stream:
+		audio_stream = AudioStreamMicrophone.new()
+
+	_audio_stream_leftover_timer = Timer.new()
+	add_child(_audio_stream_leftover_timer)
+	_audio_stream_leftover_timer.timeout.connect(func(): _audio_stream_leftover_timer_triggered = true)
+	_audio_stream_release_timer = Timer.new()
+	add_child(_audio_stream_release_timer)
+	_audio_stream_release_timer.timeout.connect(func():
+		_socket_complete()
+		)
 
 func _process(delta: float) -> void:
+	_possibly_close_socket(_socket)
 	_poll_socket(_socket)
 	_process_socket(_socket)
 	_send_socket(_socket)
+
+func _possibly_close_socket(socket : WebSocketPeer) -> void:
+	if socket and !enabled:
+		socket.close()
 
 func _poll_socket(socket : WebSocketPeer) -> void:
 	if !socket:
@@ -220,21 +268,24 @@ func _send_socket(socket : WebSocketPeer) -> void:
 		return
 	if socket.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
+	# TODO: Test this out
+	#if !_stream_opened:
+		#return
 
 	_read_audio_frames()
 
 	# TODO: Buffer, send over while we can
 	var bytes : PackedByteArray = _audio_capture_buffer.data_array
 	if bytes.size():
-		print("sending ", bytes.size())
+		#print("sending ", bytes.size())
 
 		# A print just to roughly see the strength of the thing
-		var i16 := (bytes[1] << 8) + bytes[0]
-		if (i16 & (1 << (16 - 1))) != 0:
-			i16 = i16 - (1 << 16)
-		print(i16)
-		var b : Control = $"../Control/ColorRect"
-		b.position.y = i16 * 0.01
+		#var i16 := (bytes[1] << 8) + bytes[0]
+		#if (i16 & (1 << (16 - 1))) != 0:
+			#i16 = i16 - (1 << 16)
+		#print(i16)
+		#var b : Control = $"../Control/ColorRect"
+		#b.position.y = i16 * 0.01
 
 		var err = socket.send(bytes)
 		if err != OK:
@@ -253,7 +304,27 @@ func _process_socket(socket : WebSocketPeer) -> void:
 			pass
 		WebSocketPeer.STATE_OPEN:
 			while socket.get_available_packet_count():
-				print("Got data from server: ", socket.get_packet().get_string_from_utf8())
+				var data_raw = socket.get_packet().get_string_from_utf8()
+				var data = JSON.parse_string(data_raw)
+				#print("Got data from server: ", data_raw)
+				if data:
+					match data["type"]:
+						"open":
+							_stream_opened = true
+						"message":
+							var messages : Array = data["data"]["channel"]["alternatives"]
+							if messages.size():
+								var highest = messages.reduce(func(max, msg): return msg if msg["confidence"] > max["confidence"] else max)
+								if highest:
+									_audio_stream_transcript = highest["transcript"].strip_edges()
+								# We got a message, reset the leftover timer
+								_audio_stream_leftover_timer.start(leftover_receive_wait_time)
+								_audio_stream_leftover_timer_triggered = false
+							else:
+								if _audio_stream_leftover_timer_triggered and _audio_stream_running:
+									# We're done!
+									_socket_complete()
+				#print("ASDF", data, data["type"])
 		WebSocketPeer.STATE_CLOSING:
 			# wait to close
 			pass
@@ -265,3 +336,14 @@ func _process_socket(socket : WebSocketPeer) -> void:
 			_socket = null
 		_:
 			print("Invalid socket state:", state)
+
+## When the scoket is DONE we're done.
+func _socket_complete() -> void:
+	if !_audio_stream_transcript.is_empty():
+		print("Done. Got", _audio_stream_transcript)
+		waiting_on_reply = false 
+		stt_received.emit(_audio_stream_transcript)
+		_audio_stream_transcript = ""
+		if _socket:
+			_socket.close()
+			_socket = null

@@ -11,6 +11,9 @@ enum SourceMode {
 	LOCAL_ONLY
 }
 
+## IF web client is used and this is set to true, immediately prompt the user to auth
+@export var prompt_auth_page_immediately : bool = true
+
 @export_group("API Source", "source")
 ## Which endpoints to use, local or web? Old behavior is local only.
 @export var source_mode : SourceMode = SourceMode.LOCAL_FIRST_THEN_WEB
@@ -41,6 +44,8 @@ static var _instance : Player2APIConfig
 static func grab() -> Player2APIConfig:
 	if !_instance:
 		_instance = Player2APISourceHelper.api
+		print("GOT SOURCE:", _instance)
+		print(_instance.endpoint_web.root)
 		if !_instance:
 			_instance = Player2APIConfig.new()
 	return _instance

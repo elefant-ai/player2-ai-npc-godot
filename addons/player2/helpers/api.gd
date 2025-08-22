@@ -1,7 +1,7 @@
 extends Node
 
 # auth: TODO: move? or not?
-var _web_p2_key : String = "" #"p2_cN4TQiybDWdBS13742u6HQ"
+var _web_p2_key : String = ""
 # Assume both are present, then fail if they're missing
 var _last_local_present : bool = true
 var _last_web_present : bool = true
@@ -402,15 +402,41 @@ func get_selected_characters(on_complete : Callable, on_fail : Callable = Callab
 	_req("get_selected_characters", HTTPClient.Method.METHOD_GET, "", on_complete, on_fail)
 
 func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
-	var host = "ws://coder-adrisj6-adrisworkspace0.wombat-tawny.ts.net:8090/v1/stt/stream"
-	var url = host + "?token=" + _web_p2_key + "&sample_rate=" + str(sample_rate)
+
+	if not established_api_connection():
+		printerr("Tried stt socket streaming but no API connection is established")
+		return null
+
+	var api = Player2APIConfig.grab()
+
+	# Construct the URL
+	var endpoint = api.endpoint_web
+	var url = endpoint.path("stt_stream")
+	if url.begins_with("https://"):
+		url = "ws://" + url.substr("https://".length())
+	if url.begins_with("http://"):
+		url = "ws://" + url.substr("http://".length())
+		
+	var params := {
+		"model": "nova-2", # TODO: Drop this?
+		"language": "en-US", # TODO: Configure
+		"encoding": "linear16",
+		"sample_rate": sample_rate,
+		"interim_results": true,
+		"token": _web_p2_key
+	}
+	var http_params = "&".join(params.keys().map(func(k): return k+"="+str(params[k]).uri_encode()))
+	
+	var full_url = url
+	if not http_params.is_empty():
+		full_url += "?" + http_params
+
 	var socket = WebSocketPeer.new()
 
-	var conn_err = socket.connect_to_url(url)
+	var conn_err = socket.connect_to_url(full_url)
 	if conn_err != OK:
 		print("FAILED TO CONNECT TO SOCKET")
 		return null
-	print("socket successfully created!")
 	return socket
 
 func _ready() -> void:
@@ -421,8 +447,12 @@ func _ready() -> void:
 
 	# Before we start, load our key.
 	if api.auth_key_cache_locally and _web_p2_key == "":
-		#_web_p2_key = _load_key()
+		_web_p2_key = _load_key()
 		print("loading auth key: ", _web_p2_key)
+
+	# Web Auth Prompt Immediately
+	if api.prompt_auth_page_immediately:
+		establish_connection()
 
 func _exit_tree() -> void:
 	if Engine.is_editor_hint():

@@ -31,6 +31,7 @@ endpoint_check = "{root}"
 
 [resource]
 script = ExtResource("3_pqu85")
+prompt_auth_page_immediately = true
 source_mode = 1
 error_log_ui = true
 endpoint_web = SubResource("Resource_nncrx")
