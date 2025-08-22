@@ -1,4 +1,5 @@
 ## Speech To Text processing using the Player2 API
+@tool
 class_name Player2STT
 extends Node
 
@@ -68,8 +69,14 @@ func start_stt() -> void:
 		return
 	if waiting_on_reply:
 		return
-	listening = true
+	
+	if !Player2API.established_api_connection():
+		print("Tried doing STT to early, establishing a connection first.")
+		Player2API.establish_connection()
+		return
+
 	_start_stt()
+	listening = true
 
 ## Stop listening for speech. Will query STT to receive text from received speech.
 func stop_stt() -> void:
@@ -77,9 +84,15 @@ func stop_stt() -> void:
 		return
 	if waiting_on_reply:
 		return
+
+	if !Player2API.established_api_connection():
+		print("Tried doing STT to early, establishing a connection first.")
+		Player2API.establish_connection()
+		return
+
+	_stop_stt()
 	listening = false
 	waiting_on_reply = true
-	_stop_stt()
 
 # Internals
 
@@ -109,8 +122,10 @@ func _stop_stt() -> void:
 func _start_stt_local() -> void:
 	var req = Player2Schema.STTStartRequest.new()
 	req.timeout = local_timeout
-	Player2API.stt_start(req, func(fail_code):
-		listening = false
+	Player2API.stt_start(
+		req,
+		func(body, fail_code):
+			listening = false
 	)
 func _stop_stt_local() -> void:
 	Player2API.stt_stop(func(reply):
@@ -124,7 +139,7 @@ func _stop_stt_local() -> void:
 				print("STT invalid reply!")
 				print(JSON.stringify(reply))
 		waiting_on_reply = false,
-	func(fail_code):
+	func(body, fail_code):
 		waiting_on_reply = false
 	)
 
@@ -156,7 +171,6 @@ func _start_stt_web() -> void:
 
 	_audio_stream_leftover_timer.stop()
 	_audio_stream_leftover_timer_triggered = false
-	_audio_stream_running = true
 	
 	_audio_stream_release_timer.stop()
 	
@@ -178,8 +192,16 @@ func _start_stt_web() -> void:
 	_socket = Player2API.stt_stream_socket(sample_rate)
 	_stream_opened = false
 
+	if !audio_stream:
+		audio_stream = AudioStreamMicrophone.new()
+	if audio_stream is AudioStreamMicrophone:
+		# Make sure setting is active
+		if !ProjectSettings.get_setting("audio/driver/enable_input"):
+			Player2ErrorHelper.send_error("Need to enable audio input in settings for microphone (Project -> Project Settings -> Audio -> Driver -> enable input)")
+
 	# Start recording now and adding to buffer queue
 	if audio_stream:
+		_audio_stream_running = true
 		# Initialize the bus w/ capture effect
 		_audio_capture_effect = _ensure_audio_bus_exists()
 		# Set the bus to our stream player and PLAY
@@ -192,9 +214,8 @@ func _start_stt_web() -> void:
 		_audio_stream_player.bus = AUDIO_CAPTURE_BUS
 		_audio_stream_player.play()
 		if _audio_capture_buffer:
-			_audio_capture_buffer.free()
+			_audio_capture_buffer.clear()
 		_audio_capture_buffer = StreamPeerBuffer.new()
-
 
 func _stop_stt_web() -> void:
 	if _audio_stream_running:
@@ -202,19 +223,15 @@ func _stop_stt_web() -> void:
 		# but keep receiving for a bit... until we haven't received something in a bit
 		_audio_stream_player.stop()
 		_audio_stream_running = false
-
-		_audio_stream_release_timer.start()
+	_audio_stream_release_timer.start(release_max_wait_time)
 
 func _ready() -> void:
-	
-	# Default to microphone
-	if !audio_stream:
-		audio_stream = AudioStreamMicrophone.new()
-
 	_audio_stream_leftover_timer = Timer.new()
+	_audio_stream_leftover_timer.one_shot = true
 	add_child(_audio_stream_leftover_timer)
 	_audio_stream_leftover_timer.timeout.connect(func(): _audio_stream_leftover_timer_triggered = true)
 	_audio_stream_release_timer = Timer.new()
+	_audio_stream_release_timer.one_shot = true
 	add_child(_audio_stream_release_timer)
 	_audio_stream_release_timer.timeout.connect(func():
 		_socket_complete()
@@ -341,9 +358,9 @@ func _process_socket(socket : WebSocketPeer) -> void:
 func _socket_complete() -> void:
 	if !_audio_stream_transcript.is_empty():
 		print("Done. Got", _audio_stream_transcript)
-		waiting_on_reply = false 
 		stt_received.emit(_audio_stream_transcript)
 		_audio_stream_transcript = ""
 		if _socket:
 			_socket.close()
 			_socket = null
+	waiting_on_reply = false

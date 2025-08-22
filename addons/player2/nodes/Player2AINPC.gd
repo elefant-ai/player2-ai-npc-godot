@@ -17,6 +17,8 @@ var _tts_configured = false
 ## Enable TTS
 @export var tts : Player2TTS:
 	get:
+		if Engine.is_editor_hint():
+			return tts
 		if !tts:
 			tts = Player2TTS.new()
 			tts.config = character_config.tts

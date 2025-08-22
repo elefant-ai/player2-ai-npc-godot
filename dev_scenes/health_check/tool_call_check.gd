@@ -88,7 +88,7 @@ func run_req() -> void:
 		_get_headers(),
 	func(body, code, headers):
 		print("success: ", body),
-	func(code):
+	func(body, code):
 		# Failed!
 		print("Fail: ", code)
 	)

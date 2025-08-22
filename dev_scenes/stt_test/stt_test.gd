@@ -13,6 +13,6 @@ func _ready() -> void:
 		response.text = "ERROR: " + message
 	)
 	Player2API.establish_connection(func():
-		print("yay")
+		print("yay stt_test connection established")
 		stt.start_stt()
 	)

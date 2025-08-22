@@ -20,19 +20,26 @@ func using_web() -> bool:
 func established_api_connection() -> bool:
 	return _source_tested
 
+var _establishing_connection = false
 ## Ensure a connection to the API is established and have a callback for when the connection is complete.
 ## This is not necessary unless you wish to use something like STT
 func establish_connection(on_complete : Callable = Callable()) -> void:
+	if _establishing_connection:
+		return
+	_establishing_connection = true
 	# TODO: This can fail!
 	if established_api_connection():
+		_establishing_connection = false
 		if on_complete:
 			on_complete.call()
 	# TODO: wrap the logic below in _req here to avoid an extra request
 	get_health(
 		func(data):
+			_establishing_connection = false
 			if on_complete:
 				on_complete.call(),
 		func(msg, code):
+			_establishing_connection = false
 			if on_complete:
 				on_complete.call()
 	)
@@ -132,7 +139,8 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 
 	# Source is TESTED, proceed
 	var endpoint = api.endpoint_web if use_web else api.endpoint_local
-	
+
+	print("pre:", path_property)
 	var path = endpoint.path(path_property)
 
 	print("hitting path ", path)
@@ -168,7 +176,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					_last_web_present = true
 					run_again.call()
 					,
-				func(code):
+				func(body, code):
 					# Web failed!
 					var was_assumed_present = _last_web_present
 					_last_web_present = false
@@ -191,7 +199,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					_last_local_present = true
 					run_again.call()
 					,
-				func(code):
+				func(body, code):
 					# Local failed!
 					var was_assumed_present = _last_local_present
 					_last_local_present = false
@@ -296,7 +304,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 										Player2ErrorHelper.send_error("Auth polling Error " + str(code) + ": " + body)
 
 									on_complete.call(true),
-								func(code):
+								func(body, code):
 									# Fail while polling
 									Player2ErrorHelper.send_error("Unable to connect to web during auth polling. Trying from start...")
 									Player2AsyncHelper.call_timeout(run_again, 2)
@@ -310,7 +318,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					# HTTP Failure for auth start
 					Player2ErrorHelper.send_error("Auth endpoint Error code: " + str(code) + ": " + body)
 				,
-			func(code):
+			func(body, code):
 				# fail auth start
 				Player2ErrorHelper.send_error("Unable to connect to web for auth. Trying again... " + str(code))
 				Player2AsyncHelper.call_timeout(run_again, 2)
@@ -325,7 +333,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		body,
 		_get_headers(use_web),
 		receive_results,
-		func(code):
+		func(body, code):
 			# Failure, notify if local/web is present
 			if code != HTTPRequest.RESULT_SUCCESS:
 				if use_web:

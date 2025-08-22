@@ -114,9 +114,8 @@ font_size = 49
 
 [node name="Test" type="Node2D"]
 
-[node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tts", "tool_calls_scan_node_for_functions")]
+[node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
 script = ExtResource("1_ttqlg")
-tts = NodePath("@Node@31072")
 character_config = SubResource("Resource_333ad")
 chat_config = SubResource("Resource_mieae")
 tool_calls_scan_node_for_functions = [NodePath("../Tool Receiver")]

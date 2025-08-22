@@ -51,8 +51,8 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 	on_completed_inner = func(result, response_code, headers, body):
 		if result != HTTPRequest.RESULT_SUCCESS:
 			print("HTTP failure: ", result)
-			if on_fail != null:
-				on_fail.call(result)
+			if on_fail:
+				on_fail.call(result, response_code)
 		else:
 			print("HTTP success: ", response_code, ": ", body.get_string_from_utf8())
 			if response_code == 429:

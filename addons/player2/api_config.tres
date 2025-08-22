@@ -32,7 +32,7 @@ endpoint_check = "{root}"
 [resource]
 script = ExtResource("3_pqu85")
 prompt_auth_page_immediately = true
-source_mode = 1
+source_mode = 0
 error_log_ui = true
 endpoint_web = SubResource("Resource_nncrx")
 endpoint_local = SubResource("Resource_m5qx4")
