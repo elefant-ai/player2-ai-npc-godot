@@ -49,6 +49,8 @@ func _save_key(key : String) -> void:
 	var filename = "user://auth_cache"
 
 	var client_id = ProjectSettings.get_setting("player2/client_id")
+	if !client_id:
+		client_id = ""
 
 	var file = FileAccess.open(filename, FileAccess.WRITE)
 	file.store_string(Player2CrappyEncryption.encrypt_unsecure(key, client_id))
@@ -59,6 +61,8 @@ func _load_key() -> String:
 	var filename = "user://auth_cache"
 
 	var client_id = ProjectSettings.get_setting("player2/client_id")
+	if !client_id:
+		client_id = ""
 
 
 	if not FileAccess.file_exists(filename):
@@ -216,6 +220,8 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		# No p2 auth key, run the auth sequence
 		# TODO: Better way to get client id?
 		var client_id = ProjectSettings.get_setting("player2/client_id")
+		if !client_id:
+			client_id = ""
 
 		if !client_id or client_id.is_empty():
 			var msg = "No client id defined. Please set a valid client id in the project settings under player2/client_id"

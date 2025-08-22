@@ -66,8 +66,7 @@ talk={
 [player2]
 
 game_key="Player_2_AI_NPC_Godot"
-client_id="01977e1d-bbbb-7e63-b998-a6de49976101"
-
+client_id=""
 [rendering]
 
 environment/defaults/default_clear_color=Color(0, 0, 0, 1)
