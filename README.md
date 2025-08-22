@@ -56,6 +56,15 @@ You should now see a list of functions with their descriptions below:
 
 <img width="406" height="972" alt="image" src="https://github.com/user-attachments/assets/14cd2090-2c61-4292-ad02-68e0b0569a3a" />
 
+## STT
+
+Enable audio in godot:
+
+Project Settings → Audio → Enable Input (turn it on).
+
+TODO: Image of this setting
+TODO: Can we automate this?
+
 
 ## Game Key
 

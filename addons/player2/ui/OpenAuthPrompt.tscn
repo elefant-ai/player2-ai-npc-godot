@@ -1,0 +1,187 @@
+[gd_scene load_steps=4 format=3 uid="uid://bvdm811rnyhid"]
+
+[ext_resource type="Script" uid="uid://bspbxif1p8ov3" path="res://addons/player2/ui/success_accept_reject_prompt.gd" id="1_k27lu"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_xk7xc"]
+font_size = 24
+
+[sub_resource type="LabelSettings" id="LabelSettings_k27lu"]
+
+[node name="OpenAuthPrompt" type="CanvasLayer"]
+layer = 120
+script = ExtResource("1_k27lu")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.180392, 0.133333, 0.215686, 0.345098)
+
+[node name="Panel Prompt" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 180.0
+offset_top = 79.0
+offset_right = -183.0
+offset_bottom = -79.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(120, 240)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel Prompt"]
+layout_mode = 2
+offset_left = 53.0
+offset_top = 38.0
+offset_right = 736.0
+offset_bottom = 377.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Title" type="Label" parent="Panel Prompt/VBoxContainer"]
+layout_mode = 2
+text = "Player 2 Web Authentication Needed"
+label_settings = SubResource("LabelSettings_xk7xc")
+horizontal_alignment = 1
+
+[node name="Gap" type="Control" parent="Panel Prompt/VBoxContainer"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel Prompt/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel Prompt/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Description Start" type="Label" parent="Panel Prompt/VBoxContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_vertical = 6
+text = "Authentication with a Player2 account is required to access the Player2  endpoints, including chat completion, AI NPC and Speech to Text.
+
+Confirm to proceed with authentication and Cancel to not accept Player2 features"
+label_settings = SubResource("LabelSettings_k27lu")
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Description Opened Web" type="Label" parent="Panel Prompt/VBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_vertical = 6
+text = "Proceed to the website and authenticate the app"
+label_settings = SubResource("LabelSettings_k27lu")
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="Panel Prompt"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = -66.0
+offset_right = -32.0
+offset_bottom = -19.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="Proceed" type="Button" parent="Panel Prompt/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Proceed"
+
+[node name="Gap" type="Control" parent="Panel Prompt/Buttons"]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+
+[node name="Reject" type="Button" parent="Panel Prompt/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Reject"
+
+[node name="Panel Success" type="Panel" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 180.0
+offset_top = 79.0
+offset_right = -183.0
+offset_bottom = -79.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(120, 240)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel Success"]
+layout_mode = 2
+offset_left = 53.0
+offset_top = 38.0
+offset_right = 736.0
+offset_bottom = 377.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Title" type="Label" parent="Panel Success/VBoxContainer"]
+layout_mode = 2
+text = "Success!"
+label_settings = SubResource("LabelSettings_xk7xc")
+horizontal_alignment = 1
+
+[node name="Gap" type="Control" parent="Panel Success/VBoxContainer"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel Success/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel Success/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Description" type="Label" parent="Panel Success/VBoxContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_vertical = 6
+text = "Verification successful. You may now use AI features!"
+label_settings = SubResource("LabelSettings_k27lu")
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="Panel Success"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = -66.0
+offset_right = -32.0
+offset_bottom = -19.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="Proceed" type="Button" parent="Panel Success/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Proceed"
+
+[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/ScrollContainer/VBoxContainer/Description Start" method="hide"]
+[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/ScrollContainer/VBoxContainer/Description Opened Web" method="show"]
+[connection signal="succeeded" from="." to="Panel Success" method="show"]
+[connection signal="pressed" from="Panel Prompt/Buttons/Proceed" to="." method="accept"]
+[connection signal="pressed" from="Panel Prompt/Buttons/Reject" to="." method="reject"]
+[connection signal="pressed" from="Panel Success/Buttons/Proceed" to="." method="queue_free"]

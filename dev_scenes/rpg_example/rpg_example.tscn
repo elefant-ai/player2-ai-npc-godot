@@ -1822,8 +1822,6 @@ text = "DISCLAIMER: Deprecated scene.
 Will be replaced with a new multi-agent example."
 
 [connection signal="timeout" from="Guard/Thinking Animation/Timer" to="Guard/Thinking Animation" method="inc_count"]
-[connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player" method="talk"]
-[connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player Talked Event" method="talk"]
 [connection signal="area_entered" from="Player Left Cell Trigger" to="Player Left Cell Trigger" method="queue_free"]
 [connection signal="player_talked" from="Player Talked Event" to="Guard" method="player_talked"]
 

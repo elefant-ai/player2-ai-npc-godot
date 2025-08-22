@@ -9,6 +9,6 @@ func _ready() -> void:
 				print("health check passed!!")
 				print("got ", JSON.stringify(data))
 		,
-			func(fail):
-				print("health check failed!", fail)
+			func(msg, code):
+				print("health check failed: ", msg, code)
 		)

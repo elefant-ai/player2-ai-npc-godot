@@ -1,7 +1,7 @@
 extends Node
 
 # auth: TODO: move? or not?
-var _web_p2_key : String = ""
+var _web_p2_key : String = "" #"p2_cN4TQiybDWdBS13742u6HQ"
 # Assume both are present, then fail if they're missing
 var _last_local_present : bool = true
 var _last_web_present : bool = true
@@ -15,6 +15,55 @@ func using_web() -> bool:
 	if api.source_mode == Player2APIConfig.SourceMode.LOCAL_ONLY:
 		return false
 	return !_last_local_present
+
+## Is a connection established to the API?
+func established_api_connection() -> bool:
+	return _source_tested
+
+## Ensure a connection to the API is established and have a callback for when the connection is complete.
+## This is not necessary unless you wish to use something like STT
+func establish_connection(on_complete : Callable = Callable()) -> void:
+	# TODO: This can fail!
+	if established_api_connection():
+		if on_complete:
+			on_complete.call()
+	# TODO: wrap the logic below in _req here to avoid an extra request
+	get_health(
+		func(data):
+			if on_complete:
+				on_complete.call(),
+		func(msg, code):
+			if on_complete:
+				on_complete.call()
+	)
+
+## Save the auth key with some local encryption
+func _save_key(key : String) -> void:
+	var filename = "user://auth_cache"
+
+	var client_id = ProjectSettings.get_setting("player2/client_id")
+
+	var file = FileAccess.open(filename, FileAccess.WRITE)
+	file.store_string(Player2CrappyEncryption.encrypt_unsecure(key, client_id))
+	file.close()
+
+## Load the auth key with some local encryption
+func _load_key() -> String:
+	var filename = "user://auth_cache"
+
+	var client_id = ProjectSettings.get_setting("player2/client_id")
+
+
+	if not FileAccess.file_exists(filename):
+		return ""
+
+	var file = FileAccess.open(filename, FileAccess.READ)
+
+	var content := file.get_as_text()
+	file.close()
+
+	return Player2CrappyEncryption.decrypt_unsecure(content, client_id)
+
 
 func _get_headers(web : bool) -> Array[String]:
 	var config := Player2APIConfig.grab()
@@ -33,12 +82,20 @@ func _get_headers(web : bool) -> Array[String]:
 
 	return result
 
-func code_success(code : int) -> bool:
+func _code_success(code : int) -> bool:
 	return 200 <= code and code < 300
 
 # Run source test and call after a source has been established
 # If a web is required, establish a connection somehow (get player to open up the auth page)
 func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", on_completed : Callable = Callable(), on_fail : Callable = Callable()):
+
+	var api := Player2APIConfig.grab()
+
+	# Some pre config
+	if api.source_mode == Player2APIConfig.SourceMode.WEB_ONLY:
+		_last_local_present = false
+	if api.source_mode == Player2APIConfig.SourceMode.LOCAL_ONLY:
+		_last_web_present = false
 
 	var use_web = using_web()
 
@@ -48,12 +105,13 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 	# When we receive the results ..
 	var receive_results = func(body, code, headers):
 		# Check if successful HTTP
-		if !code_success(code):
+		if !_code_success(code):
 			# not success
 			# Unauthorized
 			if use_web and code == 401:
 				print("Unauthorized response. Resetting key and trying to re-auth.")
 				Player2ErrorHelper.send_error("Got Unauthorized while doing web requests, redoing auth.")
+				_web_p2_key=  ""
 				run_again.call()
 				return
 
@@ -67,20 +125,21 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 			on_completed.call(result if result else body)
 		
 
-	var api := Player2APIConfig.grab()
 	if !api:
 		print("API config is null/not configured!")
 		Player2ErrorHelper.send_error("API config is null/not configured. Problem!")
 		assert(false)
 
 	# Source is TESTED, proceed
-	var path = api.endpoint_web.get(path_property) if use_web else api.endpoint_local.get(path_property)
+	var endpoint = api.endpoint_web if use_web else api.endpoint_local
+	
+	var path = endpoint.path(path_property)
 
 	print("hitting path ", path)
 
 	# If not source tested...
 	if !_source_tested:
-		var endpoint_check_url = api.endpoint_web.endpoint_check if use_web else api.endpoint_local.endpoint_check
+		var endpoint_check_url = endpoint.path("endpoint_check")
 
 		var try_again_if_check_failed = func(was_expecting_success : bool):
 			if !_last_local_present and !_last_web_present:
@@ -149,7 +208,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		# No p2 auth key, run the auth sequence
 		# TODO: Better way to get client id?
 		var client_id = ProjectSettings.get_setting("player2/client_id")
-		
+
 		if !client_id or client_id.is_empty():
 			var msg = "No client id defined. Please set a valid client id in the project settings under player2/client_id"
 			Player2ErrorHelper.send_error(msg)
@@ -159,15 +218,14 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 			return
 
 		# The user can cancel the process at any time with Player2AuthHelper.cancel_auth()
-		var auth_cancelled = false
-		Player2AuthHelper.auth_cancelled.connect(func():
-			if !auth_cancelled:
+		Player2AuthHelper.auth_user_cancelled.connect(
+			func():
 				var msg = "Unable to connect to web after player deined auth request."
+				print("ASDF")
 				Player2ErrorHelper.send_error(msg)
 				# TODO: Custom code/constant of some sorts?
 				if on_fail:
 					on_fail.call(msg, -3)
-				auth_cancelled = true
 		)
 
 		# Begin validation
@@ -175,15 +233,15 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		verify_begin_req.client_id = client_id
 		print("Beginning auth")
 		Player2WebHelper.request(
-			api.endpoint_web.auth_start,
+			api.endpoint_web.path("auth_start"),
 			HTTPClient.Method.METHOD_POST,
 			verify_begin_req,
 			_get_headers(false),
 			func(body, code, headers):
 				print("Got auth start response: ", body)
-				if auth_cancelled:
+				if Player2AuthHelper.auth_cancelled:
 					return
-				if code_success(code):
+				if _code_success(code):
 					# Success. We got auth info.
 					var result = JSON.parse_string(body)
 					var verification_url = result["verificationUriComplete"]
@@ -199,26 +257,28 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					poll_req.grant_type = "urn:ietf:params:oauth:grant-type:device_code"
 
 					# Start the auth verification from the verifier
-					Player2AuthHelper._run_auth_verification(verification_url)
+					var let_ui_know_auth_completed = Player2AuthHelper._run_auth_verification(verification_url)
 
 					# Poll until we get it
 					Player2AsyncHelper.call_poll(
 						func(on_complete):
-							if auth_cancelled:
+							if Player2AuthHelper.auth_cancelled:
 								return
 							Player2WebHelper.request(
-								api.endpoint_web.auth_poll,
+								api.endpoint_web.path("auth_poll"),
 								HTTPClient.Method.METHOD_POST,
 								poll_req,
 								_get_headers(false),
 								func(body, code, headers):
 									print("Got auth poll response: ", body)
-									if auth_cancelled:
+									if Player2AuthHelper.auth_cancelled:
 										return
-									if code_success(code):
+									if _code_success(code):
 										# We succeeded!
 										print("Successfully got auth key. Continuing to request.")
-										_web_p2_key =JSON.parse_string(body)["p2Key"]
+										_web_p2_key = JSON.parse_string(body)["p2Key"]
+										if let_ui_know_auth_completed:
+											let_ui_know_auth_completed.call()
 										on_complete.call(false)
 										run_again.call()
 										return
@@ -340,3 +400,36 @@ func stt_stop(on_complete : Callable, on_fail : Callable = Callable()) -> void:
 
 func get_selected_characters(on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	_req("get_selected_characters", HTTPClient.Method.METHOD_GET, "", on_complete, on_fail)
+
+func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
+	var host = "ws://coder-adrisj6-adrisworkspace0.wombat-tawny.ts.net:8090/v1/stt/stream"
+	var url = host + "?token=" + _web_p2_key + "&sample_rate=" + str(sample_rate)
+	var socket = WebSocketPeer.new()
+
+	var conn_err = socket.connect_to_url(url)
+	if conn_err != OK:
+		print("FAILED TO CONNECT TO SOCKET")
+		return null
+	print("socket successfully created!")
+	return socket
+
+func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
+
+	var api = Player2APIConfig.grab()
+
+	# Before we start, load our key.
+	if api.auth_key_cache_locally and _web_p2_key == "":
+		#_web_p2_key = _load_key()
+		print("loading auth key: ", _web_p2_key)
+
+func _exit_tree() -> void:
+	if Engine.is_editor_hint():
+		return
+
+	var api = Player2APIConfig.grab()
+
+	# Before we leave, store our key.
+	if api.auth_key_cache_locally and _web_p2_key != "":
+		_save_key(_web_p2_key)

@@ -14,6 +14,10 @@ config/name="Player 2 AI NPC Godot"
 run/main_scene="uid://cjlrjwtxls65d"
 config/features=PackedStringArray("4.4", "Forward Plus")
 
+[audio]
+
+driver/enable_input=true
+
 [autoload]
 
 Player2AsyncHelper="*res://addons/player2/helpers/async_helper.gd"
@@ -25,7 +29,7 @@ Player2API="*res://addons/player2/helpers/api.gd"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/player2/plugin.cfg")
+enabled=PackedStringArray()
 
 [input]
 
@@ -62,7 +66,7 @@ talk={
 [player2]
 
 game_key="Player_2_AI_NPC_Godot"
-client_id=""
+client_id="01977e1d-bbbb-7e63-b998-a6de49976101"
 
 [rendering]
 

@@ -28,6 +28,14 @@ enum SourceMode {
 @export var request_timeout_check_local : float = 1
 @export var request_timeout_check_web : float = 5
 
+@export_group("Authentication", "auth")
+## If true, the user's auth key will be cached locally after logging in and read
+## on startup
+@export var auth_key_cache_locally : bool = true
+
+@export_group("UI", "ui")
+@export var ui_web_auth_prompt : PackedScene
+
 static var _instance : Player2APIConfig
 
 static func grab() -> Player2APIConfig:

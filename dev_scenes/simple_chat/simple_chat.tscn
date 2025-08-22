@@ -163,7 +163,6 @@ color = Color(0.992602, 0.638143, 0.760959, 1)
 [connection signal="thinking_ended" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="hide"]
 [connection signal="tts_began" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="show"]
 [connection signal="tts_ended" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="hide"]
-[connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player2Agent" method="chat"]
 [connection signal="timeout" from="CanvasLayer/Simple Interface/Thinking Animation/Timer" to="CanvasLayer/Simple Interface/Thinking Animation" method="inc_count"]
 
 [editable path="CanvasLayer/Simple Interface"]
