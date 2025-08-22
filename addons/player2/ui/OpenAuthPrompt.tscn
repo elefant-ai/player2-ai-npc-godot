@@ -1,11 +1,46 @@
-[gd_scene load_steps=4 format=3 uid="uid://bvdm811rnyhid"]
+[gd_scene load_steps=11 format=3 uid="uid://bvdm811rnyhid"]
 
 [ext_resource type="Script" uid="uid://bspbxif1p8ov3" path="res://addons/player2/ui/success_accept_reject_prompt.gd" id="1_k27lu"]
+[ext_resource type="StyleBox" uid="uid://h7a4syba52h8" path="res://addons/player2/ui/Player2StyleBoxFlat.tres" id="2_nsgi6"]
+[ext_resource type="Texture2D" uid="uid://cw6s6dp4uas50" path="res://addons/player2/ui/site_auth_example.png" id="3_17kjp"]
+[ext_resource type="Texture2D" uid="uid://2q85n0l7ywh0" path="res://addons/player2/ui/check-mark-circle-svgrepo-com.svg" id="4_kp01c"]
+
+[sub_resource type="Theme" id="Theme_k27lu"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_xk7xc"]
 font_size = 24
+font_color = Color(0.520814, 0.790433, 1, 1)
+shadow_size = 10
+shadow_color = Color(0.6192, 0.711507, 0.86, 0.560784)
+
+[sub_resource type="Theme" id="Theme_17kjp"]
+default_font_size = 24
 
 [sub_resource type="LabelSettings" id="LabelSettings_k27lu"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nsgi6"]
+bg_color = Color(0.239501, 0.688244, 0.566472, 1)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_blend = true
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_17kjp"]
+bg_color = Color(0.55, 0.253, 0.253, 1)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_blend = true
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
 
 [node name="OpenAuthPrompt" type="CanvasLayer"]
 layer = 120
@@ -17,7 +52,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.180392, 0.133333, 0.215686, 0.345098)
+theme = SubResource("Theme_k27lu")
+color = Color(0.109804, 0.109804, 0.109804, 0.72549)
 
 [node name="Panel Prompt" type="Panel" parent="."]
 anchors_preset = 15
@@ -30,6 +66,7 @@ offset_bottom = -79.0
 grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(120, 240)
+theme_override_styles/panel = ExtResource("2_nsgi6")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel Prompt"]
 layout_mode = 2
@@ -44,7 +81,7 @@ size_flags_vertical = 3
 
 [node name="Title" type="Label" parent="Panel Prompt/VBoxContainer"]
 layout_mode = 2
-text = "Player 2 Web Authentication Needed"
+text = "Player2 AI Required"
 label_settings = SubResource("LabelSettings_xk7xc")
 horizontal_alignment = 1
 
@@ -52,27 +89,52 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="Panel Prompt/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel Prompt/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel Prompt/VBoxContainer/ScrollContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel Prompt/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 
-[node name="Description Start" type="Label" parent="Panel Prompt/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 2
+
+[node name="Connection Failed" type="RichTextLabel" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+size_flags_vertical = 6
+theme = SubResource("Theme_17kjp")
+bbcode_enabled = true
+text = "[color=light_coral][b]Connection Failed[/b][/color]"
+horizontal_alignment = 1
+
+[node name="Description Start" type="RichTextLabel" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
 size_flags_vertical = 6
-text = "Authentication with a Player2 account is required to access the Player2  endpoints, including chat completion, AI NPC and Speech to Text.
+bbcode_enabled = true
+text = "[b]Why?[/b]
 
-Confirm to proceed with authentication and Cancel to not accept Player2 features"
-label_settings = SubResource("LabelSettings_k27lu")
+The game uses Player2's AI API to power in-game conversations, Text To Speech, Speech To Text and more. The game may not function properly without these features enabled."
+fit_content = true
 horizontal_alignment = 1
-autowrap_mode = 3
 
-[node name="Description Opened Web" type="Label" parent="Panel Prompt/VBoxContainer/ScrollContainer/VBoxContainer"]
-visible = false
+[node name="Authenticating" type="RichTextLabel" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+size_flags_vertical = 6
+theme = SubResource("Theme_17kjp")
+bbcode_enabled = true
+text = "[color=peru][b]Authenticating...[/b][/color]"
+horizontal_alignment = 1
+
+[node name="Description Opened Web" type="Label" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
 size_flags_vertical = 6
@@ -80,6 +142,25 @@ text = "Proceed to the website and authenticate the app"
 label_settings = SubResource("LabelSettings_k27lu")
 horizontal_alignment = 1
 autowrap_mode = 3
+
+[node name="Control" type="Control" parent="Panel Prompt/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(192, 0)
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="Panel Prompt/VBoxContainer/HBoxContainer/Control"]
+custom_minimum_size = Vector2(0, 128)
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(96, 0)
+size_flags_horizontal = 8
+texture = ExtResource("3_17kjp")
+expand_mode = 1
+stretch_mode = 4
 
 [node name="Buttons" type="HBoxContainer" parent="Panel Prompt"]
 layout_mode = 1
@@ -98,7 +179,8 @@ alignment = 1
 [node name="Proceed" type="Button" parent="Panel Prompt/Buttons"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Proceed"
+theme_override_styles/normal = SubResource("StyleBoxFlat_nsgi6")
+text = "Turn On Player2 AI"
 
 [node name="Gap" type="Control" parent="Panel Prompt/Buttons"]
 custom_minimum_size = Vector2(64, 0)
@@ -107,10 +189,10 @@ layout_mode = 2
 [node name="Reject" type="Button" parent="Panel Prompt/Buttons"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Reject"
+theme_override_styles/normal = SubResource("StyleBoxFlat_17kjp")
+text = "Proceed Without Player2 AI"
 
 [node name="Panel Success" type="Panel" parent="."]
-visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -121,6 +203,7 @@ offset_bottom = -79.0
 grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(120, 240)
+theme_override_styles/panel = ExtResource("2_nsgi6")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel Success"]
 layout_mode = 2
@@ -151,14 +234,48 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Description" type="Label" parent="Panel Success/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="Connection Failed" type="RichTextLabel" parent="Panel Success/VBoxContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+size_flags_vertical = 6
+theme = SubResource("Theme_17kjp")
+bbcode_enabled = true
+text = "[b][color=pale_green]Connection successful![/color][/b]"
+horizontal_alignment = 1
+
+[node name="Gap" type="Control" parent="Panel Success/VBoxContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+
+[node name="Description" type="RichTextLabel" parent="Panel Success/VBoxContainer/ScrollContainer/VBoxContainer"]
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
 size_flags_vertical = 6
-text = "Verification successful. You may now use AI features!"
-label_settings = SubResource("LabelSettings_k27lu")
+bbcode_enabled = true
+text = "You may now use AI features!"
 horizontal_alignment = 1
-autowrap_mode = 3
+
+[node name="Control" type="Control" parent="Panel Success/VBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="Panel Success/VBoxContainer/ScrollContainer/VBoxContainer/Control"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -64.0
+offset_top = -64.0
+offset_right = 64.0
+offset_bottom = 64.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(64, 64)
+texture = ExtResource("4_kp01c")
+expand_mode = 1
+stretch_mode = 4
 
 [node name="Buttons" type="HBoxContainer" parent="Panel Success"]
 layout_mode = 1
@@ -177,10 +294,14 @@ alignment = 1
 [node name="Proceed" type="Button" parent="Panel Success/Buttons"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Proceed"
+theme_override_styles/normal = SubResource("StyleBoxFlat_nsgi6")
+text = "Continue With Game 🎮"
 
-[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/ScrollContainer/VBoxContainer/Description Start" method="hide"]
-[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/ScrollContainer/VBoxContainer/Description Opened Web" method="show"]
+[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Description Opened Web" method="show"]
+[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Description Start" method="hide"]
+[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Connection Failed" method="hide"]
+[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Authenticating" method="show"]
+[connection signal="succeeded" from="." to="Panel Prompt" method="hide"]
 [connection signal="succeeded" from="." to="Panel Success" method="show"]
 [connection signal="pressed" from="Panel Prompt/Buttons/Proceed" to="." method="accept"]
 [connection signal="pressed" from="Panel Prompt/Buttons/Reject" to="." method="reject"]
