@@ -11,14 +11,21 @@ config_version=5
 [application]
 
 config/name="Player 2 AI NPC Godot"
-run/main_scene="uid://cjlrjwtxls65d"
+run/main_scene="uid://cc80o6rwn8i0u"
 config/features=PackedStringArray("4.4", "Forward Plus")
+
+[audio]
+
+driver/enable_input=true
 
 [autoload]
 
-Player2WebHelper="*res://addons/player2/helpers/web_helper.gd"
-Player2ErrorHelper="*res://addons/player2/helpers/error_helper.tscn"
 Player2AsyncHelper="*res://addons/player2/helpers/async_helper.gd"
+Player2ErrorHelper="*res://addons/player2/helpers/error_helper.tscn"
+Player2WebHelper="*res://addons/player2/helpers/web_helper.gd"
+Player2AuthHelper="*res://addons/player2/helpers/auth_helper.gd"
+Player2APISourceHelper="*res://addons/player2/helpers/Player2APISource.tscn"
+Player2API="*res://addons/player2/helpers/api.gd"
 
 [editor_plugins]
 
@@ -58,8 +65,8 @@ talk={
 
 [player2]
 
-game_key="my_game_key"
-
+game_key="Player_2_AI_NPC_Godot"
+client_id=""
 [rendering]
 
 environment/defaults/default_clear_color=Color(0, 0, 0, 1)

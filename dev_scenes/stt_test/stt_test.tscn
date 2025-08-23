@@ -1,0 +1,77 @@
+[gd_scene load_steps=5 format=3 uid="uid://da3k3wdoxrxbm"]
+
+[ext_resource type="Script" uid="uid://cefsdd2m7qmmu" path="res://dev_scenes/stt_test/stt_test.gd" id="1_oiplv"]
+[ext_resource type="Script" uid="uid://demr3r0wkqqj1" path="res://addons/player2/nodes/Player2STT.gd" id="2_ns05t"]
+[ext_resource type="AudioStream" uid="uid://csdwmiq4byp0i" path="res://dev_scenes/stt_test/talking.wav" id="3_uhvyn"]
+[ext_resource type="AudioStream" uid="uid://dbw7a0uknuu4i" path="res://dev_scenes/stt_test/jam.wav" id="4_bu4pp"]
+
+[node name="SttTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_oiplv")
+
+[node name="Info" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Press Tab to STT"
+
+[node name="Response" type="Label" parent="."]
+layout_mode = 0
+offset_top = 298.0
+offset_right = 126.0
+offset_bottom = 321.0
+text = "Reply goes here"
+
+[node name="Player2STT" type="Node" parent="."]
+script = ExtResource("2_ns05t")
+audio_stream = ExtResource("3_uhvyn")
+metadata/_custom_type_script = "uid://demr3r0wkqqj1"
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_bu4pp")
+volume_db = -4.908
+autoplay = true
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="Control"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Stop Button" type="Button" parent="."]
+layout_mode = 0
+offset_left = 776.0
+offset_top = 244.0
+offset_right = 784.0
+offset_bottom = 252.0
+text = "Stop"
+
+[connection signal="stt_received" from="Player2STT" to="Response" method="set_text"]
+[connection signal="pressed" from="Stop Button" to="Player2STT" method="stop_stt"]

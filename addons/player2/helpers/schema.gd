@@ -69,3 +69,11 @@ class TTSRequest extends Resource:
 
 class STTStartRequest extends Resource:
 	@export var timeout : float
+
+class AuthStartRequest extends Resource:
+	@export var client_id : String
+
+class AuthPollRequest extends Resource:
+	@export var client_id : String
+	@export var device_code : String
+	@export var grant_type : String

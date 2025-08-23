@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="Player2APIConfig" load_steps=7 format=3 uid="uid://b17boijhcsvyu"]
+
+[ext_resource type="Script" uid="uid://4jjipstvxd6p" path="res://addons/player2/helpers/config/Player2LocalEndpointConfig.gd" id="1_vtgv6"]
+[ext_resource type="Script" uid="uid://ceh624ltng4km" path="res://addons/player2/helpers/config/Player2WebEndpointConfig.gd" id="2_88imo"]
+[ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/helpers/config/Player2APIConfig.gd" id="3_pqu85"]
+[ext_resource type="PackedScene" uid="uid://bvdm811rnyhid" path="res://addons/player2/ui/OpenAuthPrompt.tscn" id="4_88imo"]
+
+[sub_resource type="Resource" id="Resource_m5qx4"]
+script = ExtResource("1_vtgv6")
+root = "http://127.0.0.1:4315"
+chat = "{root}/v1/chat/completions"
+health = "{root}/v1/health"
+tts_speak = "{root}/v1/tts/speak"
+tts_stop = "{root}/v1/tts/stop"
+get_selected_characters = "{root}/v1/selected_characters"
+stt_start = "{root}/v1/stt/start"
+stt_stop = "{root}/v1/stt/stop"
+endpoint_check = "{root}/v1/health"
+
+[sub_resource type="Resource" id="Resource_nncrx"]
+script = ExtResource("2_88imo")
+root = "https://api.player2.game"
+chat = "{root}/v1/chat/completions"
+health = "{root}/v1/health"
+tts_speak = "{root}/v1/tts/speak"
+get_selected_characters = "{root}/v1/selected_characters"
+auth_start = "{root}/v1/login/device/new"
+auth_poll = "{root}/v1/login/device/token"
+stt_stream = "{root}/v1/stt/stream"
+endpoint_check = "{root}"
+
+[resource]
+script = ExtResource("3_pqu85")
+prompt_auth_page_immediately = true
+source_mode = 0
+error_log_ui = true
+endpoint_web = SubResource("Resource_nncrx")
+endpoint_local = SubResource("Resource_m5qx4")
+request_too_much_delay_seconds = 3.0
+request_timeout = 20.0
+request_timeout_check_local = 1.0
+request_timeout_check_web = 5.0
+auth_key_cache_locally = true
+ui_web_auth_prompt = ExtResource("4_88imo")
+metadata/_custom_type_script = "uid://b6indg81ao1we"

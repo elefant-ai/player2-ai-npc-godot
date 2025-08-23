@@ -20,7 +20,7 @@ func _parse_url_and_port(path : String) -> UrlPort:
 
 	return UrlPort.new(url, port)
 
-func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", headers : Array[String] = [], on_completed : Callable = Callable(), on_fail : Callable = Callable()) -> void:
+func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", headers : Array[String] = [], on_completed : Callable = Callable(), on_fail : Callable = Callable(), timeout = -1) -> void:
 
 	var string_body : String
 	if body is String:
@@ -31,9 +31,8 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 		string_body = JsonClassConverter.class_to_json_string(body)
 
 	print("HTTP REQUEST:")
-	print("\n\n")
 	print(string_body)
-	print("\n\n")
+	print("\n")
 
 	# mock it
 	#if on_completed:
@@ -45,16 +44,29 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 
 	var http = HTTPRequest.new()
 	add_child(http)
+	
+	http.timeout = timeout if timeout != -1 else Player2APIConfig.grab().request_timeout
 
 	var on_completed_inner : Callable
 	on_completed_inner = func(result, response_code, headers, body):
-		print("HTTP done")
 		if result != HTTPRequest.RESULT_SUCCESS:
-			if on_fail != null:
-				on_fail.call(result)
+			print("HTTP failure: ", result)
+			if on_fail:
+				on_fail.call(result, response_code)
 		else:
+			print("HTTP success: ", response_code, ": ", body.get_string_from_utf8())
+			if response_code == 429:
+				# Too many requests, try again...
+				print("too many requests, trying again...")
+				Player2WebHelper.call_timeout(
+					func():
+						# Call ourselves again...
+						request(path, method, body, headers, on_completed, on_fail),
+					Player2APIConfig.grab().request_too_much_delay_seconds
+				)
+				return
 			if on_completed:
-				on_completed.call(body.get_string_from_utf8() if body else "", response_code)
+				on_completed.call(body.get_string_from_utf8() if body else "", response_code, headers)
 		#if on_completed_inner != null:
 			#http.request_completed.disconnect(on_completed_inner)
 		remove_child(http)
@@ -64,17 +76,8 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 	var err = http.request(path, headers, method, string_body)
 
 	if err != OK:
-		print("Error sending HTTP request")
+		print("Error sending HTTP request for ", path, ", headers=", headers, ", method=", method, ", body=", string_body)
 		print(err)
 		if on_fail != null:
 			on_fail.call(err)
 		return
-
-func call_timeout(call : Callable, timeout : float) -> void:
-	var t = Timer.new()
-	t.autostart = false
-	t.timeout.connect(func():
-		call.call()
-		t.queue_free())
-	add_child(t)
-	t.start(timeout)

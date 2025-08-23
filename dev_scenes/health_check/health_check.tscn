@@ -1,0 +1,59 @@
+[gd_scene load_steps=3 format=3 uid="uid://n1xlbj2ndal5"]
+
+[ext_resource type="Script" uid="uid://bt0y2jdsivfq2" path="res://dev_scenes/health_check/health_check.gd" id="1_y3n4o"]
+[ext_resource type="Script" uid="uid://dkc6350kdt50v" path="res://dev_scenes/health_check/tool_call_check.gd" id="2_xyo11"]
+
+[node name="HealthCheck" type="Node2D"]
+script = ExtResource("1_y3n4o")
+run = true
+
+[node name="Tester" type="Node" parent="."]
+script = ExtResource("2_xyo11")
+web = true
+text = "{
+    \"messages\": [
+        {
+            \"content\": \"Your name is Robot. You help the player out.\",
+            \"role\": \"system\",
+            \"tool_call_id\": \"\",
+            \"tool_calls\": []
+        },
+        {
+            \"content\": \"{\\\"speaker_message\\\":\\\"hi\\\",\\\"speaker_name\\\":\\\"User\\\",\\\"stimuli\\\":\\\"\\\",\\\"world_status\\\":\\\"\\\"}\",
+            \"role\": \"user\",
+            \"tool_call_id\": \"\",
+            \"tool_calls\": []
+        }
+    ],
+    \"tool_choice\": \"Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls.\",
+    \"tools\": [
+        {
+            \"function\": {
+                \"description\": \"Make the background of the user's input field quickly flash black and then go back to normal. Notifies caller when one blink is successful. \",
+                \"name\": \"blink\",
+                \"parameters\": {
+                    \"properties\": {
+                        \"MESSAGE_ARG\": {
+                            \"description\": \"If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud.\",
+                            \"type\": \"string\"
+                        }
+                    },
+                    \"required\": [
+                        \"MESSAGE_ARG\"
+                    ],
+                    \"type\": \"object\"
+                }
+            },
+            \"type\": \"function\"
+        }
+    ]
+}"
+
+[node name="Button" type="Button" parent="."]
+offset_left = 174.0
+offset_top = 117.0
+offset_right = 424.0
+offset_bottom = 264.0
+text = "Call"
+
+[connection signal="pressed" from="Button" to="Tester" method="run_req"]

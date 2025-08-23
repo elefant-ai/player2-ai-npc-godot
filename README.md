@@ -56,9 +56,34 @@ You should now see a list of functions with their descriptions below:
 
 <img width="406" height="972" alt="image" src="https://github.com/user-attachments/assets/14cd2090-2c61-4292-ad02-68e0b0569a3a" />
 
+## STT
+
+Enable audio in godot:
+
+Project Settings → Audio → Enable Input (turn it on).
+
+TODO: Image of this setting
+TODO: Can we automate this?
+
 
 ## Game Key
 
 Access and set your game key (used to register your app in the Player 2 Launcher) by going into **Project Settings** -> **Player 2** -> **Game Key**
 
 <img width="1168" height="618" alt="image" src="https://github.com/user-attachments/assets/6f180630-8fdf-4478-b7b4-8c21cf216996" />
+
+## Client ID
+
+Player2 now supports a Web API that requires NO launcher to access, but does require authentication. Thankfully the Godot plugin handles authentication for you, the only thing you need is your `client_id`.
+
+A backend portal for creating a client_id is in progress, but feel free to DM a staff member [on our discord](https://player2.game/discord) for help getting one.
+
+Populate your client_id under **Project Settings** -> **Player 2** -> **Game Key**
+
+## Web API Configuration
+
+The default behavior of the extension is to search the local API, then default to the web API if no local API is found.
+
+If you wish to force the extension to only use local/web, open up the `addons/player2/api_config.tres` resource file and edit the `API Source Mode` field:
+<img width="580" height="989" alt="image" src="https://github.com/user-attachments/assets/df04134a-d4d5-4e38-8fdf-e6d0e54cfaff" />
+
