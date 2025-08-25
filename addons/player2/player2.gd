@@ -27,18 +27,6 @@ func _enter_tree() -> void:
 	add_custom_type("Player2TTS", "Player2TTS", preload("res://addons/player2/nodes/Player2TTS.gd"), preload("p2.svg"))
 
 	# Settings
-	# Game Key
-	if not ProjectSettings.has_setting("player2/game_key"):
-		var default : String = ProjectSettings.get_setting("application/config/name")
-		if !default:
-			default = "my_game"
-		default = default.replace(" ", "_").replace(":", "_")
-		ProjectSettings.set_setting("player2/game_key", default)
-		ProjectSettings.add_property_info({
-			"name": "player2/game_key",
-			"type": TYPE_STRING,
-			"hint": PROPERTY_HINT_NONE
-		})
 	# Client ID
 	if not ProjectSettings.has_setting("player2/client_id"):
 		var default : String = ""
@@ -61,18 +49,21 @@ func _enter_tree() -> void:
 		#})
 	#elif !ProjectSettings.get("player2/api"):
 		#ProjectSettings.set_setting("player2/api", Player2APIConfig.new())
-	ProjectSettings.set_as_basic("player2/game_key", true)
-	#ProjectSettings.set_as_basic("player2/api", true)
+
+	# game_key is Deprecated
+	if ProjectSettings.has_setting("player2/game_key"):
+		ProjectSettings.clear("player2/game_key")
 	ProjectSettings.set_as_basic("player2/client_id", true)
-	
+	#ProjectSettings.set_as_basic("player2/api", true)
+
 func _exit_tree() -> void:
 	# Clean-up of the plugin goes here.
 	remove_custom_type("Player2AINPC")
 	remove_custom_type("Player2STT")
 	remove_custom_type("Player2TTS")
 	# Settings
-	ProjectSettings.clear("player2/game_key")
 	ProjectSettings.clear("player2/client_id")
+	#ProjectSettings.clear("player2/api", true)
 
 func _enable_plugin() -> void:
 	add_autoload_singleton(ASYNC_HELPER_AUTOLOAD_NAME, ASYNC_HELPER_AUTOLOAD_PATH)

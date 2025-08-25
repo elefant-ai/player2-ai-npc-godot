@@ -193,6 +193,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_17kjp")
 text = "Proceed Without Player2 AI"
 
 [node name="Panel Success" type="Panel" parent="."]
+visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

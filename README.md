@@ -56,21 +56,21 @@ You should now see a list of functions with their descriptions below:
 
 <img width="406" height="972" alt="image" src="https://github.com/user-attachments/assets/14cd2090-2c61-4292-ad02-68e0b0569a3a" />
 
-## STT
+## TTS (Text To Speech)
+
+Use the `Player2TTS` node to easily access Text To Speech
+
+An audio source output will be automatically created for you, but can be manually set in the node.
+
+## STT (Speech To Text)
+
+Use the `Player2STT` node to easily access Speech To Text
+
+However, in order to do this audio must first be enabled in the godot engine.
 
 Enable audio in godot:
 
-Project Settings → Audio → Enable Input (turn it on).
-
-TODO: Image of this setting
-TODO: Can we automate this?
-
-
-## Game Key
-
-Access and set your game key (used to register your app in the Player 2 Launcher) by going into **Project Settings** -> **Player 2** -> **Game Key**
-
-<img width="1168" height="618" alt="image" src="https://github.com/user-attachments/assets/6f180630-8fdf-4478-b7b4-8c21cf216996" />
+**Project Settings** -> **Audio** -> **Enable Input (turn it on).**
 
 ## Client ID
 

@@ -30,7 +30,7 @@ extends Resource
 ## How many messages to hold in history before summarizing
 @export var conversation_history_size : int = 64
 ## How many messages to use in our summary when summarizing
-@export var conversation_summary_buffer : int = 48
+@export var conversation_summary_buffer : int = 64
 ## How many characters to limit our summary to.
 @export var summary_max_size : int = 500
 ## The request prompt to create a conversation summary.

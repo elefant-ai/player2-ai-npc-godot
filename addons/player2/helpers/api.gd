@@ -1,3 +1,4 @@
+@tool
 extends Node
 
 # auth: TODO: move? or not?
@@ -78,14 +79,9 @@ func _load_key() -> String:
 
 func _get_headers(web : bool) -> Array[String]:
 	var config := Player2APIConfig.grab()
-	var game_key = ProjectSettings.get_setting("player2/game_key")
-	if !game_key or game_key.is_empty():
-		game_key = "undefined_godot_project"
-	var key = game_key# game_key.replace(" ", "_").replace(":", "_")
 	var result : Array[String] = [
 		"Content-Type: application/json; charset=utf-8",
-		"Accept: application/json; charset=utf-8",
-		"player2-game-key: " + key
+		"Accept: application/json; charset=utf-8"
 	]
 
 	if web and !_web_p2_key.is_empty():
@@ -134,7 +130,6 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 			# Try json, otherwise just return it...
 			var result = JSON.parse_string(body)
 			on_completed.call(result if result else body)
-		
 
 	if !api:
 		print("API config is null/not configured!")
@@ -456,6 +451,14 @@ func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
+
+	var client_id = ProjectSettings.get_setting("player2/client_id")
+	if !client_id:
+		client_id = ""
+
+	if !client_id or client_id.is_empty():
+		var msg = "No client id defined. Please set a valid client id in the project settings under player2/client_id"
+		Player2ErrorHelper.send_error(msg)
 
 	var api = Player2APIConfig.grab()
 
