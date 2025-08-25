@@ -56,9 +56,9 @@ You should now see a list of functions with their descriptions below:
 
 <img width="406" height="972" alt="image" src="https://github.com/user-attachments/assets/14cd2090-2c61-4292-ad02-68e0b0569a3a" />
 
-## TTS (Text To Speech)
+## Manual TTS (Text To Speech)
 
-Use the `Player2TTS` node to easily access Text To Speech
+Use the `Player2TTS` node to use Text To Speech manually.
 
 An audio source output will be automatically created for you, but can be manually set in the node.
 
