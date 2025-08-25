@@ -231,8 +231,8 @@ func _processconversation_history() -> void:
 	if conversation_history.size() > chat_config.conversation_history_size:
 		print("Conversation history limit reached: Cropping and summarizing")
 		# crop conversation history
-		var to_summarize := conversation_history.slice(0, chat_config.conversation_summary_buffer)
-		conversation_history = conversation_history.slice(conversation_history.size() - chat_config.conversation_history_size)
+		var to_summarize := conversation_history.slice(conversation_history.size() - chat_config.conversation_summary_buffer)
+		conversation_history = conversation_history.slice(min (conversation_history.size() - 1, chat_config.conversation_history_size))
 
 		# summarize a fragment of the space we cropped out and push that to the start...
 		if to_summarize.size() > 0:
@@ -246,7 +246,7 @@ func _processconversation_history() -> void:
 					if _current_summary.length() > chat_config.summary_max_size:
 						_current_summary = _current_summary.substr(0, chat_config.summary_max_size)
 					_summarizing_history = false,
-				func():
+				func(msg, code):
 					# error! Do nothing for now.
 					_summarizing_history = false
 			)
@@ -285,14 +285,19 @@ func _summarize_history_internal(messages : Array[ConversationMessage], previous
 	thinking = true
 	Player2API.chat(request,
 		func(result):
+			thinking = false
 			if result.choices.size() != 0:
 				var reply = result.choices.get(0).message.content
 				on_completed.call(reply)
 				# done, good.
 				return
-			printerr("Invalid reply: ", JsonClassConverter.class_to_json_string(result) )
-			on_fail.call(),
-		on_fail
+			var msg = "Invalid reply: " + JsonClassConverter.class_to_json_string(result) 
+			printerr(msg)
+			on_fail.call(msg, -1234),
+		func(body, code):
+			thinking = false
+			if on_fail:
+				on_fail.call(body, code)
 	)
 
 ## Append a reply message to our history, assuming it's from the assistant.

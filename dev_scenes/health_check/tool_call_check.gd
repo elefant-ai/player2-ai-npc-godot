@@ -51,14 +51,9 @@ extends Node
 
 func _get_headers() -> Array[String]:
 	var config := Player2APIConfig.grab()
-	var game_key = ProjectSettings.get_setting("player2/game_key")
-	if !game_key or game_key.is_empty():
-		game_key = "undefined_godot_project"
-	var key = game_key# game_key.replace(" ", "_").replace(":", "_")
 	var result : Array[String] = [
 		"Content-Type: application/json; charset=utf-8",
-		"Accept: application/json; charset=utf-8",
-		"player2-game-key: " + key
+		"Accept: application/json; charset=utf-8"
 	]
 
 	if web and !web_auth_key.is_empty():

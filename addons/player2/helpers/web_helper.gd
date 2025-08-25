@@ -31,8 +31,10 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 		string_body = JsonClassConverter.class_to_json_string(body)
 
 	print("HTTP REQUEST:")
+	print(headers)
 	print(string_body)
 	print("\n")
+	# print_stack()
 
 	# mock it
 	#if on_completed:
@@ -50,6 +52,7 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 	var on_completed_inner : Callable
 	on_completed_inner = func(result, response_code, headers, body):
 		if result != HTTPRequest.RESULT_SUCCESS:
+			Player2ErrorHelper.send_error("Http failure Http code " + str(result))
 			print("HTTP failure: ", result)
 			if on_fail:
 				on_fail.call(result, response_code)
