@@ -7,6 +7,12 @@ var _web_p2_key : String = ""
 var _last_local_present : bool = true
 var _last_web_present : bool = true
 var _source_tested : bool = false
+# Queued up calls for auth
+var _auth_running : bool = false
+class AuthCallback:
+	var run: Callable
+	var on_fail : Callable
+var _auth_queue : Array[AuthCallback] = []
 
 func using_web() -> bool:
 	var api = Player2APIConfig.grab()
@@ -76,6 +82,9 @@ func _load_key() -> String:
 
 	return Player2CrappyEncryption.decrypt_unsecure(content, client_id)
 
+func _wipe_cached_key() -> void:
+	var filename = "user://auth_cache"
+	DirAccess.remove_absolute(filename)
 
 func _get_headers(web : bool) -> Array[String]:
 	var config := Player2APIConfig.grab()
@@ -108,6 +117,15 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 
 	var run_again = func():
 		_req(path_property, method, body, on_completed, on_fail)
+
+	if _auth_running:
+		print("(tried a request while waiting for auth, queuing up...)")
+		# Add self to auth queue
+		var queued := AuthCallback.new()
+		queued.run = run_again
+		queued.on_fail = on_fail
+		_auth_queue.push_back(queued)
+		return
 
 	# When we receive the results ..
 	var receive_results = func(body, code, headers):
@@ -229,12 +247,19 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		# The user can cancel the process at any time with Player2AuthHelper.cancel_auth()
 		Player2AuthHelper.auth_user_cancelled.connect(
 			func():
+				_auth_running = false
 				var msg = "Unable to connect to web after player deined auth request."
-				print("ASDF")
 				Player2ErrorHelper.send_error(msg)
 				# TODO: Custom code/constant of some sorts?
 				if on_fail:
 					on_fail.call(msg, -3)
+				var calls : Array[Callable] = []
+				calls.assign(_auth_queue.map(func(c): return c.on_fail))
+				_auth_queue.clear()
+				for c in calls:
+					if c:
+						c.call(msg, -3)
+
 		)
 
 		# Begin validation
@@ -266,6 +291,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					poll_req.grant_type = "urn:ietf:params:oauth:grant-type:device_code"
 
 					# Start the auth verification from the verifier
+					_auth_running = true
 					var let_ui_know_auth_completed = Player2AuthHelper._run_auth_verification(verification_url)
 
 					# Poll until we get it
@@ -288,8 +314,16 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 										_web_p2_key = JSON.parse_string(body)["p2Key"]
 										if let_ui_know_auth_completed:
 											let_ui_know_auth_completed.call()
+										_auth_running = false
 										on_complete.call(false)
+										# Auth completed: call everything in the queue
 										run_again.call()
+										var calls : Array[Callable] = []
+										calls.assign(_auth_queue.map(func(c): return c.run))
+										_auth_queue.clear()
+										for c in calls:
+											if c:
+												c.call()
 										return
 									# we did NOT succeed
 									# Check for expiration
@@ -306,6 +340,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 
 									on_complete.call(true),
 								func(body, code):
+									_auth_running = false
 									# Fail while polling
 									Player2ErrorHelper.send_error("Unable to connect to web during auth polling. Trying from start...")
 									Player2AsyncHelper.call_timeout(run_again, 2)
@@ -466,6 +501,10 @@ func _ready() -> void:
 	if api.auth_key_cache_locally and _web_p2_key == "":
 		_web_p2_key = _load_key()
 		print("loading auth key: ", _web_p2_key)
+		if _web_p2_key == "":
+			_wipe_cached_key()
+	else:
+		_wipe_cached_key()
 
 	# Web Auth Prompt Immediately
 	if api.prompt_auth_page_immediately:

@@ -33,9 +33,9 @@ func _ready() -> void:
 	if poke_button:
 		poke_button.pressed.connect(func(): poked.emit())
 	
-	if player2_stt:
-		# Pass the message from stt upwards
-		player2_stt.stt_received.connect(_send)
+	#if player2_stt:
+		## Pass the message from stt upwards
+		#player2_stt.stt_received.connect(_send)
 
 func _send(text : String) -> void:
 	append_line_user(text)
