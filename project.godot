@@ -22,9 +22,9 @@ driver/enable_input=true
 
 Player2AsyncHelper="*res://addons/player2/helpers/async_helper.gd"
 Player2ErrorHelper="*res://addons/player2/helpers/error_helper.tscn"
+Player2APISourceHelper="*res://addons/player2/helpers/Player2APISource.tscn"
 Player2WebHelper="*res://addons/player2/helpers/web_helper.gd"
 Player2AuthHelper="*res://addons/player2/helpers/auth_helper.gd"
-Player2APISourceHelper="*res://addons/player2/helpers/Player2APISource.tscn"
 Player2API="*res://addons/player2/helpers/api.gd"
 
 [editor_plugins]

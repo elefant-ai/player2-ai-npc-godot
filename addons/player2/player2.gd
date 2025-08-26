@@ -20,12 +20,8 @@ const API_SOURCE_HELPER_AUTOLOAD_PATH = "res://addons/player2/helpers/Player2API
 const API_HELPER_AUTOLOAD_NAME = "Player2API"
 const API_HELPER_AUTOLOAD_PATH = "res://addons/player2/helpers/api.gd"
 
-func _enter_tree() -> void:
-	# Initialization of the plugin goes here.
-	add_custom_type("Player2AINPC", "Player2AINPC", preload("nodes/Player2AINPC.gd"), preload("p2.svg"))
-	add_custom_type("Player2STT", "Player2STT", preload("nodes/Player2STT.gd"), preload("p2.svg"))
-	add_custom_type("Player2TTS", "Player2TTS", preload("res://addons/player2/nodes/Player2TTS.gd"), preload("p2.svg"))
 
+func _enter_tree() -> void:
 	# Settings
 	# Client ID
 	if not ProjectSettings.has_setting("player2/client_id"):
@@ -56,27 +52,38 @@ func _enter_tree() -> void:
 	ProjectSettings.set_as_basic("player2/client_id", true)
 	#ProjectSettings.set_as_basic("player2/api", true)
 
+	add_autoload_singleton(ASYNC_HELPER_AUTOLOAD_NAME, ASYNC_HELPER_AUTOLOAD_PATH)
+	add_autoload_singleton(ERROR_HELPER_AUTOLOAD_NAME, ERROR_HELPER_AUTOLOAD_PATH)
+	add_autoload_singleton(API_SOURCE_HELPER_AUTOLOAD_NAME, API_SOURCE_HELPER_AUTOLOAD_PATH)
+	add_autoload_singleton(WEB_HELPER_AUTOLOAD_NAME, WEB_HELPER_AUTOLOAD_PATH)
+	add_autoload_singleton(AUTH_HELPER_AUTOLOAD_NAME, AUTH_HELPER_AUTOLOAD_PATH)
+	add_autoload_singleton(API_HELPER_AUTOLOAD_NAME, API_HELPER_AUTOLOAD_PATH)
+
+	# Initialization of the plugin goes here.
+	add_custom_type("Player2AINPC", "Player2AINPC", preload("nodes/Player2AINPC.gd"), preload("p2.svg"))
+	add_custom_type("Player2STT", "Player2STT", preload("nodes/Player2STT.gd"), preload("p2.svg"))
+	add_custom_type("Player2TTS", "Player2TTS", preload("nodes/Player2TTS.gd"), preload("p2.svg"))
+
+
 func _exit_tree() -> void:
-	# Clean-up of the plugin goes here.
-	remove_custom_type("Player2AINPC")
-	remove_custom_type("Player2STT")
-	remove_custom_type("Player2TTS")
 	# Settings
 	ProjectSettings.clear("player2/client_id")
 	#ProjectSettings.clear("player2/api", true)
 
-func _enable_plugin() -> void:
-	add_autoload_singleton(ASYNC_HELPER_AUTOLOAD_NAME, ASYNC_HELPER_AUTOLOAD_PATH)
-	add_autoload_singleton(ERROR_HELPER_AUTOLOAD_NAME, ERROR_HELPER_AUTOLOAD_PATH)
-	add_autoload_singleton(WEB_HELPER_AUTOLOAD_NAME, WEB_HELPER_AUTOLOAD_PATH)
-	add_autoload_singleton(AUTH_HELPER_AUTOLOAD_NAME, AUTH_HELPER_AUTOLOAD_PATH)
-	add_autoload_singleton(API_SOURCE_HELPER_AUTOLOAD_NAME, API_SOURCE_HELPER_AUTOLOAD_PATH)
-	add_autoload_singleton(API_HELPER_AUTOLOAD_NAME, API_HELPER_AUTOLOAD_PATH)
-
-func _disable_plugin() -> void:
-	remove_autoload_singleton(ASYNC_HELPER_AUTOLOAD_NAME)
-	remove_autoload_singleton(ERROR_HELPER_AUTOLOAD_NAME)
-	remove_autoload_singleton(WEB_HELPER_AUTOLOAD_NAME)
-	remove_autoload_singleton(AUTH_HELPER_AUTOLOAD_NAME)
-	remove_autoload_singleton(API_SOURCE_HELPER_AUTOLOAD_NAME)
 	remove_autoload_singleton(API_HELPER_AUTOLOAD_NAME)
+	remove_autoload_singleton(AUTH_HELPER_AUTOLOAD_NAME)
+	remove_autoload_singleton(WEB_HELPER_AUTOLOAD_NAME)
+	remove_autoload_singleton(API_SOURCE_HELPER_AUTOLOAD_NAME)
+	remove_autoload_singleton(ERROR_HELPER_AUTOLOAD_NAME)
+	remove_autoload_singleton(ASYNC_HELPER_AUTOLOAD_NAME)
+
+	# Clean-up of the plugin goes here.
+	remove_custom_type("Player2AINPC")
+	remove_custom_type("Player2STT")
+	remove_custom_type("Player2TTS")
+
+
+func _enable_plugin() -> void:
+	pass
+func _disable_plugin() -> void:
+	pass
