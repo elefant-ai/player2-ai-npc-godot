@@ -61,7 +61,7 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 			if response_code == 429:
 				# Too many requests, try again...
 				print("too many requests, trying again...")
-				Player2WebHelper.call_timeout(
+				Player2AsyncHelper.call_timeout(
 					func():
 						# Call ourselves again...
 						request(path, method, body, headers, on_completed, on_fail),
