@@ -7,6 +7,9 @@ var _web_p2_key : String = ""
 var _last_local_present : bool = true
 var _last_web_present : bool = true
 var _source_tested : bool = false
+# whether localhost:XXXX/login/web/{client_id} is assumed to exist
+var _auth_local_endpoint_present : bool = true
+
 # Queued up calls for auth
 var _auth_running : bool = false
 class AuthCallback:
@@ -231,10 +234,12 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 	# Check for auth key
 	if use_web and _web_p2_key.is_empty():
 		# No p2 auth key, run the auth sequence
-		# TODO: Better way to get client id?
+
 		var client_id = ProjectSettings.get_setting("player2/client_id")
 		if !client_id:
 			client_id = ""
+
+		# TODO: Better way to get client id?
 
 		if !client_id or client_id.is_empty():
 			var msg = "No client id defined. Please set a valid client id in the project settings under player2/client_id"
@@ -243,6 +248,20 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 			if on_fail:
 				on_fail.call(msg, -2)
 			return
+
+		# When we complete auth successfully
+		var do_auth_complete = func(p2_key : String):
+			print("Successfully got auth key. Continuing to request.")
+			_web_p2_key = p2_key
+			_auth_running = false
+			# Auth completed: call everything in the queue
+			run_again.call()
+			var calls : Array[Callable] = []
+			calls.assign(_auth_queue.map(func(c): return c.run))
+			_auth_queue.clear()
+			for c in calls:
+				if c:
+					c.call()
 
 		# The user can cancel the process at any time with Player2AuthHelper.cancel_auth()
 		Player2AuthHelper.auth_user_cancelled.connect(
@@ -260,6 +279,38 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					if c:
 						c.call(msg, -3)
 		)
+
+		# TRY auth local endpoint FIRST
+		if _auth_local_endpoint_present and _last_local_present:
+			# do NOT continue running the request, we are doing our thing up here.
+			var local_auth_path = api.endpoint_local.path("webapi_login")
+			local_auth_path = local_auth_path.replace("{client_id}", client_id)
+			Player2WebHelper.request(
+				local_auth_path,
+				HTTPClient.Method.METHOD_POST,
+				"",
+				_get_headers(false),
+				func(body, code, headers):
+					print("Got local auth response: ", body)
+					if Player2AuthHelper.auth_cancelled:
+						return
+					if _code_success(code):
+						var p2_key = JSON.parse_string(body)["p2Key"]
+						do_auth_complete.call(p2_key)
+					else:
+						# Failure
+						print("Local auth failed, trying web.")
+						_auth_local_endpoint_present = false
+						Player2AsyncHelper.call_timeout(run_again, 0.1)
+					,
+				func(body, code):
+					print("Local auth failed, trying web.")
+					_auth_local_endpoint_present = false
+					Player2AsyncHelper.call_timeout(run_again, 0.1)
+					,
+				0.5 # Timeout
+			)
+			return
 
 		# Begin validation
 		var verify_begin_req := Player2Schema.AuthStartRequest.new()
@@ -309,20 +360,11 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 										return
 									if _code_success(code):
 										# We succeeded!
-										print("Successfully got auth key. Continuing to request.")
-										_web_p2_key = JSON.parse_string(body)["p2Key"]
 										if let_ui_know_auth_completed:
 											let_ui_know_auth_completed.call()
-										_auth_running = false
 										on_complete.call(false)
-										# Auth completed: call everything in the queue
-										run_again.call()
-										var calls : Array[Callable] = []
-										calls.assign(_auth_queue.map(func(c): return c.run))
-										_auth_queue.clear()
-										for c in calls:
-											if c:
-												c.call()
+										var p2_key = JSON.parse_string(body)["p2Key"]
+										do_auth_complete.call(p2_key)
 										return
 									# we did NOT succeed
 									# Check for expiration

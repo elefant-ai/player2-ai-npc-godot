@@ -10,5 +10,6 @@ extends Player2EndpointConfig
 @export var get_selected_characters : String = "{root}/v1/selected_characters"
 @export var stt_start : String = "{root}/v1/stt/start"
 @export var stt_stop : String = "{root}/v1/stt/stop"
+@export var webapi_login : String = "{root}/v1/login/web/{client_id}"
 
 @export var endpoint_check = "{root}/v1/health"
