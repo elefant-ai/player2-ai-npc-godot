@@ -21,7 +21,7 @@ func using_web() -> bool:
 		return true
 	if api.source_mode == Player2APIConfig.SourceMode.LOCAL_ONLY:
 		return false
-	return !_last_local_present
+	return _last_web_present
 
 ## Is a connection established to the API?
 func established_api_connection() -> bool:
@@ -259,7 +259,6 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 				for c in calls:
 					if c:
 						c.call(msg, -3)
-
 		)
 
 		# Begin validation

@@ -3,8 +3,8 @@ class_name Player2APIConfig
 extends Resource
 
 enum SourceMode {
-	## Starts with trying to hit the local Payer2 launcher endpoints. If that fails, tries the web.
-	LOCAL_FIRST_THEN_WEB,
+	## Starts with trying to hit the web endpoints. If that fails, tries local.
+	WEB_FIRST_THEN_LOCAL,
 	## Only uses the web API from the Player2 website.
 	WEB_ONLY,
 	## Only uses the local API from the Player2 launcher.
@@ -16,7 +16,7 @@ enum SourceMode {
 
 @export_group("API Source", "source")
 ## Which endpoints to use, local or web? Old behavior is local only.
-@export var source_mode : SourceMode = SourceMode.LOCAL_FIRST_THEN_WEB
+@export var source_mode : SourceMode = SourceMode.WEB_FIRST_THEN_LOCAL
 
 @export_group("Error handling", "error")
 @export var error_log_ui : bool = true
