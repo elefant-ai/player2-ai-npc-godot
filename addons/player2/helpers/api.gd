@@ -7,12 +7,16 @@ var _web_p2_key : String = ""
 var _last_local_present : bool = true
 var _last_web_present : bool = true
 var _source_tested : bool = false
+var _source_testing : bool = false
+# whether localhost:XXXX/login/web/{client_id} is assumed to exist
+var _auth_local_endpoint_present : bool = true
+
 # Queued up calls for auth
 var _auth_running : bool = false
-class AuthCallback:
+class RequestCallback:
 	var run: Callable
 	var on_fail : Callable
-var _auth_queue : Array[AuthCallback] = []
+var _auth_queue : Array[RequestCallback] = []
 
 func using_web() -> bool:
 	var api = Player2APIConfig.grab()
@@ -118,14 +122,24 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 	var run_again = func():
 		_req(path_property, method, body, on_completed, on_fail)
 
+	if !_source_tested and _source_testing:
+		print("(tried a request while testing source, calling again later...)")
+		# Just wait, keep it simple
+		Player2AsyncHelper.call_timeout(run_again, 1)
+		return
+
 	if _auth_running:
 		print("(tried a request while waiting for auth, queuing up...)")
 		# Add self to auth queue
-		var queued := AuthCallback.new()
+		var queued := RequestCallback.new()
 		queued.run = run_again
 		queued.on_fail = on_fail
 		_auth_queue.push_back(queued)
 		return
+
+	var do_source_test_complete = func():
+		_source_testing = false
+		run_again.call()
 
 	# When we receive the results ..
 	var receive_results = func(body, code, headers):
@@ -164,12 +178,13 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 
 	# If not source tested...
 	if !_source_tested:
+		_source_testing = true
 		var endpoint_check_url = endpoint.path("endpoint_check")
 
-		var try_again_if_check_failed = func(was_expecting_success : bool):
-			if !_last_local_present and !_last_web_present:
-				if was_expecting_success:
-					Player2ErrorHelper.send_error("Unable to connect to API. Will attempt to reconnect for a bit")
+		var try_again_if_check_failed = func(double_failure : bool):
+			_source_testing = false
+			if double_failure:
+				Player2ErrorHelper.send_error("Unable to connect to API. Will attempt to reconnect for a bit")
 				# Wait a bit and go again if we have tried both and failed
 				# TODO: Magic number
 				Player2AsyncHelper.call_timeout(run_again, 3)
@@ -191,12 +206,15 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					# We succeeded! pretend like this is normal and move on.
 					_source_tested = true
 					_last_web_present = true
-					run_again.call()
+					do_source_test_complete.call()
 					,
 				func(body, code):
 					# Web failed!
-					var was_assumed_present = _last_web_present
+					var was_assumed_present = _last_web_present and !_last_local_present
 					_last_web_present = false
+					if api.source_mode == Player2APIConfig.SourceMode.WEB_FIRST_THEN_LOCAL:
+						# Try web again
+						_last_local_present = true
 					# Try again!
 					print("Tried finding web API but failed. Retrying...")
 					try_again_if_check_failed.call(was_assumed_present),
@@ -214,12 +232,15 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					print("local source confirmed! proceeding with web.")
 					_source_tested = true
 					_last_local_present = true
-					run_again.call()
+					do_source_test_complete.call()
 					,
 				func(body, code):
 					# Local failed!
-					var was_assumed_present = _last_local_present
+					var was_assumed_present = _last_local_present and !_last_web_present
 					_last_local_present = false
+					if api.source_mode == Player2APIConfig.SourceMode.WEB_FIRST_THEN_LOCAL:
+						# Try web again
+						_last_web_present = true
 					# Try again!
 					print("Tried finding local API but failed. Retrying...")
 					try_again_if_check_failed.call(was_assumed_present),
@@ -231,10 +252,13 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 	# Check for auth key
 	if use_web and _web_p2_key.is_empty():
 		# No p2 auth key, run the auth sequence
-		# TODO: Better way to get client id?
+		_auth_running = true
+
 		var client_id = ProjectSettings.get_setting("player2/client_id")
 		if !client_id:
 			client_id = ""
+
+		# TODO: Better way to get client id?
 
 		if !client_id or client_id.is_empty():
 			var msg = "No client id defined. Please set a valid client id in the project settings under player2/client_id"
@@ -244,11 +268,25 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 				on_fail.call(msg, -2)
 			return
 
+		# When we complete auth successfully
+		var do_auth_complete = func(p2_key : String):
+			print("Successfully got auth key. Continuing to request.")
+			_web_p2_key = p2_key
+			_auth_running = false
+			# Auth completed: call everything in the queue
+			run_again.call()
+			var calls : Array[Callable] = []
+			calls.assign(_auth_queue.map(func(c): return c.run))
+			_auth_queue.clear()
+			for c in calls:
+				if c:
+					c.call()
+
 		# The user can cancel the process at any time with Player2AuthHelper.cancel_auth()
 		Player2AuthHelper.auth_user_cancelled.connect(
 			func():
 				_auth_running = false
-				var msg = "Unable to connect to web after player deined auth request."
+				var msg = "Unable to connect to web after player denied auth request."
 				Player2ErrorHelper.send_error(msg)
 				# TODO: Custom code/constant of some sorts?
 				if on_fail:
@@ -260,6 +298,41 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					if c:
 						c.call(msg, -3)
 		)
+
+		# TRY auth local endpoint FIRST
+		# TODO: Add me in again once local endpoint is testable
+		if false and _auth_local_endpoint_present and _last_local_present:
+			# do NOT continue running the request, we are doing our thing up here.
+			var local_auth_path = api.endpoint_local.path("webapi_login")
+			local_auth_path = local_auth_path.replace("{client_id}", client_id)
+			Player2WebHelper.request(
+				local_auth_path,
+				HTTPClient.Method.METHOD_POST,
+				"",
+				_get_headers(false),
+				func(body, code, headers):
+					_auth_running = false
+					print("Got local auth response: ", body)
+					if Player2AuthHelper.auth_cancelled:
+						return
+					if _code_success(code):
+						var p2_key = JSON.parse_string(body)["p2Key"]
+						do_auth_complete.call(p2_key)
+					else:
+						# Failure
+						print("Local app auth failed, defaulting to web auth.")
+						_auth_local_endpoint_present = false
+						Player2AsyncHelper.call_timeout(run_again, 0.1)
+					,
+				func(body, code):
+					_auth_running = false
+					print("Local app auth failed, defaulting to web auth.")
+					_auth_local_endpoint_present = false
+					Player2AsyncHelper.call_timeout(run_again, 0.1)
+					,
+				0.5 # Timeout
+			)
+			return
 
 		# Begin validation
 		var verify_begin_req := Player2Schema.AuthStartRequest.new()
@@ -290,7 +363,6 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					poll_req.grant_type = "urn:ietf:params:oauth:grant-type:device_code"
 
 					# Start the auth verification from the verifier
-					_auth_running = true
 					var let_ui_know_auth_completed = Player2AuthHelper._run_auth_verification(verification_url)
 
 					# Poll until we get it
@@ -309,20 +381,11 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 										return
 									if _code_success(code):
 										# We succeeded!
-										print("Successfully got auth key. Continuing to request.")
-										_web_p2_key = JSON.parse_string(body)["p2Key"]
 										if let_ui_know_auth_completed:
 											let_ui_know_auth_completed.call()
-										_auth_running = false
 										on_complete.call(false)
-										# Auth completed: call everything in the queue
-										run_again.call()
-										var calls : Array[Callable] = []
-										calls.assign(_auth_queue.map(func(c): return c.run))
-										_auth_queue.clear()
-										for c in calls:
-											if c:
-												c.call()
+										var p2_key = JSON.parse_string(body)["p2Key"]
+										do_auth_complete.call(p2_key)
 										return
 									# we did NOT succeed
 									# Check for expiration
