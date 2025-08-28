@@ -28,7 +28,7 @@ get_selected_characters = "{root}/v1/selected_characters"
 auth_start = "{root}/v1/login/device/new"
 auth_poll = "{root}/v1/login/device/token"
 stt_stream = "{root}/v1/stt/stream"
-endpoint_check = "{root}"
+endpoint_check = "{root}/v1/health"
 
 [resource]
 script = ExtResource("3_pqu85")

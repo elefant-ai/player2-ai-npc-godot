@@ -13,4 +13,4 @@ extends Player2EndpointConfig
 
 @export var stt_stream : String = "{root}/v1/stt/stream"
 
-@export var endpoint_check = "{root}"
+@export var endpoint_check = "{root}/v1/health"
