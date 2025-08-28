@@ -8,7 +8,7 @@
 [ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="4_ofn2n"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/simple_interface.tscn" id="5_333ad"]
 [ext_resource type="Script" uid="uid://dt7mt3t7a08me" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinitions.gd" id="5_ccetc"]
-[ext_resource type="Script" uid="uid://b2t46qb8xam24" path="res://dev_scenes/rpg_example/thinking_animation.gd" id="6_qmjy4"]
+[ext_resource type="Script" uid="uid://b2t46qb8xam24" path="res://dev_scenes/shared/thinking_animation.gd" id="6_qmjy4"]
 
 [sub_resource type="Resource" id="Resource_qec4n"]
 script = ExtResource("3_333ad")
