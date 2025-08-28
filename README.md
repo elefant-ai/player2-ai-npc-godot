@@ -7,16 +7,24 @@ The plugin uses free AI APIs from the [player2 App](https://player2.game/)
 
 Just open Player2, and the plugin connects automatically, so you can dive right into building your world instead of wrestling with keys or settings. When your game is ready, we’ll share it with our community of 40,000+ active players eager for AI-driven adventures [on our discord](https://player2.game/discord)
 
-For usage information, visit [our blog](https://blog.player2.game/p/announcing-the-player-2-ai-npc-godot)
-
 ## Usage Guide
 
 ### Installing the plugin
 
-[The plugin is available in the godot asset library](https://godotengine.org/asset-library/asset/4097)
+[Most up to date download is here on github](https://github.com/elefant-ai/player2-ai-npc-godot/archive/refs/heads/main.zip). Feel free to drag and drop only the `addons` folder into your project.
+
+[The plugin is also available in the godot asset library](https://godotengine.org/asset-library/asset/4097)
+
+## Creating your Player2 Project and getting the Client ID
+
+Player2 now supports a Web API that requires NO launcher to access, but does require authentication. Thankfully the Godot plugin handles authentication for you, the only thing you need is your `client_id`.
+
+A backend portal for creating a client_id is present here: https://player2.game/profile/developer
+
+Populate your client_id under **Project Settings** -> **Player 2** -> **Game Key**
 
 ### Adding the node
-First, add a Player 2 AI NPC Node
+To spawn in an AI NPC agent that can talk and perform actions in the world, add a Player 2 AI NPC Node:
 
 <img width="751" height="698" alt="image" src="https://github.com/user-attachments/assets/f73b90ea-4919-40a7-8eb6-8a59a9591cf9" />
 
@@ -34,11 +42,19 @@ For example, we have a simple interface example with a `text_sent` signal that i
 
 Hearing back from the agent can be done with the agent's `chat_received` signal. Hook this up to a function that can read the agent's reply.
 
-## TTS and Player 2 Launcher Characters
+## Text To Speech and Player 2 Launcher Characters
 
 Access TTS support and the characters from the Player 2 launcher using the Character Config
 
-<img width="389" height="327" alt="image" src="https://github.com/user-attachments/assets/7a76d2b6-e516-4a43-9f04-c4c768069a6f" />
+<img width="426" height="322" alt="image" src="https://github.com/user-attachments/assets/702e0382-f84f-4c96-b897-c74063cffa88" />
+
+To have more control over the bot's TTS, you can manually create a `Player2TTS` node and assign it to the agent. However, a default TTS node is populated automatically at runtime.
+
+## Remembering chat history
+
+By default, an agent will remember the previous chat history and greet the player at the start. This can be disabled under the Chat Config:
+
+<img width="414" height="148" alt="image" src="https://github.com/user-attachments/assets/66e2ccac-e1b3-463f-8187-7794cf378959" />
 
 ## Tool Calling
 
@@ -72,18 +88,8 @@ Enable audio in godot:
 
 **Project Settings** -> **Audio** -> **Enable Input (turn it on).**
 
-## Client ID
-
-Player2 now supports a Web API that requires NO launcher to access, but does require authentication. Thankfully the Godot plugin handles authentication for you, the only thing you need is your `client_id`.
-
-A backend portal for creating a client_id is in progress, but feel free to DM a staff member [on our discord](https://player2.game/discord) for help getting one.
-
-Populate your client_id under **Project Settings** -> **Player 2** -> **Game Key**
-
 ## Web API Configuration
 
-The default behavior of the extension is to search the local API, then default to the web API if no local API is found.
+If you wish to disable the error logging at the top of the screen, customize request timeouts, or customize the authentication UI for the Web API, modify the resource at `addons/player2/api_config.tres`
 
-If you wish to force the extension to only use local/web, open up the `addons/player2/api_config.tres` resource file and edit the `API Source Mode` field:
-<img width="580" height="989" alt="image" src="https://github.com/user-attachments/assets/df04134a-d4d5-4e38-8fdf-e6d0e54cfaff" />
-
+<img width="356" height="459" alt="image" src="https://github.com/user-attachments/assets/23cd97b5-e01c-4401-8fb8-53208144ff33" />
