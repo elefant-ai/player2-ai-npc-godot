@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Player 2 AI NPC Godot"
-run/main_scene="uid://cc80o6rwn8i0u"
+run/main_scene="uid://n1xlbj2ndal5"
 config/features=PackedStringArray("4.4", "Forward Plus")
 
 [audio]
@@ -65,7 +65,7 @@ talk={
 
 [player2]
 
-client_id=""
+client_id="01977e1d-cf15-7d58-a6e2-ef47fc3d9f30"
 
 [rendering]
 
