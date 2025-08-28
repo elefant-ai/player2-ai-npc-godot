@@ -300,7 +300,8 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		)
 
 		# TRY auth local endpoint FIRST
-		if _auth_local_endpoint_present and _last_local_present:
+		# TODO: Add me in again once local endpoint is testable
+		if false and _auth_local_endpoint_present and _last_local_present:
 			# do NOT continue running the request, we are doing our thing up here.
 			var local_auth_path = api.endpoint_local.path("webapi_login")
 			local_auth_path = local_auth_path.replace("{client_id}", client_id)
