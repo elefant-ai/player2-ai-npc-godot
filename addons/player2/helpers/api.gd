@@ -286,7 +286,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		Player2AuthHelper.auth_user_cancelled.connect(
 			func():
 				_auth_running = false
-				var msg = "Unable to connect to web after player deined auth request."
+				var msg = "Unable to connect to web after player denied auth request."
 				Player2ErrorHelper.send_error(msg)
 				# TODO: Custom code/constant of some sorts?
 				if on_fail:
