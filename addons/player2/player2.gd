@@ -63,6 +63,7 @@ func _enter_tree() -> void:
 	add_custom_type("Player2AINPC", "Player2AINPC", preload("nodes/Player2AINPC.gd"), preload("p2.svg"))
 	add_custom_type("Player2STT", "Player2STT", preload("nodes/Player2STT.gd"), preload("p2.svg"))
 	add_custom_type("Player2TTS", "Player2TTS", preload("nodes/Player2TTS.gd"), preload("p2.svg"))
+	add_custom_type("Player2AIChatCompletion", "Player2AIChatCompletion.gd", preload("nodes/Player2AIChatCompletion.gd"), preload("p2.svg"))
 
 
 func _exit_tree() -> void:
@@ -81,6 +82,7 @@ func _exit_tree() -> void:
 	remove_custom_type("Player2AINPC")
 	remove_custom_type("Player2STT")
 	remove_custom_type("Player2TTS")
+	remove_custom_type("Player2AIChatCompletion")
 
 
 func _enable_plugin() -> void:
