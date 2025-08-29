@@ -1,5 +1,5 @@
-## Text 2 Speech node for Player 2 API
 @tool
+## Text 2 Speech node for Player 2 API
 class_name Player2TTS
 extends Node
 

@@ -1,5 +1,5 @@
-## Speech To Text processing using the Player2 API
 @tool
+## Speech To Text processing using the Player2 API
 class_name Player2STT
 extends Node
 
