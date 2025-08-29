@@ -23,6 +23,12 @@ var _tts_configured = false
 			tts = Player2TTS.new()
 			tts.config = character_config.tts
 			add_child(tts)
+
+		if !_tts_configured and tts:
+			# hooks
+			tts.tts_began.connect(func(): tts_began.emit())
+			tts.tts_ended.connect(func(): tts_ended.emit())
+			_tts_configured = true
 		return tts
 
 ## More lower level Character configuration.
