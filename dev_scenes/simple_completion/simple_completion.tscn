@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://b0bvpk34hdjbf"]
+
+[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/shared/simple_interface.tscn" id="1_gdmo3"]
+[ext_resource type="Script" uid="uid://codbx8odbryj7" path="res://addons/player2/nodes/Player2AIChatCompletion.gd" id="2_hgcvq"]
+
+[node name="SimpleCompletion" type="CanvasLayer"]
+
+[node name="Player2AIChatCompletion" type="Node" parent="."]
+script = ExtResource("2_hgcvq")
+metadata/_custom_type_script = "uid://codbx8odbryj7"
+
+[node name="Simple Interface" parent="." instance=ExtResource("1_gdmo3")]
+
+[connection signal="chat_received" from="Player2AIChatCompletion" to="Simple Interface" method="append_line_agent"]
+[connection signal="thinking_began" from="Player2AIChatCompletion" to="Simple Interface" method="start_thinking"]
+[connection signal="thinking_ended" from="Player2AIChatCompletion" to="Simple Interface" method="stop_thinking"]
+[connection signal="text_sent" from="Simple Interface" to="Player2AIChatCompletion" method="chat"]

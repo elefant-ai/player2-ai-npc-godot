@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://cc80o6rwn8i0u"]
+[gd_scene load_steps=17 format=3 uid="uid://cc80o6rwn8i0u"]
 
 [ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/nodes/Player2AINPC.gd" id="1_ttqlg"]
 [ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/helpers/config/Player2AICharacterConfig.gd" id="2_333ad"]
@@ -6,9 +6,8 @@
 [ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/helpers/config/Player2AIChatConfig.gd" id="4_a46nd"]
 [ext_resource type="Script" uid="uid://r7ec3bhr4ij0" path="res://dev_scenes/simple_chat/ai_simple_tool_receiver.gd" id="4_ccetc"]
 [ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="4_ofn2n"]
-[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/simple_interface.tscn" id="5_333ad"]
+[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/shared/simple_interface.tscn" id="5_333ad"]
 [ext_resource type="Script" uid="uid://dt7mt3t7a08me" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinitions.gd" id="5_ccetc"]
-[ext_resource type="Script" uid="uid://b2t46qb8xam24" path="res://dev_scenes/shared/thinking_animation.gd" id="6_qmjy4"]
 
 [sub_resource type="Resource" id="Resource_qec4n"]
 script = ExtResource("3_333ad")
@@ -109,10 +108,7 @@ get_time = SubResource("Resource_a46nd")
 announce = SubResource("Resource_ccetc")
 set_volume = SubResource("Resource_2vci2")
 
-[sub_resource type="LabelSettings" id="LabelSettings_qmjy4"]
-font_size = 49
-
-[node name="Test" type="Node2D"]
+[node name="Simple Chat" type="CanvasLayer"]
 
 [node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
 script = ExtResource("1_ttqlg")
@@ -124,51 +120,22 @@ metadata/_custom_type_script = "uid://bupnh0kqklshe"
 
 [node name="Tool Receiver" type="Node" parent="." node_paths=PackedStringArray("billboard", "blink_background")]
 script = ExtResource("4_ccetc")
-billboard = NodePath("../CanvasLayer/Simple Interface/Billboard")
-blink_background = NodePath("../CanvasLayer/Simple Interface")
+billboard = NodePath("../Simple Interface/Billboard")
+blink_background = NodePath("../Simple Interface")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="Simple Interface" parent="." instance=ExtResource("5_333ad")]
+offset_top = -156.0
 
-[node name="Simple Interface" parent="CanvasLayer" instance=ExtResource("5_333ad")]
-
-[node name="Thinking Animation" type="Label" parent="CanvasLayer/Simple Interface"]
-visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -34.0
-offset_right = 20.0
-offset_bottom = 34.0
-grow_horizontal = 2
-grow_vertical = 2
-pivot_offset = Vector2(20, 34)
-text = "..."
-label_settings = SubResource("LabelSettings_qmjy4")
-horizontal_alignment = 1
-vertical_alignment = 1
-script = ExtResource("6_qmjy4")
-
-[node name="Timer" type="Timer" parent="CanvasLayer/Simple Interface/Thinking Animation"]
-wait_time = 0.3
-autostart = true
-
-[node name="TTS Indicator" type="ColorRect" parent="CanvasLayer"]
+[node name="TTS Indicator" type="ColorRect" parent="."]
 visible = false
 offset_right = 40.0
 offset_bottom = 40.0
+size_flags_horizontal = 4
 color = Color(0.992602, 0.638143, 0.760959, 1)
 
-[connection signal="chat_received" from="Player2Agent" to="CanvasLayer/Simple Interface" method="append_line_agent"]
-[connection signal="thinking_began" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="show"]
-[connection signal="thinking_ended" from="Player2Agent" to="CanvasLayer/Simple Interface/Thinking Animation" method="hide"]
-[connection signal="tts_began" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="show"]
-[connection signal="tts_ended" from="Player2Agent" to="CanvasLayer/TTS Indicator" method="hide"]
-[connection signal="text_sent" from="CanvasLayer/Simple Interface" to="Player2Agent" method="chat"]
-[connection signal="pressed" from="CanvasLayer/Simple Interface/Poke Button" to="Player2Agent" method="notify" binds= ["You have been poked by the user physically! Feel free to respond or not."]]
-[connection signal="timeout" from="CanvasLayer/Simple Interface/Thinking Animation/Timer" to="CanvasLayer/Simple Interface/Thinking Animation" method="inc_count"]
-
-[editable path="CanvasLayer/Simple Interface"]
+[connection signal="chat_received" from="Player2Agent" to="Simple Interface" method="append_line_agent"]
+[connection signal="thinking_began" from="Player2Agent" to="Simple Interface" method="start_thinking"]
+[connection signal="thinking_ended" from="Player2Agent" to="Simple Interface" method="stop_thinking"]
+[connection signal="tts_began" from="Player2Agent" to="TTS Indicator" method="show"]
+[connection signal="tts_ended" from="Player2Agent" to="TTS Indicator" method="hide"]
+[connection signal="text_sent" from="Simple Interface" to="Player2Agent" method="chat"]

@@ -3,6 +3,7 @@ extends Node
 @export var button : Button
 @export var text : TextEdit
 @export var chat : Label
+@export var thinking : CanvasItem
 
 @export var poke_button : Button
 @export var deselect_on_send : bool
@@ -56,6 +57,13 @@ func append_line_agent(line : String) -> void:
 	print("got agent: " + line)
 	if chat:
 		chat.text += "Agent: " + line + "\n"
+
+func start_thinking() -> void:
+	if thinking:
+		thinking.show()
+func stop_thinking() -> void:
+	if thinking:
+		thinking.hide()
 
 # STT 
 

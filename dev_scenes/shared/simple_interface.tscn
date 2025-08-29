@@ -1,12 +1,16 @@
-[gd_scene load_steps=4 format=3 uid="uid://bj2556dthmk1e"]
+[gd_scene load_steps=6 format=3 uid="uid://bj2556dthmk1e"]
 
 [ext_resource type="Script" uid="uid://4flv2qyji2mp" path="res://dev_scenes/simple_chat/ai_simple_text_interface.gd" id="1_6vno8"]
 [ext_resource type="Script" uid="uid://demr3r0wkqqj1" path="res://addons/player2/nodes/Player2STT.gd" id="2_wfmdp"]
+[ext_resource type="Script" uid="uid://b2t46qb8xam24" path="res://dev_scenes/shared/thinking_animation.gd" id="3_btci8"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ygx8q"]
 font_size = 156
 
-[node name="Simple Interface" type="ColorRect" node_paths=PackedStringArray("button", "text", "chat", "poke_button", "player2_stt")]
+[sub_resource type="LabelSettings" id="LabelSettings_wtujj"]
+font_size = 49
+
+[node name="Simple Interface" type="ColorRect" node_paths=PackedStringArray("button", "text", "chat", "thinking", "poke_button", "player2_stt")]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -18,6 +22,7 @@ script = ExtResource("1_6vno8")
 button = NodePath("Button")
 text = NodePath("TextEdit")
 chat = NodePath("Label")
+thinking = NodePath("Thinking Animation")
 poke_button = NodePath("Poke Button")
 player2_stt = NodePath("Player2STT")
 
@@ -75,6 +80,31 @@ grow_horizontal = 0
 action_mode = 0
 text = "Poke"
 
+[node name="Thinking Animation" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -34.0
+offset_right = 20.0
+offset_bottom = 34.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(20, 34)
+text = "..."
+label_settings = SubResource("LabelSettings_wtujj")
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("3_btci8")
+
+[node name="Timer" type="Timer" parent="Thinking Animation"]
+wait_time = 0.3
+autostart = true
+
 [node name="Player2STT" type="Node" parent="."]
 script = ExtResource("2_wfmdp")
 metadata/_custom_type_script = "uid://demr3r0wkqqj1"
@@ -102,6 +132,7 @@ offset_right = 284.0
 offset_bottom = 484.0
 text = "(Processing STT...)"
 
+[connection signal="timeout" from="Thinking Animation/Timer" to="Thinking Animation" method="inc_count"]
 [connection signal="listening_started" from="Player2STT" to="Player2STT/Listening Label" method="show"]
 [connection signal="listening_stopped" from="Player2STT" to="Player2STT/Listening Label" method="hide"]
 [connection signal="reply_wait_started" from="Player2STT" to="Player2STT/Reply Wait Label" method="show"]
