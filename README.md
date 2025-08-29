@@ -34,6 +34,8 @@ Then, open the node and modify the description of the agent
 
 ## Talking to the Agent
 
+An agent chat example can be found under `dev_scenes/simple_chat/simple_chat.tscn`
+
 To talk to the agent, call it's `chat` function. To notify the agent of stimuli from the world, call it's `notify` function.
 
 For example, we have a simple interface example with a `text_sent` signal that is fired when the user types in a chat box and presses enter. This can get hooked into the `chat` function to talk to the agent.
@@ -71,6 +73,14 @@ Then, drag the new node into the `Scan Node for Functions` property in the AI NP
 You should now see a list of functions with their descriptions below:
 
 <img width="406" height="972" alt="image" src="https://github.com/user-attachments/assets/14cd2090-2c61-4292-ad02-68e0b0569a3a" />
+
+## Simple chat completion
+
+If you wish to simply run AI/LLM chat completion without history, TTS, or agent replies, use the `Player2AIChatCompletion` node.
+
+The interface is similar to the `Player2AINPC` node.
+
+An example can be found under `dev_scenes/simple_completion/simple_completion.tscn`
 
 ## Manual TTS (Text To Speech)
 
