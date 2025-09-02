@@ -32,27 +32,36 @@ func established_api_connection() -> bool:
 	return _source_tested
 
 var _establishing_connection = false
+var _establishing_connection_queue : Array[Callable] = []
 ## Ensure a connection to the API is established and have a callback for when the connection is complete.
 ## This is not necessary unless you wish to use something like STT
 func establish_connection(on_complete : Callable = Callable()) -> void:
 	if _establishing_connection:
+		_establishing_connection_queue.push_back(on_complete)
 		return
+	var complete = func():
+		for c in _establishing_connection_queue:
+			c.call()
+		if on_complete:
+			on_complete.call()
+		_establishing_connection_queue = []
+
 	_establishing_connection = true
 	# TODO: This can fail!
 	if established_api_connection():
 		_establishing_connection = false
-		if on_complete:
-			on_complete.call()
+		complete.call()
+		return
 	# TODO: wrap the logic below in _req here to avoid an extra request
 	get_health(
 		func(data):
 			_establishing_connection = false
-			if on_complete:
-				on_complete.call(),
+			complete.call()
+			return,
 		func(msg, code):
 			_establishing_connection = false
-			if on_complete:
-				on_complete.call()
+			complete.call()
+			return,
 	)
 
 ## Save the auth key with some local encryption
