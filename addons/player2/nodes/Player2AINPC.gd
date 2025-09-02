@@ -433,6 +433,10 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 				if tc_arg:
 					tool_call.args.append(tc_arg)
 
+			# do not allow empty description
+			if !tool_call.description or tool_call.description.is_empty():
+				tool_call.description = "(empty)"
+
 			result.append(tool_call)
 
 			# Update callable function as well
