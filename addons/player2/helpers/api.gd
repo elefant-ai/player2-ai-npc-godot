@@ -339,7 +339,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					_auth_local_endpoint_present = false
 					Player2AsyncHelper.call_timeout(run_again, 0.1)
 					,
-				0.5 # Timeout
+				api.request_timeout_local_auth
 			)
 			return
 

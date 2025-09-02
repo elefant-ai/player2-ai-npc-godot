@@ -63,8 +63,8 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 				Player2AsyncHelper.call_timeout(
 					func():
 						# Call ourselves again...
-						request(path, method, body, headers, on_completed, on_fail),
-					Player2APIConfig.grab().request_too_much_delay_seconds
+						request(path, method, body, headers, on_completed, on_fail, timeout),
+					Player2APIConfig.grab().retry_delay
 				)
 				return
 			if on_completed:

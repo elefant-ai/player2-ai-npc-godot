@@ -26,10 +26,11 @@ enum SourceMode {
 @export var endpoint_local : Player2LocalEndpointConfig = Player2LocalEndpointConfig.new()
 
 @export_group("Timeouts and Delays")
-@export var request_too_much_delay_seconds : float = 3
-@export var request_timeout : float = 20
-@export var request_timeout_check_local : float = 1
-@export var request_timeout_check_web : float = 5
+@export var request_timeout : float = 30.0
+@export var request_timeout_check_local : float = 1.0
+@export var request_timeout_check_web : float = 8.0
+@export var request_timeout_local_auth : float = 0.5
+@export var retry_delay : float = 3
 
 @export_group("Authentication", "auth")
 ## If true, the user's auth key will be cached locally after logging in and read
