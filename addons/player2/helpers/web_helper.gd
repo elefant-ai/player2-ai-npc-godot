@@ -52,7 +52,7 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 	var on_completed_inner : Callable
 	on_completed_inner = func(result, response_code, headers, body):
 		if result != HTTPRequest.RESULT_SUCCESS:
-			print("HTTP failure: ", result)
+			print("Godot HTTP failure: ", result)
 			if on_fail:
 				on_fail.call(result, response_code)
 		else:
@@ -81,5 +81,5 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 		print("Error sending HTTP request for ", path, ", headers=", headers, ", method=", method, ", body=", string_body)
 		print(err)
 		if on_fail != null:
-			on_fail.call(err)
+			on_fail.call("Error sending HTTP request with the following Godot HTTP Error Code: ", err)
 		return

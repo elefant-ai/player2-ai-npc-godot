@@ -72,7 +72,7 @@ func _get_headers() -> Array[String]:
 func run_req() -> void:
 	var api = Player2APIConfig.grab()
 	
-	var path = api.endpoint_web.chat if web else api.endpoint_local.chat
+	var path = api.endpoint_web.path("chat") if web else api.endpoint_local.path("chat")
 
 	var headers = _get_headers()
 

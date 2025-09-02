@@ -4,6 +4,7 @@ extends Node
 @onready var stt : Player2STT = $Player2STT
 
 func _ready() -> void:
+	print("Simple Chat START")
 	stt.stt_received.connect(func(message : String):
 		print("RECEIVED:", message)
 		response.text = message
