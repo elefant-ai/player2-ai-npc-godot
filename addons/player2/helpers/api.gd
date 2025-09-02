@@ -64,6 +64,12 @@ func establish_connection(on_complete : Callable = Callable()) -> void:
 			return,
 	)
 
+func _maybe_save_key():
+	var api = Player2APIConfig.grab()
+	if api.auth_key_cache_locally and _web_p2_key != "":
+		_save_key(_web_p2_key)
+
+
 ## Save the auth key with some local encryption
 func _save_key(key : String) -> void:
 	var filename = "user://auth_cache"
@@ -281,6 +287,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		var do_auth_complete = func(p2_key : String):
 			print("Successfully got auth key. Continuing to request.")
 			_web_p2_key = p2_key
+			_maybe_save_key()
 			_auth_running = false
 			# Auth completed: call everything in the queue
 			run_again.call()
@@ -309,11 +316,11 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		)
 
 		# TRY auth local endpoint FIRST
-		# TODO: Add me in again once local endpoint is testable
-		if false and _auth_local_endpoint_present and _last_local_present:
+		if _auth_local_endpoint_present and _last_local_present:
 			# do NOT continue running the request, we are doing our thing up here.
 			var local_auth_path = api.endpoint_local.path("webapi_login")
 			local_auth_path = local_auth_path.replace("{client_id}", client_id)
+			print("trying local auth first at ", local_auth_path)
 			Player2WebHelper.request(
 				local_auth_path,
 				HTTPClient.Method.METHOD_POST,
@@ -321,9 +328,9 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 				_get_headers(false),
 				func(body, code, headers):
 					_auth_running = false
-					print("Got local auth response: ", body)
 					if Player2AuthHelper.auth_cancelled:
 						return
+					print("Got local auth response: ", body)
 					if _code_success(code):
 						var p2_key = JSON.parse_string(body)["p2Key"]
 						do_auth_complete.call(p2_key)
@@ -588,8 +595,4 @@ func _exit_tree() -> void:
 	if Engine.is_editor_hint():
 		return
 
-	var api = Player2APIConfig.grab()
-
-	# Before we leave, store our key.
-	if api.auth_key_cache_locally and _web_p2_key != "":
-		_save_key(_web_p2_key)
+	_maybe_save_key()
