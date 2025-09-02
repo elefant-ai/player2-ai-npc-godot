@@ -12,5 +12,6 @@ extends Player2EndpointConfig
 @export var auth_poll : String = "{root}/v1/login/device/token"
 
 @export var stt_stream : String = "{root}/v1/stt/stream"
+@export var stt_protocol : String = "wss"
 
 @export var endpoint_check = "{root}/v1/health"

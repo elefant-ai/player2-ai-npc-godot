@@ -518,13 +518,14 @@ func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 	# Construct the URL
 	var endpoint = api.endpoint_web
 	var url = endpoint.path("stt_stream")
+	var stream_protocol = api.endpoint_web.stt_protocol
 	if url.begins_with("https://"):
-		url = "ws://" + url.substr("https://".length())
+		url = stream_protocol + "://" + url.substr("https://".length())
 	if url.begins_with("http://"):
-		url = "ws://" + url.substr("http://".length())
+		url = stream_protocol + "://" + url.substr("http://".length())
 		
 	var params := {
-		"model": "nova-2", # TODO: Drop this?
+		#"model": "nova-2", # TODO: Drop this?
 		"language": "en-US", # TODO: Configure
 		"encoding": "linear16",
 		"sample_rate": sample_rate,
@@ -538,6 +539,8 @@ func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 		full_url += "?" + http_params
 
 	var socket = WebSocketPeer.new()
+
+	print("HTTP Socket: ", full_url)
 
 	var conn_err = socket.connect_to_url(full_url)
 	if conn_err != OK:
