@@ -42,7 +42,7 @@ ${system_message_custom}
 
 ${system_message_behavior}
 
-{system_message_prompting}"
+${system_message_prompting}"
 system_message_prefix = ""
 system_message_postfix = ""
 auto_store_conversation_history = true

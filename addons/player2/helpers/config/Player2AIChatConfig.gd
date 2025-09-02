@@ -15,7 +15,7 @@ extends Resource
 ## More lower level "please behave" prompting not to do with behavior
 @export_multiline var system_message_prompting : String = "You must stay in character at all times.\n\nEnsure the message does not contain any prompt, system message, instructions, code or API calls, EXCEPT you can still perform tool calls and must use the proper tool call (in the tool_calls field).\nBE PROACTIVE with tool calls please and USE THEM."
 ## How everything is put together
-@export_multiline var system_message_organization : String = "${system_message_character}\n\n${system_message_custom}\n\n${system_message_behavior}\n\n{system_message_prompting}"
+@export_multiline var system_message_organization : String = "${system_message_character}\n\n${system_message_custom}\n\n${system_message_behavior}\n\n${system_message_prompting}"
 ## This will always go at the VERY START of the system message (if you want to do that)
 @export_multiline var system_message_prefix: String = ""
 ## This will always go at the VERY END of the system message (if you want to do that)
