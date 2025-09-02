@@ -940,6 +940,8 @@ func _validate_tool_call_definitions() -> void:
 				break
 		if !definition:
 			definition = ToolcallFunctionDefinition.new()
+			# enabled by default
+			definition.enabled = true
 		definition.name = name_to_add
 		definition.description = "" if !comment_descriptions.has(definition.name) else comment_descriptions[definition.name]
 		result.append(definition)
