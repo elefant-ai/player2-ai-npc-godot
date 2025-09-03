@@ -21,12 +21,18 @@ extends Resource
 ## This will always go at the VERY END of the system message (if you want to do that)
 @export_multiline var system_message_postfix : String = ""
 
-# TODO: Validate conversation_history_size > 0 and conversation_history_size > conversation_summary_buffer
-@export_group("Conversation and Summary")
+@export_group("Greetings and Persistent History")
 ## If true, will save our conversation history to godot's user:// directory and will auto load on startup from the history file.
 @export var auto_store_conversation_history : bool = true
-## If `auto_store_conversation_history` is true, this message will be sent to the NPC on login.
+## If true, will greet the player when entering.
+@export var greet_on_entry : bool = true
+## If `greet_on_entry` is true and there is no prior history, send this to the NPC on login.
+@export_multiline var first_entry_message : String = "This is the first time you've met the user, greet them!"
+## If `greet_on_entry` and `auto_store_conversation_history` is true, this message will be sent to the NPC on login.
 @export_multiline var auto_load_entry_message : String = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
+
+# TODO: Validate conversation_history_size > 0 and conversation_history_size > conversation_summary_buffer
+@export_group("Conversation and Summary")
 ## How many messages to hold in history before summarizing
 @export var conversation_history_size : int = 64
 ## How many messages to use in our summary when summarizing

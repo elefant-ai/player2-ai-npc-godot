@@ -178,16 +178,21 @@ func clear_conversation_history(filename : String = ""):
 			print("Successfully deleted conversation history from " + filename)
 	notify_property_list_changed()
 
+func _on_entry_load_conversation_or_greet():
+	if not (chat_config.auto_store_conversation_history and load_conversation_history()):
+		if chat_config.greet_on_entry and !chat_config.first_entry_message.is_empty():
+			notify(chat_config.first_entry_message)
+
 ## Load our conversation history from a file. Leave blank to use our default location.
 ## Alternatively, set `conversation_history` manually, and for a "welcome back" message use `notify`.
-func load_conversation_history(notify_agent_for_welcome_message: bool = true, message : String = "", filename : String = "") -> void:
+func load_conversation_history(notify_agent_for_welcome_message: bool = true, message : String = "", filename : String = "") -> bool:
 	if filename.is_empty():
 		filename = _get_default_conversation_history_filepath()
 	print("Loading conversation history from " + filename)
 
 	if not FileAccess.file_exists(filename):
 		print("(no conversation history found at " + filename + ")")
-		return
+		return false
 
 	var file = FileAccess.open(filename, FileAccess.READ)
 
@@ -201,10 +206,11 @@ func load_conversation_history(notify_agent_for_welcome_message: bool = true, me
 	conversation_history = deserialized
 
 	# Notify welcome message
-	if notify_agent_for_welcome_message:
+	if chat_config.greet_on_entry and notify_agent_for_welcome_message:
 		if message.is_empty():
 			message = chat_config.auto_load_entry_message
 		notify(message)
+	return true
 
 ## Add chat message to our history.
 ## This is a user talking to the agent.
@@ -856,13 +862,11 @@ func _update_selected_character_from_endpoint() -> void:
 			_selected_character = characters[index]
 			_selected_character_index = index
 			# After loaded, then we might also load our conversation history.
-			if chat_config.auto_store_conversation_history:
-				load_conversation_history(),
+			_on_entry_load_conversation_or_greet(),
 		func(fail_code):
 			thinking = false
 			# After loaded, then we might also load our conversation history.
-			if chat_config.auto_store_conversation_history:
-				load_conversation_history(),
+			_on_entry_load_conversation_or_greet(),
 	)
 
 ## Overwrite to manually define tool calls instead of relying on signals.
@@ -971,8 +975,7 @@ func _ready() -> void:
 	if character_config.use_player2_selected_character:
 		_update_selected_character_from_endpoint()
 	else:
-		if chat_config.auto_store_conversation_history:
-			load_conversation_history()
+		_on_entry_load_conversation_or_greet()
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
