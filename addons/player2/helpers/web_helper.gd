@@ -1,27 +1,8 @@
 extends Node
 
-# This is silly but yeah may as well do it right :tm:
-class UrlPort:
-	var url : String
-	var port : int
-	func _init(url : String, port : int):
-		self.url = url
-		self.port = port
-
-# default port if none provided is -1 (let Godot handle this)
-func _parse_url_and_port(path : String) -> UrlPort:
-	var url = path
-	var port = -1
-
-	var port_index = path.rfind(":")
-	if port_index != -1:
-		url = path.substr(0, port_index)
-		port = path.substr(port_index + 1).to_int()
-
-	return UrlPort.new(url, port)
+var should_print_response = func(path : String, body : String): return true
 
 func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", headers : Array[String] = [], on_completed : Callable = Callable(), on_fail : Callable = Callable(), timeout = -1) -> void:
-
 	var string_body : String
 	if body is String:
 		string_body = body
@@ -56,7 +37,12 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 			if on_fail:
 				on_fail.call(result, response_code)
 		else:
-			print("HTTP success: ", response_code, ": ", body.get_string_from_utf8())
+			print("HTTP success:", path,"=", response_code)
+			var avoid_printing = should_print_response.call(path, body.get_string_from_utf8())
+			if avoid_printing:
+				print("(body omitted)")
+			else:
+				print(body.get_string_from_utf8())
 			if response_code == 429:
 				# Too many requests, try again...
 				print("too many requests, trying again...")

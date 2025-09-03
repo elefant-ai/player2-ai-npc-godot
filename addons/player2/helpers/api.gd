@@ -568,6 +568,14 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 
+	var api = Player2APIConfig.grab()
+
+	# Don't print TTS responses, they are big!
+	Player2WebHelper.should_print_response = func(path : String, body : String):
+		if path == api.endpoint_web.tts_speak:
+			return false
+		return true
+
 	var client_id = ProjectSettings.get_setting("player2/client_id")
 	if !client_id:
 		client_id = ""
@@ -575,8 +583,6 @@ func _ready() -> void:
 	if !client_id or client_id.is_empty():
 		var msg = "No client id defined. Please set a valid client id in the project settings under player2/client_id"
 		Player2ErrorHelper.send_error(msg)
-
-	var api = Player2APIConfig.grab()
 
 	# Before we start, load our key.
 	if api.auth_key_cache_locally and _web_p2_key == "":
