@@ -17,6 +17,9 @@ const AUDIO_CAPTURE_BUS = "Player2STTAudioCaptureBus"
 var _audio_stream_player : AudioStreamPlayer
 var _audio_capture_effect : AudioEffectCapture
 var _audio_capture_buffer : StreamPeerBuffer
+# This gets populated and flushed into _audio_stream_transcript
+var _audio_stream_transcript_buffer : String = ""
+# This is the transcript
 var _audio_stream_transcript : String = ""
 
 var _audio_stream_running : bool
@@ -175,6 +178,7 @@ func _start_stt_web() -> void:
 	_audio_stream_release_timer.stop()
 	
 	_audio_stream_transcript = ""
+	_audio_stream_transcript_buffer = ""
 
 	# If we haven't authenticated yet, don't do anything.
 	if !Player2API.established_api_connection():
@@ -291,7 +295,6 @@ func _send_socket(socket : WebSocketPeer) -> void:
 
 	_read_audio_frames()
 
-	# TODO: Buffer, send over while we can
 	var bytes : PackedByteArray = _audio_capture_buffer.data_array
 	if bytes.size():
 		#print("sending ", bytes.size())
@@ -308,6 +311,13 @@ func _send_socket(socket : WebSocketPeer) -> void:
 		if err != OK:
 			print("SOCKET SEND ERROR:", err)
 	_audio_capture_buffer.clear()
+
+func _flush_audio_transcript_buffer():
+	if _audio_stream_transcript.length() > 0:
+		_audio_stream_transcript += " " + _audio_stream_transcript_buffer
+	else:
+		_audio_stream_transcript = _audio_stream_transcript_buffer
+	_audio_stream_transcript_buffer = ""
 
 func _process_socket(socket : WebSocketPeer) -> void:
 	if !socket:
@@ -330,13 +340,21 @@ func _process_socket(socket : WebSocketPeer) -> void:
 							_stream_opened = true
 						"message":
 							var messages : Array = data["data"]["channel"]["alternatives"]
+							# When we get the END of messages, data["data"]["is_final"] is set to true
+							var messages_final = "is_final" in data["data"] and data["data"]["is_final"]
+							print("STT messages: ", messages_final, messages)
 							if messages.size():
+								# We got a transcript
 								var highest = messages.reduce(func(max, msg): return msg if msg["confidence"] > max["confidence"] else max)
 								if highest:
-									_audio_stream_transcript = highest["transcript"].strip_edges()
+									_audio_stream_transcript_buffer = highest["transcript"].strip_edges()
 								# We got a message, reset the leftover timer
 								_audio_stream_leftover_timer.start(leftover_receive_wait_time)
 								_audio_stream_leftover_timer_triggered = false
+								if messages_final:
+									# We've stopped or paused, this is the last we'll see this so flush it now!
+									_flush_audio_transcript_buffer()
+									print("STT update transcript: ", _audio_stream_transcript)
 							else:
 								if _audio_stream_leftover_timer_triggered and _audio_stream_running:
 									# We're done!
@@ -356,6 +374,7 @@ func _process_socket(socket : WebSocketPeer) -> void:
 
 ## When the scoket is DONE we're done.
 func _socket_complete() -> void:
+	_flush_audio_transcript_buffer()
 	if !_audio_stream_transcript.is_empty():
 		print("Done. Got", _audio_stream_transcript)
 		stt_received.emit(_audio_stream_transcript)
