@@ -408,7 +408,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 									var delta_time_s = (Time.get_ticks_msec() - start_time_ms) / 1000
 									var expired = expires_in and delta_time_s > expires_in
 									if expired:
-										print("Device code expired. Trying again...")
+										print("Device code expired. Trying from the start...")
 										Player2AsyncHelper.call_timeout(run_again, 2)
 										on_complete.call(false)
 										return
