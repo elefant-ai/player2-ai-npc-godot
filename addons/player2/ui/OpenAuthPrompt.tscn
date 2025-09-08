@@ -14,7 +14,7 @@ shadow_size = 10
 shadow_color = Color(0.6192, 0.711507, 0.86, 0.560784)
 
 [sub_resource type="Theme" id="Theme_17kjp"]
-default_font_size = 48
+default_font_size = 32
 
 [sub_resource type="LabelSettings" id="LabelSettings_k27lu"]
 font_size = 24
@@ -121,19 +121,8 @@ bbcode_enabled = true
 text = "[color=light_coral][b]Connection Failed[/b][/color]"
 horizontal_alignment = 1
 
-[node name="Description Start" type="RichTextLabel" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
-visible = false
-custom_minimum_size = Vector2(100, 100)
-layout_mode = 2
-size_flags_vertical = 6
-bbcode_enabled = true
-text = "[b]Why?[/b]
-
-The game uses Player2's AI API to power in-game conversations, Text To Speech, Speech To Text and more. The game may not function properly without these features enabled."
-fit_content = true
-horizontal_alignment = 1
-
 [node name="Authenticating" type="RichTextLabel" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
 custom_minimum_size = Vector2(120, 100)
 layout_mode = 2
 size_flags_vertical = 6
@@ -144,7 +133,31 @@ fit_content = true
 scroll_active = false
 horizontal_alignment = 1
 
+[node name="Connect to Player2" type="RichTextLabel" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(120, 100)
+layout_mode = 2
+size_flags_vertical = 6
+theme = SubResource("Theme_17kjp")
+bbcode_enabled = true
+text = "[color=peru][b]Connect to Player2[/b][/color]"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+
+[node name="Description Start" type="RichTextLabel" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_vertical = 6
+bbcode_enabled = true
+text = "[b]Why?[/b]
+
+The game uses Player2's AI API to power in-game conversations, Text To Speech, Speech To Text and more. The game may not function properly without these features enabled."
+fit_content = true
+horizontal_alignment = 1
+
 [node name="Description Opened Web" type="Label" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
 size_flags_vertical = 6
