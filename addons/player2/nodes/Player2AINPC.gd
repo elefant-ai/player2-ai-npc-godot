@@ -126,9 +126,10 @@ func print_client_version() -> void:
 			print(result.client_version)
 	)
 
-func _queue_message(message : ConversationMessage) -> void:
+func _queue_message(message : ConversationMessage, silent : bool = false) -> void:
 	conversation_history.push_back(message)
-	_messsage_queued = true
+	if not silent:
+		_messsage_queued = true
 	if _summarizing_history:
 		# do not process conversation history, just push it
 		return
@@ -222,11 +223,12 @@ func chat(message : String, speaker : String = "User") -> void:
 
 ## Add a notification message to our history
 ## This is the developer talking to the agent, letting it know that something happened.
-func notify(message : String) -> void:
+## You can pass a "silent" flag to not have the agent respond and simply append to the conversation history.
+func notify(message : String, silent : bool = false) -> void:
 	var conversation_message : ConversationMessage = ConversationMessage.new()
 	conversation_message.message = _construct_user_message_json("", "", message, get_agent_status())
 	conversation_message.role = "user"
-	_queue_message(conversation_message)
+	_queue_message(conversation_message, silent)
 
 ## Stops TTS
 func stop_tts() -> void:
