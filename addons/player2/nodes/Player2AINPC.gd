@@ -833,8 +833,10 @@ func _process_chat_api() -> void:
 								func_result_string = func_result
 							elif func_result is Dictionary:
 								func_result_string = JSON.stringify(func_result)
-							else:
+							elif func_result is Object:
 								func_result_string = JsonClassConverter.class_to_json_string(func_result)
+							else:
+								func_result_string = str(func_result)
 
 							if func_result_string and !func_result_string.is_empty():
 								var func_result_notify_string := chat_config.tool_calls_reply_message \
