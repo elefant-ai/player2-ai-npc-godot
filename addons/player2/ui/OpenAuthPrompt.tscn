@@ -324,8 +324,8 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_nsgi6")
 text = "Continue With Game 🎮"
 
 [connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Connection Failed" method="hide"]
-[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Description Start" method="hide"]
 [connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Authenticating" method="show"]
+[connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Description Start" method="hide"]
 [connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Description Opened Web" method="show"]
 [connection signal="accepted" from="." to="Panel Prompt/Buttons/Proceed" method="hide"]
 [connection signal="accepted" from="." to="Panel Prompt/Buttons/Gap" method="hide"]
