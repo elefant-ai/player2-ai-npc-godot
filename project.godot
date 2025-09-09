@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Player 2 AI NPC Godot"
+config/name="Player2 AI NPC Godot"
 run/main_scene="uid://n1xlbj2ndal5"
 config/features=PackedStringArray("4.4", "Forward Plus")
 

@@ -1,7 +1,7 @@
-# Player 2 AI NPC Plugin for Godot
+# Player2 AI NPC Plugin for Godot
 The Official Player2 AI NPC Plugin for Godot
 
-The Player 2 AI NPC Godot plugin allows developers to easily create AI NPCs in their Godot projects.
+The Player2 AI NPC Godot plugin allows developers to easily create AI NPCs in their Godot projects.
 
 The plugin uses free AI APIs from the [player2 App](https://player2.game/)
 
@@ -21,10 +21,10 @@ Player2 now supports a Web API that requires NO launcher to access, but does req
 
 A backend portal for creating a client_id is present here: https://player2.game/profile/developer
 
-Populate your client_id under **Project Settings** -> **Player 2** -> **Game Key**
+Populate your client_id under **Project Settings** -> **Player2** -> **Game Key**
 
 ### Adding the node
-To spawn in an AI NPC agent that can talk and perform actions in the world, add a Player 2 AI NPC Node:
+To spawn in an AI NPC agent that can talk and perform actions in the world, add a Player2 AI NPC Node:
 
 <img width="751" height="698" alt="image" src="https://github.com/user-attachments/assets/f73b90ea-4919-40a7-8eb6-8a59a9591cf9" />
 
@@ -44,9 +44,9 @@ For example, we have a simple interface example with a `text_sent` signal that i
 
 Hearing back from the agent can be done with the agent's `chat_received` signal. Hook this up to a function that can read the agent's reply.
 
-## Text To Speech and Player 2 Launcher Characters
+## Text To Speech and Player2 Launcher Characters
 
-Access TTS support and the characters from the Player 2 launcher using the Character Config
+Access TTS support and the characters from the Player2 launcher using the Character Config
 
 <img width="426" height="322" alt="image" src="https://github.com/user-attachments/assets/702e0382-f84f-4c96-b897-c74063cffa88" />
 

@@ -2,9 +2,9 @@
 class_name Player2AICharacterConfig
 extends Resource
 
-## Selected character from the Player 2 Launcher
-@export_group ("Player 2 Selected Character", "use_player2_selected_character")
-## If true, will grab information about the player's selected agents from the Player 2 Launcher
+## Selected character from the Player2 Launcher
+@export_group ("Player2 Selected Character", "use_player2_selected_character")
+## If true, will grab information about the player's selected agents from the Player2 Launcher
 @export var use_player2_selected_character : bool = false:
 	set(val):
 		use_player2_selected_character = val
