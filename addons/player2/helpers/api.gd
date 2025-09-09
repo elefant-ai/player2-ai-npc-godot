@@ -594,7 +594,7 @@ func _ready() -> void:
 	# Check for internal site
 	if Engine.has_singleton("JavaScriptBridge"):
 		var origin = JavaScriptBridge.eval("window.location.origin", true)
-		if origin.ends_with(api.endpoint_web.internal_site_origin):
+		if origin is String and origin.ends_with(api.endpoint_web.internal_site_origin):
 			# We are in the internal site. OVERRIDE
 			print("Found that we're in the internal site. Forcing web and not doing any auth since the site handles that for us!")
 			_internal_site = true
