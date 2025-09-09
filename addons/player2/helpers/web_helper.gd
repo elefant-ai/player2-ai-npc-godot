@@ -38,11 +38,11 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 				on_fail.call(result, response_code)
 		else:
 			print("HTTP success:", path,"=", response_code)
-			var avoid_printing = should_print_response.call(path, body.get_string_from_utf8())
-			if avoid_printing:
-				print("(body omitted)")
-			else:
+			var should_print_response = should_print_response.call(path, body.get_string_from_utf8())
+			if should_print_response:
 				print(body.get_string_from_utf8())
+			else:
+				print("(body omitted)")
 			if response_code == 429:
 				# Too many requests, try again...
 				print("too many requests, trying again...")

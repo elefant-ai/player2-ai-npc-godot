@@ -577,7 +577,7 @@ func _ready() -> void:
 
 	# Don't print TTS responses, they are big!
 	Player2WebHelper.should_print_response = func(path : String, body : String):
-		if path == api.endpoint_web.tts_speak:
+		if path == api.endpoint_web.path("tts_speak"):
 			return false
 		return true
 
