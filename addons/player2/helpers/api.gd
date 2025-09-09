@@ -2,21 +2,21 @@
 extends Node
 
 # auth: TODO: move? or not?
-var _web_p2_key : String = ""
+var _web_p2_key: String = ""
 # Assume both are present, then fail if they're missing
-var _last_local_present : bool = true
-var _last_web_present : bool = true
-var _source_tested : bool = false
-var _source_testing : bool = false
+var _last_local_present: bool = true
+var _last_web_present: bool = true
+var _source_tested: bool = false
+var _source_testing: bool = false
 # whether localhost:XXXX/login/web/{client_id} is assumed to exist
-var _auth_local_endpoint_present : bool = true
+var _auth_local_endpoint_present: bool = true
 
 # Queued up calls for auth
-var _auth_running : bool = false
+var _auth_running: bool = false
 class RequestCallback:
 	var run: Callable
-	var on_fail : Callable
-var _auth_queue : Array[RequestCallback] = []
+	var on_fail: Callable
+var _auth_queue: Array[RequestCallback] = []
 
 func using_web() -> bool:
 	var api = Player2APIConfig.grab()
@@ -27,15 +27,19 @@ func using_web() -> bool:
 		return false
 	return _last_web_present
 
+func running_in_player2_browser() -> bool:
+	var api = Player2APIConfig.grab()
+	return api.endpoint_web.running_in_browser
+
 ## Is a connection established to the API?
 func established_api_connection() -> bool:
 	return _source_tested
 
 var _establishing_connection = false
-var _establishing_connection_queue : Array[Callable] = []
+var _establishing_connection_queue: Array[Callable] = []
 ## Ensure a connection to the API is established and have a callback for when the connection is complete.
 ## This is not necessary unless you wish to use something like STT
-func establish_connection(on_complete : Callable = Callable()) -> void:
+func establish_connection(on_complete: Callable = Callable()) -> void:
 	if _establishing_connection:
 		_establishing_connection_queue.push_back(on_complete)
 		return
@@ -57,11 +61,11 @@ func establish_connection(on_complete : Callable = Callable()) -> void:
 		func(data):
 			_establishing_connection = false
 			complete.call()
-			return,
+			return ,
 		func(msg, code):
 			_establishing_connection = false
 			complete.call()
-			return,
+			return ,
 	)
 
 func _maybe_save_key():
@@ -71,7 +75,7 @@ func _maybe_save_key():
 
 
 ## Save the auth key with some local encryption
-func _save_key(key : String) -> void:
+func _save_key(key: String) -> void:
 	var filename = "user://auth_cache"
 
 	var client_id = ProjectSettings.get_setting("player2/client_id")
@@ -110,9 +114,9 @@ func _wipe_cached_key() -> void:
 	var filename = "user://auth_cache"
 	DirAccess.remove_absolute(filename)
 
-func _get_headers(web : bool) -> Array[String]:
+func _get_headers(web: bool) -> Array[String]:
 	var config := Player2APIConfig.grab()
-	var result : Array[String] = [
+	var result: Array[String] = [
 		"Content-Type: application/json; charset=utf-8",
 		"Accept: application/json; charset=utf-8"
 	]
@@ -122,13 +126,12 @@ func _get_headers(web : bool) -> Array[String]:
 
 	return result
 
-func _code_success(code : int) -> bool:
+func _code_success(code: int) -> bool:
 	return 200 <= code and code < 300
 
 # Run source test and call after a source has been established
 # If a web is required, establish a connection somehow (get player to open up the auth page)
-func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", on_completed : Callable = Callable(), on_fail : Callable = Callable()):
-
+func _req(path_property: String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body: Variant = "", on_completed: Callable = Callable(), on_fail: Callable = Callable()):
 	var api := Player2APIConfig.grab()
 
 	# Some pre config
@@ -138,6 +141,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		_last_web_present = false
 
 	var use_web = using_web()
+	var use_player2_browser = running_in_player2_browser()
 
 	var run_again = func():
 		_req(path_property, method, body, on_completed, on_fail)
@@ -166,11 +170,12 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		# Check if successful HTTP
 		if !_code_success(code):
 			# not success
-			# Unauthorized
-			if use_web and code == 401:
+			# Unauthorized; if in player2 browser we don't want to use the p2 key auth flow - it shouldn't fail
+			# TODO: possibly need to alert user to refresh the game if they're in browser and get a 401
+			if use_web and code == 401 and !use_player2_browser:
 				print("Unauthorized response. Resetting key and trying to re-auth.")
 				Player2ErrorHelper.send_error("Got Unauthorized while doing web requests, redoing auth.")
-				_web_p2_key=  ""
+				_web_p2_key = ""
 				run_again.call()
 				return
 
@@ -201,7 +206,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		_source_testing = true
 		var endpoint_check_url = endpoint.path("endpoint_check")
 
-		var try_again_if_check_failed = func(double_failure : bool):
+		var try_again_if_check_failed = func(double_failure: bool):
 			_source_testing = false
 			if double_failure:
 				Player2ErrorHelper.send_error("Unable to connect to API. Will attempt to reconnect for a bit")
@@ -289,14 +294,14 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 			return
 
 		# When we complete auth successfully
-		var do_auth_complete = func(p2_key : String):
+		var do_auth_complete = func(p2_key: String):
 			print("Successfully got auth key. Continuing to request.")
 			_web_p2_key = p2_key
 			_maybe_save_key()
 			_auth_running = false
 			# Auth completed: call everything in the queue
 			run_again.call()
-			var calls : Array[Callable] = []
+			var calls: Array[Callable] = []
 			calls.assign(_auth_queue.map(func(c): return c.run))
 			_auth_queue.clear()
 			for c in calls:
@@ -312,7 +317,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 				# TODO: Custom code/constant of some sorts?
 				if on_fail:
 					on_fail.call(msg, -3)
-				var calls : Array[Callable] = []
+				var calls: Array[Callable] = []
 				calls.assign(_auth_queue.map(func(c): return c.on_fail))
 				_auth_queue.clear()
 				for c in calls:
@@ -474,7 +479,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 	)
 
 
-func _alert_error_fail(code : int, use_http_result : bool = false, response_body : String = ""):
+func _alert_error_fail(code: int, use_http_result: bool = false, response_body: String = ""):
 	if use_http_result:
 		match (code):
 			HTTPRequest.RESULT_SUCCESS:
@@ -493,7 +498,7 @@ func _alert_error_fail(code : int, use_http_result : bool = false, response_body
 			Player2ErrorHelper.send_error("Internal server error: " + response_body)
 
 
-func get_health(on_complete : Callable = Callable(), on_fail : Callable = Callable()):
+func get_health(on_complete: Callable = Callable(), on_fail: Callable = Callable()):
 	_req("health", HTTPClient.Method.METHOD_GET, "",
 	on_complete,
 	on_fail
@@ -505,7 +510,7 @@ func chat(request: Player2Schema.ChatCompletionRequest, on_complete: Callable, o
 	if !request.tools or request.tools.size() == 0:
 		json_req.erase("tools")
 		json_req.erase("tool_choice")
-		for m : Dictionary in json_req["messages"]:
+		for m: Dictionary in json_req["messages"]:
 			m.erase("tool_call_id")
 			m.erase("tool_calls")
 
@@ -513,23 +518,22 @@ func chat(request: Player2Schema.ChatCompletionRequest, on_complete: Callable, o
 		on_complete, on_fail
 	)
 
-func tts_speak(request : Player2Schema.TTSRequest,on_complete : Callable = Callable(), on_fail : Callable = Callable()) -> void:
+func tts_speak(request: Player2Schema.TTSRequest, on_complete: Callable = Callable(), on_fail: Callable = Callable()) -> void:
 	_req("tts_speak", HTTPClient.Method.METHOD_POST, request, on_complete, on_fail)
 
-func tts_stop(on_fail : Callable = Callable()) -> void:
+func tts_stop(on_fail: Callable = Callable()) -> void:
 	_req("tts_stop", HTTPClient.Method.METHOD_POST, "", Callable(), on_fail)
 
-func stt_start(request : Player2Schema.STTStartRequest, on_fail : Callable = Callable()) -> void:
+func stt_start(request: Player2Schema.STTStartRequest, on_fail: Callable = Callable()) -> void:
 	_req("stt_start", HTTPClient.Method.METHOD_POST, "", Callable(), on_fail)
 
-func stt_stop(on_complete : Callable, on_fail : Callable = Callable()) -> void:
+func stt_stop(on_complete: Callable, on_fail: Callable = Callable()) -> void:
 	_req("stt_stop", HTTPClient.Method.METHOD_POST, "", on_complete, on_fail)
 
-func get_selected_characters(on_complete : Callable, on_fail : Callable = Callable()) -> void:
+func get_selected_characters(on_complete: Callable, on_fail: Callable = Callable()) -> void:
 	_req("get_selected_characters", HTTPClient.Method.METHOD_GET, "", on_complete, on_fail)
 
-func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
-
+func stt_stream_socket(sample_rate: int = 44100) -> WebSocketPeer:
 	if not established_api_connection():
 		printerr("Tried stt socket streaming but no API connection is established")
 		return null
@@ -553,7 +557,7 @@ func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 		"interim_results": true,
 		"token": _web_p2_key
 	}
-	var http_params = "&".join(params.keys().map(func(k): return k+"="+str(params[k]).uri_encode()))
+	var http_params = "&".join(params.keys().map(func(k): return k + "=" + str(params[k]).uri_encode()))
 	
 	var full_url = url
 	if not http_params.is_empty():
@@ -576,7 +580,7 @@ func _ready() -> void:
 	var api = Player2APIConfig.grab()
 
 	# Don't print TTS responses, they are big!
-	Player2WebHelper.should_print_response = func(path : String, body : String):
+	Player2WebHelper.should_print_response = func(path: String, body: String):
 		if path == api.endpoint_web.tts_speak:
 			return false
 		return true
