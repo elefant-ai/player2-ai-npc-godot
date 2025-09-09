@@ -10,7 +10,9 @@ func send_error(error : String, also_print : bool = true) -> void:
 	if also_print:
 		print(error)
 	if Player2APIConfig.grab().error_log_ui:
-		var label = Label.new()
+		# TODO: Better toast system
+		var label := Label.new()
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.text = "Player2 ERROR: " + error
 		if error_container:
 			error_container.add_child(label)

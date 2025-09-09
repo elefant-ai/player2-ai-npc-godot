@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://hc1g7ksikv7o" path="res://addons/player2/helpers/error_helper.gd" id="1_b3jjp"]
 
 [node name="Error Helper" type="CanvasLayer"]
+layer = 100
 script = ExtResource("1_b3jjp")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
@@ -10,6 +11,8 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 89.0
 grow_horizontal = 2
+mouse_filter = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
 layout_mode = 2
+mouse_filter = 2
