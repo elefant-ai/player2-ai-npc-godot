@@ -124,7 +124,7 @@ func _get_headers(web : bool) -> Array[String]:
 		"Accept: application/json; charset=utf-8"
 	]
 
-	if web and !_web_p2_key.is_empty() and !_internal_site:
+	if web and !_web_p2_key.is_empty() and not _internal_site:
 		result.push_back("Authorization: Bearer " + _web_p2_key)
 
 	return result
@@ -180,7 +180,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 					return
 				print("Unauthorized response. Resetting key and trying to re-auth.")
 				Player2ErrorHelper.send_error("Got Unauthorized while doing web requests, redoing auth.")
-				_web_p2_key =  ""
+				_web_p2_key = ""
 				run_again.call()
 				return
 
@@ -567,7 +567,7 @@ func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 		"interim_results": true
 	}
 	if not _internal_site:
-		params["token"] =  _web_p2_key
+		params["token"] = _web_p2_key
 
 	var http_params = "&".join(params.keys().map(func(k): return k+"="+str(params[k]).uri_encode()))
 	
