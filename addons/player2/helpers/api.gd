@@ -21,6 +21,8 @@ class RequestCallback:
 	var on_fail : Callable
 var _auth_queue : Array[RequestCallback] = []
 
+var _internal_site : bool = false
+
 func using_web() -> bool:
 	var api = Player2APIConfig.grab()
 
@@ -68,6 +70,8 @@ func establish_connection(on_complete : Callable = Callable()) -> void:
 	)
 
 func _maybe_save_key():
+	if _internal_site:
+		return
 	var api = Player2APIConfig.grab()
 	if api.auth_key_cache_locally and _web_p2_key != "":
 		_save_key(_web_p2_key)
@@ -120,7 +124,7 @@ func _get_headers(web : bool) -> Array[String]:
 		"Accept: application/json; charset=utf-8"
 	]
 
-	if web and !_web_p2_key.is_empty():
+	if web and !_web_p2_key.is_empty() and !_internal_site:
 		result.push_back("Authorization: Bearer " + _web_p2_key)
 
 	return result
@@ -171,9 +175,12 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 			# not success
 			# Unauthorized
 			if use_web and code == 401:
+				if _internal_site:
+					Player2ErrorHelper.send_error("Got Unauthorized response. Try refreshing the page!")
+					return
 				print("Unauthorized response. Resetting key and trying to re-auth.")
 				Player2ErrorHelper.send_error("Got Unauthorized while doing web requests, redoing auth.")
-				_web_p2_key=  ""
+				_web_p2_key =  ""
 				run_again.call()
 				return
 
@@ -274,7 +281,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		return
 
 	# Check for auth key
-	if use_web and _web_p2_key.is_empty():
+	if use_web and _web_p2_key.is_empty() and not _internal_site:
 		# No p2 auth key, run the auth sequence
 		_auth_running = true
 
@@ -490,7 +497,7 @@ func _alert_error_fail(code : int, use_http_result : bool = false, response_body
 				pass
 	match (code):
 		401:
-			Player2ErrorHelper.send_error("User is not authenticated in the Player2 Launcher: " + response_body)
+			Player2ErrorHelper.send_error("User is not authenticated: " + response_body)
 		402:
 			Player2ErrorHelper.send_error("Insufficient credits to complete request: " + response_body)
 		500:
@@ -557,9 +564,11 @@ func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 		"language": "en-US", # TODO: Configure
 		"encoding": "linear16",
 		"sample_rate": sample_rate,
-		"interim_results": true,
-		"token": _web_p2_key
+		"interim_results": true
 	}
+	if not _internal_site:
+		params["token"] =  _web_p2_key
+
 	var http_params = "&".join(params.keys().map(func(k): return k+"="+str(params[k]).uri_encode()))
 	
 	var full_url = url
@@ -582,6 +591,17 @@ func _ready() -> void:
 
 	var api = Player2APIConfig.grab()
 
+	# Check for internal site
+	if Engine.has_singleton("JavaScriptBridge"):
+		var origin = JavaScriptBridge.eval("window.location.origin", true)
+		if origin.ends_with(api.endpoint_web.internal_site_origin):
+			# We are in the internal site. OVERRIDE
+			print("Found that we're in the internal site. Forcing web and not doing any auth since the site handles that for us!")
+			_internal_site = true
+			api.source_mode = Player2APIConfig.SourceMode.WEB_ONLY
+			api.web_endpoint.set_using_site(origin)
+
+
 	# Don't print TTS responses, they are big!
 	Player2WebHelper.should_print_response = func(path : String, body : String):
 		if path == api.endpoint_web.path("tts_speak"):
@@ -597,7 +617,7 @@ func _ready() -> void:
 		Player2ErrorHelper.send_error(msg)
 
 	# Before we start, load our key.
-	if api.auth_key_cache_locally and _web_p2_key == "":
+	if api.auth_key_cache_locally and _web_p2_key == "" and not _internal_site:
 		_web_p2_key = _load_key()
 		print("loading auth key: ", _web_p2_key)
 		if _web_p2_key == "":

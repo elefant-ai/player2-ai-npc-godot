@@ -23,6 +23,8 @@ endpoint_check = "{root}/v1/health"
 [sub_resource type="Resource" id="Resource_nncrx"]
 script = ExtResource("2_88imo")
 root = "https://api.player2.game"
+root_internal_site = "{origin}/_api"
+internal_site_origin = "player2.game"
 chat = "{root}/v1/chat/completions"
 health = "{root}/v1/health"
 tts_speak = "{root}/v1/tts/speak"
