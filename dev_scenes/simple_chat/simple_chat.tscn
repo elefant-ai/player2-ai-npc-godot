@@ -71,7 +71,7 @@ resource_scene_unique_id = "Resource_ccetc"
 script = ExtResource("4_ofn2n")
 name = "announce"
 enabled = true
-description = "Set the text of a big label at the center of the screen. Label keeps this value until announce is called again. "
+description_comment = "Set the text of a big label at the center of the screen. Label keeps this value until announce is called again. "
 
 [sub_resource type="Resource" id="Resource_1eb8p"]
 Resource = null
@@ -80,7 +80,7 @@ resource_scene_unique_id = "Resource_1eb8p"
 script = ExtResource("4_ofn2n")
 name = "blink"
 enabled = true
-description = "Make the background of the user's input field quickly flash black and then go back to normal. Notifies caller when one blink is successful. "
+description_comment = "Make the background of the user's input field quickly flash black and then go back to normal. Notifies caller when one blink is successful. "
 
 [sub_resource type="Resource" id="Resource_a46nd"]
 Resource = null
@@ -89,7 +89,7 @@ resource_scene_unique_id = "Resource_a46nd"
 script = ExtResource("4_ofn2n")
 name = "get_time"
 enabled = true
-description = "Gets the time in full string format (YYYY-MM-DDTHH:MM:SS). "
+description_comment = "Gets the time in full string format (YYYY-MM-DDTHH:MM:SS). "
 
 [sub_resource type="Resource" id="Resource_2vci2"]
 Resource = null
@@ -98,7 +98,7 @@ resource_scene_unique_id = "Resource_2vci2"
 script = ExtResource("4_ofn2n")
 name = "set_volume"
 enabled = false
-description = ""
+description_comment = ""
 
 [sub_resource type="Resource" id="Resource_jcp5b"]
 Resource = null

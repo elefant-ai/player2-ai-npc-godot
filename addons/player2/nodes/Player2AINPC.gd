@@ -432,7 +432,7 @@ func _scan_funcs_for_tools() -> Array[AIToolCall]:
 
 			# name and description
 			tool_call.function_name = f_name
-			tool_call.description = function_definition.description
+			tool_call.description = function_definition.description_comment
 
 			# args
 			tool_call.args = []
@@ -955,7 +955,7 @@ func _validate_tool_call_definitions() -> void:
 			# enabled by default
 			definition.enabled = true
 		definition.name = name_to_add
-		definition.description = "" if !comment_descriptions.has(definition.name) else comment_descriptions[definition.name]
+		definition.description_comment = "" if !comment_descriptions.has(definition.name) else comment_descriptions[definition.name]
 		result.append(definition)
 
 	# Set the value
