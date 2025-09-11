@@ -1,0 +1,3 @@
+lightning svg:
+	by Leonid Tsvetkov
+	https://www.svgrepo.com/svg/457852/lightning-1

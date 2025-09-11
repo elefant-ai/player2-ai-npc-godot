@@ -1,0 +1,82 @@
+[gd_scene load_steps=4 format=3 uid="uid://dyd5u1qkiakb4"]
+
+[ext_resource type="Texture2D" uid="uid://c6s823ycq48nx" path="res://addons/player2/ui/lightning-1-svgrepo-com.svg" id="1_65i10"]
+[ext_resource type="Script" uid="uid://dhuh47q17obt5" path="res://addons/player2/ui/power_hud.gd" id="1_ljsom"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f2r4j"]
+bg_color = Color(0.145098, 0.305882, 0.619608, 1)
+border_width_left = 80
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.0901961, 0.105882, 0.286275, 1)
+border_blend = true
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.278431)
+shadow_size = 4
+shadow_offset = Vector2(0, 10)
+
+[node name="PowerHud" type="CanvasLayer" node_paths=PackedStringArray("active_root", "color_items", "button")]
+script = ExtResource("1_ljsom")
+active_root = NodePath("Container")
+color_items = [NodePath("Container/VBoxContainer/Power Icon"), NodePath("Container/Power")]
+button = NodePath("Container/Power")
+
+[node name="Container" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -108.0
+offset_bottom = 40.0
+grow_horizontal = 0
+
+[node name="Panel" type="Panel" parent="Container"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_f2r4j")
+
+[node name="Power" type="Button" parent="Container"]
+modulate = Color(0.336, 0.8, 0.390133, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "0"
+icon = ExtResource("1_65i10")
+flat = true
+expand_icon = true
+
+[node name="VBoxContainer" type="HBoxContainer" parent="Container"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Gap2" type="Control" parent="Container/VBoxContainer"]
+custom_minimum_size = Vector2(5, 0)
+layout_mode = 2
+
+[node name="Power Icon" type="TextureRect" parent="Container/VBoxContainer"]
+modulate = Color(0.337255, 0.8, 0.388235, 1)
+self_modulate = Color(0.654232, 0.654232, 0.654232, 1)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("1_65i10")
+expand_mode = 2
+stretch_mode = 5
+
+[node name="Gap" type="Control" parent="Container/VBoxContainer"]
+custom_minimum_size = Vector2(5, 0)
+layout_mode = 2

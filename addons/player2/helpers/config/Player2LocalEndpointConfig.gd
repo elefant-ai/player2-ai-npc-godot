@@ -5,6 +5,7 @@ extends Player2EndpointConfig
 
 @export var chat : String = "{root}/v1/chat/completions"
 @export var health : String = "{root}/v1/health"
+@export var joules : String = "{root}/v1/joules"
 @export var tts_speak: String = "{root}/v1/tts/speak"
 @export var tts_stop: String = "{root}/v1/tts/stop"
 @export var get_selected_characters : String = "{root}/v1/selected_characters"

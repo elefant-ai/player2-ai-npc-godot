@@ -8,8 +8,11 @@ var _last_local_present : bool = true
 var _last_web_present : bool = true
 var _source_tested : bool = false
 var _source_testing : bool = false
-# whether localhost:XXXX/login/web/{client_id} is assumed to exist
+## whether localhost:XXXX/login/web/{client_id} is assumed to exist
 var _auth_local_endpoint_present : bool = true
+
+## Emits when a request completes successfully
+signal request_success(path : String)
 
 # Queued up calls for auth
 var _auth_running : bool = false
@@ -182,6 +185,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 			# Try json, otherwise just return it...
 			var result = JSON.parse_string(body)
 			on_completed.call(result if result else body)
+			request_success.emit(path_property)
 
 	if !api:
 		print("API config is null/not configured!")
@@ -525,6 +529,9 @@ func stt_start(request : Player2Schema.STTStartRequest, on_fail : Callable = Cal
 func stt_stop(on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	_req("stt_stop", HTTPClient.Method.METHOD_POST, "", on_complete, on_fail)
 
+func joules(on_complete : Callable, on_fail : Callable = Callable()) -> void:
+	_req("joules", HTTPClient.Method.METHOD_GET, "", on_complete, on_fail)
+
 func get_selected_characters(on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	_req("get_selected_characters", HTTPClient.Method.METHOD_GET, "", on_complete, on_fail)
 
@@ -602,6 +609,12 @@ func _ready() -> void:
 	# Web Auth Prompt Immediately
 	if api.prompt_auth_page_immediately:
 		establish_connection()
+
+	# Power hud
+	if api.ui_power_hud:
+		var power_hud : Node = api.ui_power_hud.instantiate()
+		add_child(power_hud)
+
 
 func _exit_tree() -> void:
 	if Engine.is_editor_hint():

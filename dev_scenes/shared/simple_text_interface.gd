@@ -5,7 +5,6 @@ extends Node
 @export var chat : Label
 @export var thinking : CanvasItem
 
-@export var poke_button : Button
 @export var deselect_on_send : bool
 
 @export var player2_stt : Player2STT
@@ -13,7 +12,6 @@ extends Node
 const stt_keycode : int = KEY_TAB
 
 signal text_sent(text : String)
-signal poked
 
 func _ready() -> void:
 	button.pressed.connect(send)
@@ -31,8 +29,6 @@ func _ready() -> void:
 					text.accept_event()
 					send()
 	)
-	if poke_button:
-		poke_button.pressed.connect(func(): poked.emit())
 	
 	#if player2_stt:
 		## Pass the message from stt upwards

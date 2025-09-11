@@ -24,6 +24,7 @@ enum SourceMode {
 @export_group("Endpoints", "endpoint")
 @export var endpoint_web : Player2WebEndpointConfig = Player2WebEndpointConfig.new()
 @export var endpoint_local : Player2LocalEndpointConfig = Player2LocalEndpointConfig.new()
+@export var endpoint_webpage : Player2WebpageEndpointConfig = Player2WebpageEndpointConfig.new()
 
 @export_group("Timeouts and Delays")
 @export var request_timeout : float = 30.0
@@ -39,6 +40,7 @@ enum SourceMode {
 
 @export_group("UI", "ui")
 @export var ui_web_auth_prompt : PackedScene
+@export var ui_power_hud : PackedScene
 
 static var _instance : Player2APIConfig
 

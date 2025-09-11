@@ -1,9 +1,11 @@
-[gd_resource type="Resource" script_class="Player2APIConfig" load_steps=7 format=3 uid="uid://b17boijhcsvyu"]
+[gd_resource type="Resource" script_class="Player2APIConfig" load_steps=10 format=3 uid="uid://b17boijhcsvyu"]
 
 [ext_resource type="Script" uid="uid://4jjipstvxd6p" path="res://addons/player2/helpers/config/Player2LocalEndpointConfig.gd" id="1_vtgv6"]
 [ext_resource type="Script" uid="uid://ceh624ltng4km" path="res://addons/player2/helpers/config/Player2WebEndpointConfig.gd" id="2_88imo"]
+[ext_resource type="Script" uid="uid://ryrmb3i1dluf" path="res://addons/player2/helpers/config/Player2WebpageEndpointConfig.gd" id="3_m5qx4"]
 [ext_resource type="Script" uid="uid://b6indg81ao1we" path="res://addons/player2/helpers/config/Player2APIConfig.gd" id="3_pqu85"]
 [ext_resource type="PackedScene" uid="uid://bvdm811rnyhid" path="res://addons/player2/ui/OpenAuthPrompt.tscn" id="4_88imo"]
+[ext_resource type="PackedScene" uid="uid://dyd5u1qkiakb4" path="res://addons/player2/ui/PowerHUD.tscn" id="5_m5qx4"]
 
 [sub_resource type="Resource" id="Resource_m5qx4"]
 script = ExtResource("1_vtgv6")
@@ -31,6 +33,10 @@ stt_stream = "{root}/v1/stt/stream"
 stt_protocol = "wss"
 endpoint_check = "{root}/v1/health"
 
+[sub_resource type="Resource" id="Resource_4mmoy"]
+script = ExtResource("3_m5qx4")
+profile_ai_power = "https://player2.game/profile/ai-power"
+
 [resource]
 script = ExtResource("3_pqu85")
 prompt_auth_page_immediately = true
@@ -38,6 +44,7 @@ source_mode = 0
 error_log_ui = true
 endpoint_web = SubResource("Resource_nncrx")
 endpoint_local = SubResource("Resource_m5qx4")
+endpoint_webpage = SubResource("Resource_4mmoy")
 request_timeout = 30.0
 request_timeout_check_local = 1.0
 request_timeout_check_web = 8.0
@@ -45,4 +52,5 @@ request_timeout_local_auth = 0.5
 retry_delay = 3.0
 auth_key_cache_locally = true
 ui_web_auth_prompt = ExtResource("4_88imo")
+ui_power_hud = ExtResource("5_m5qx4")
 metadata/_custom_type_script = "uid://b6indg81ao1we"
