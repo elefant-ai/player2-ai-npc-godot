@@ -231,10 +231,12 @@ text = "Turn On Player2 AI"
 text_overrun_behavior = 3
 
 [node name="Gap" type="Control" parent="Panel Prompt/Buttons"]
+visible = false
 custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
 
 [node name="Reject" type="Button" parent="Panel Prompt/Buttons"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 theme = SubResource("Theme_kp01c")
