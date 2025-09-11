@@ -69,9 +69,6 @@ talk={
 
 [player2]
 
-client_id="01977e1d-cf15-7d58-a6e2-ef47fc3d9f30"
-main_scene="uid://n1xlbj2ndal5"
-
 [rendering]
 
 environment/defaults/default_clear_color=Color(0, 0, 0, 1)
