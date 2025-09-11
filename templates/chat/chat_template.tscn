@@ -69,9 +69,9 @@ Resource = null
 resource_path = "res://templates/chat/chat_template.tscn::Resource_v8qlu"
 resource_scene_unique_id = "Resource_v8qlu"
 script = ExtResource("5_1v8gg")
-name = "console_log"
+name = "blink"
 enabled = true
-description_comment = "Logs a custom message to the console "
+description_comment = "Make the background of the user's input field quickly flash black and then go back to normal. Notifies caller when one blink is successful. "
 
 [sub_resource type="Resource" id="Resource_gxjob"]
 Resource = null
@@ -97,7 +97,7 @@ resource_path = "res://templates/chat/chat_template.tscn::Resource_jcp5b"
 script = ExtResource("6_d141t")
 definitions = Array[ExtResource("5_1v8gg")]([SubResource("Resource_gxjob"), SubResource("Resource_v8qlu"), SubResource("Resource_x4btm")])
 console_log_hello_world = SubResource("Resource_gxjob")
-console_log = SubResource("Resource_v8qlu")
+blink = SubResource("Resource_v8qlu")
 get_current_time = SubResource("Resource_x4btm")
 
 [node name="Chat Template" type="CanvasLayer"]
