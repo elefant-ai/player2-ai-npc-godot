@@ -23,6 +23,13 @@ A backend portal for creating a client_id is present here: https://player2.game/
 
 Populate your client_id under **Project Settings** -> **Player2** -> **Game Key**
 
+### Quick start Template
+
+To jump right in with a Chat agent, open `templates/chat/chat_template.tscn` and get started!
+
+<img width="358" height="120" alt="image" src="https://github.com/user-attachments/assets/7653f220-1ed0-4fb4-9f47-f8a7e22571f9" />
+
+
 ### Adding the node
 To spawn in an AI NPC agent that can talk and perform actions in the world, add a Player2 AI NPC Node:
 
