@@ -23,6 +23,9 @@ var _auth_queue : Array[RequestCallback] = []
 
 var _internal_site : bool = false
 
+func using_internal_site() -> bool:
+	return _internal_site
+
 func using_web() -> bool:
 	var api = Player2APIConfig.grab()
 
@@ -599,7 +602,7 @@ func _ready() -> void:
 			print("Found that we're in the internal site. Forcing web and not doing any auth since the site handles that for us!")
 			_internal_site = true
 			api.source_mode = Player2APIConfig.SourceMode.WEB_ONLY
-			api.web_endpoint.set_using_site(origin)
+			api.endpoint_web.set_using_site(origin)
 
 
 	# Don't print TTS responses, they are big!

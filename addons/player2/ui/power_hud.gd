@@ -35,7 +35,12 @@ func _ready() -> void:
 		)
 	if active_root:
 		active_root.hide()
-	
+
+	# If we're in the internal site, do not show power hud.
+	if Player2API.using_internal_site():
+		print("(not showing power hud, inside internal site)")
+		return
+
 	# Poll power
 	_check_power_endpoint(func():
 		Player2AsyncHelper.call_timeout(_check_power_endpoint, power_poll_interval)
