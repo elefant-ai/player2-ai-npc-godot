@@ -213,6 +213,8 @@ func _start_stt_web() -> void:
 			_audio_stream_player.stop()
 		else:
 			_audio_stream_player = AudioStreamPlayer.new()
+			# Fix for web build to work
+			_audio_stream_player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 			add_child(_audio_stream_player)
 		_audio_stream_player.stream = audio_stream
 		_audio_stream_player.bus = AUDIO_CAPTURE_BUS
