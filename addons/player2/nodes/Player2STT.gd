@@ -53,6 +53,8 @@ var waiting_on_reply: bool = false:
 signal stt_received(message : String)
 ## When an STT message has failed
 signal stt_failed(message : String, code : int)
+## When STT receives any part of a message, receive the result so far
+signal stt_partial_received(partial_message_result : String)
 
 ## When we start listening for speech
 signal listening_started
@@ -314,11 +316,14 @@ func _send_socket(socket : WebSocketPeer) -> void:
 			print("SOCKET SEND ERROR:", err)
 	_audio_capture_buffer.clear()
 
-func _flush_audio_transcript_buffer():
+func _get_message_total_so_far() -> String:
 	if _audio_stream_transcript.length() > 0:
-		_audio_stream_transcript += " " + _audio_stream_transcript_buffer
+		return _audio_stream_transcript + " " + _audio_stream_transcript_buffer
 	else:
-		_audio_stream_transcript = _audio_stream_transcript_buffer
+		return _audio_stream_transcript_buffer
+
+func _flush_audio_transcript_buffer():
+	_audio_stream_transcript = _get_message_total_so_far()
 	_audio_stream_transcript_buffer = ""
 
 func _process_socket(socket : WebSocketPeer) -> void:
@@ -350,6 +355,8 @@ func _process_socket(socket : WebSocketPeer) -> void:
 								var highest = messages.reduce(func(max, msg): return msg if msg["confidence"] > max["confidence"] else max)
 								if highest:
 									_audio_stream_transcript_buffer = highest["transcript"].strip_edges()
+									# partial received
+									stt_partial_received.emit(_get_message_total_so_far())
 								# We got a message, reset the leftover timer
 								_audio_stream_leftover_timer.start(leftover_receive_wait_time)
 								_audio_stream_leftover_timer_triggered = false

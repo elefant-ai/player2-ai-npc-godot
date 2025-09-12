@@ -5,6 +5,11 @@ extends Node
 
 func _ready() -> void:
 	print("Simple Chat START")
+
+	stt.stt_partial_received.connect(func(partial_message_result : String):
+		print("(partial :", partial_message_result, ")")
+		response.text = partial_message_result
+	)
 	stt.stt_received.connect(func(message : String):
 		print("RECEIVED:", message)
 		response.text = message

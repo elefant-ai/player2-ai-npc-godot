@@ -29,7 +29,7 @@ func _ready() -> void:
 					text.accept_event()
 					send()
 	)
-	
+
 	#if player2_stt:
 		## Pass the message from stt upwards
 		#player2_stt.stt_received.connect(_send)
@@ -53,6 +53,9 @@ func append_line_agent(line : String) -> void:
 	print("got agent: " + line)
 	if chat:
 		chat.text += "Agent: " + line + "\n"
+
+func set_text_input(line : String) -> void:
+	text.text = line
 
 func start_thinking() -> void:
 	if thinking:

@@ -105,4 +105,5 @@ text = "(Processing STT...)"
 [connection signal="listening_stopped" from="Player2STT" to="Player2STT/Listening Label" method="hide"]
 [connection signal="reply_wait_started" from="Player2STT" to="Player2STT/Reply Wait Label" method="show"]
 [connection signal="reply_wait_stopped" from="Player2STT" to="Player2STT/Reply Wait Label" method="hide"]
+[connection signal="stt_partial_received" from="Player2STT" to="." method="set_text_input"]
 [connection signal="stt_received" from="Player2STT" to="." method="_send"]
