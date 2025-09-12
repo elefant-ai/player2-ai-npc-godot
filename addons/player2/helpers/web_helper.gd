@@ -25,9 +25,12 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 		#on_completed.call('{ "choices": [{ "finish_reason": "stop", "index": 0.0, "message": { "content": "```json\n{\n  \"reason\": \"The user asked me to blink the screen. I will call the blink function.\",\n  \"message\": \"Sure, I can do that!\",\n  \"function\": \"blink\",\n  \"args\": {}\n}\n```", "role": "assistant" } }], "created": 1751056169.0, "id": "cd5a3180-5d08-4a3d-9274-5693f15657f7", "model": "elefant-ai-200b-fp8", "object": "chat.completion", "usage": { "completion_tokens": 57.0, "prompt_tokens": 654.0, "total_tokens": 711.0 } }', 200)
 	#return
 
-	var http = HTTPRequest.new()
+	var http := HTTPRequest.new()
 	add_child(http)
-	
+
+	# Fix for web build to work
+	http.accept_gzip = false
+
 	http.timeout = timeout if timeout != -1 else Player2APIConfig.grab().request_timeout
 
 	var on_completed_inner : Callable
