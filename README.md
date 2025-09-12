@@ -57,6 +57,8 @@ Access TTS support and the characters from the Player2 launcher using the Charac
 
 <img width="426" height="322" alt="image" src="https://github.com/user-attachments/assets/702e0382-f84f-4c96-b897-c74063cffa88" />
 
+You can set the Voice ID to get a custom voice. [View all voice IDs here](https://api.player2.game/v1/tts/voices)
+
 To have more control over the bot's TTS, you can manually create a `Player2TTS` node and assign it to the agent. However, a default TTS node is populated automatically at runtime.
 
 ## Remembering chat history
