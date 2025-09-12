@@ -69,6 +69,8 @@ talk={
 
 [player2]
 
+client_id=""
+
 [rendering]
 
 environment/defaults/default_clear_color=Color(0, 0, 0, 1)
