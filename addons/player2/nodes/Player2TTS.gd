@@ -44,7 +44,8 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 	req.voice_gender = Player2TTSConfig.Gender.find_key(config.tts_default_gender).to_lower()
 	req.voice_language = Player2TTSConfig.Language.find_key(config.tts_default_language)
 	req.audio_format = "mp3" # TODO: Customize? Enum?
-	req.voice_ids = voice_ids
+	var voice_ids_override : Array[String] = [config.voice_id]
+	req.voice_ids = voice_ids if config.voice_id.is_empty() else voice_ids_override
 
 	Player2API.tts_speak(req, func(data):
 		_tts_playing = true

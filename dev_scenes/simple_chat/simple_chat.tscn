@@ -14,6 +14,7 @@ script = ExtResource("3_333ad")
 tts_speed = 1.0
 tts_default_language = 0
 tts_default_gender = 0
+voice_id = ""
 
 [sub_resource type="Resource" id="Resource_333ad"]
 script = ExtResource("2_333ad")

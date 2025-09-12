@@ -8,7 +8,8 @@
 script = ExtResource("3_ye3im")
 tts_speed = 1.0
 tts_default_language = 0
-tts_default_gender = 1
+tts_default_gender = 0
+voice_id = "01955d76-ed5b-7480-951c-af1dd9873e34"
 
 [node name="TtsTest" type="Control"]
 layout_mode = 3

@@ -14,6 +14,7 @@ script = ExtResource("3_x4btm")
 tts_speed = 1.0
 tts_default_language = 0
 tts_default_gender = 0
+voice_id = ""
 
 [sub_resource type="Resource" id="Resource_333ad"]
 script = ExtResource("2_gxjob")
@@ -45,8 +46,8 @@ ${system_message_behavior}
 ${system_message_prompting}"
 system_message_prefix = ""
 system_message_postfix = ""
-auto_store_conversation_history = true
-greet_on_entry = true
+auto_store_conversation_history = false
+greet_on_entry = false
 first_entry_message = "This is the first time you've met the user, greet them!"
 auto_load_entry_message = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
 conversation_history_size = 64
