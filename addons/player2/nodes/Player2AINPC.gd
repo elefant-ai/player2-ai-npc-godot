@@ -976,6 +976,10 @@ func _ready() -> void:
 	_queue_process_timer.timeout.connect(_process_chat_api)
 	_queue_process_timer.start()
 
+	# Clear history if we're NOT auto storing it
+	if not chat_config.auto_store_conversation_history:
+		clear_conversation_history()
+
 	if character_config.use_player2_selected_character:
 		_update_selected_character_from_endpoint()
 	else:
