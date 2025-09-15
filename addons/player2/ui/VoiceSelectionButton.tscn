@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://cubtlch2k182f"]
+
+[ext_resource type="Texture2D" uid="uid://qelpvbvxbnjw" path="res://addons/player2/ui/play-svgrepo-com.svg" id="1_j73wk"]
+
+[node name="Voice Selection Button" type="HBoxContainer"]
+
+[node name="Name" type="Button" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Name Here"
+
+[node name="Play" type="Button" parent="."]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+icon = ExtResource("1_j73wk")
+icon_alignment = 1
+expand_icon = true

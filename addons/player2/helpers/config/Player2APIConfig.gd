@@ -47,8 +47,8 @@ static var _instance : Player2APIConfig
 static func grab() -> Player2APIConfig:
 	if !_instance:
 		_instance = Player2APISourceHelper.api
-		print("GOT SOURCE:", _instance)
-		print(_instance.endpoint_web.root)
+		# print("GOT SOURCE:", _instance)
+		#print(_instance.endpoint_web.root)
 		if !_instance:
 			_instance = Player2APIConfig.new()
 	return _instance

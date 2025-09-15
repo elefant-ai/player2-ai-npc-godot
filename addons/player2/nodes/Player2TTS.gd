@@ -28,6 +28,28 @@ func _on_tts_finished() -> void:
 		tts_ended.emit()
 		_tts_playing = false
 
+static func speak_raw_data(parent : Node, audio_data : String, tts_audio_player : Node) -> Node:
+	# Web endpoint returns data:audio/mp3;base64, at the start so remove that...
+	var first_comma = audio_data.find(",")
+	if first_comma != -1:
+		audio_data = audio_data.substr(first_comma + 1)
+	# Validation
+	if !(tts_audio_player is AudioStreamPlayer or tts_audio_player is AudioStreamPlayer2D or tts_audio_player is AudioStreamPlayer3D):
+		#printerr("Invalid TTS audio player provided. Must be an AudioStreamPlayer, AudioStreamPlayer2D or AudioStreamPlayer3D. Creating default.")
+		tts_audio_player = null
+	# Ensure TTS audio player exists
+	if !tts_audio_player:
+		tts_audio_player = AudioStreamPlayer.new()
+		parent.add_child(tts_audio_player)
+	# Decode raw bytes to audio stream
+	var decoded_bytes = Marshalls.base64_to_raw(audio_data)
+	var stream : AudioStream = AudioStreamMP3.new()
+	stream.set_data(decoded_bytes)
+	# Play this stream
+	tts_audio_player.stream = stream
+	tts_audio_player.play()
+	return tts_audio_player
+
 func speak(message : String, voice_ids : Array[String] = []) -> void:
 	# Cancel previous TTS
 	stop()
@@ -50,26 +72,7 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 	Player2API.tts_speak(req, func(data):
 		_tts_playing = true
 		tts_began.emit()
-		var audio_data : String = data["data"]
-		# Web endpoint returns data:audio/mp3;base64, at the start so remove that...
-		var first_comma = audio_data.find(",")
-		if first_comma != -1:
-			audio_data = audio_data.substr(first_comma + 1)
-		# Validation
-		if !(tts_audio_player is AudioStreamPlayer or tts_audio_player is AudioStreamPlayer2D or tts_audio_player is AudioStreamPlayer3D):
-			#printerr("Invalid TTS audio player provided. Must be an AudioStreamPlayer, AudioStreamPlayer2D or AudioStreamPlayer3D. Creating default.")
-			tts_audio_player = null
-		# Ensure TTS audio player exists
-		if !tts_audio_player:
-			tts_audio_player = AudioStreamPlayer.new()
-			add_child(tts_audio_player)
-		# Decode raw bytes to audio stream
-		var decoded_bytes = Marshalls.base64_to_raw(audio_data)
-		var stream : AudioStream = AudioStreamMP3.new()
-		stream.set_data(decoded_bytes)
-		# Play this stream
-		tts_audio_player.stream = stream
-		tts_audio_player.play()
+		tts_audio_player = speak_raw_data(self, data["data"], tts_audio_player)
 	)
 
 ## Stops TTS

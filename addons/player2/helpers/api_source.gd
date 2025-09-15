@@ -1,3 +1,4 @@
+@tool
 extends Node
 
 # Not Player2APIConfig to avoid looping references (yeah)

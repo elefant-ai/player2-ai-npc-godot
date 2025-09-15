@@ -1,3 +1,4 @@
+@tool
 extends Node
 
 var should_print_response = func(path : String, body : String): return true

@@ -1,0 +1,54 @@
+[gd_scene load_steps=3 format=3 uid="uid://b22wy62b8mu0d"]
+
+[ext_resource type="Script" uid="uid://dswluwa4gl8j6" path="res://addons/player2/ui/voice_id_selector_ui.gd" id="1_ojlpp"]
+[ext_resource type="PackedScene" uid="uid://cubtlch2k182f" path="res://addons/player2/ui/VoiceSelectionButton.tscn" id="2_6of5c"]
+
+[node name="VoiceIdSelectorUi" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_ojlpp")
+button_scene = ExtResource("2_6of5c")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 45.0
+offset_top = 28.0
+offset_right = -45.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RichTextLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "Select Voice ID from API"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Voice Buttons" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Test Text" type="TextEdit" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+text = "Glue the sheet to the dark blue background.
+It's easy to tell the depth of a well.
+These days a chicken leg is a rare dish."
+placeholder_text = "(text to test here)"
+scroll_fit_content_width = true
