@@ -10,11 +10,46 @@ var editor_tool_button_clear_conversation_history = _clear_conversation_history_
 @export var character_name : String = "Robot"
 ## Describe who the NPC character is
 @export_multiline var character_description = "A helpful agent who is there to help out the player and be chatty with them!"
+
+#@export_group ("Player2 Selected Character", "use_player2_selected_character")
+## Selected character from the player's Player2 account.
+## If true, the agent will play the character of the player's selected Player2 Agent.
+@export var use_player2_selected_character : bool = false:
+	set(val):
+		use_player2_selected_character = val
+		# for the agent to make updates
+		notify_property_list_changed()
+## If there are multiple agents (CURRENTLY UNSUPPORTED), pick this index. Set to -1 to automatically pick a unique agent
+@export_range(-1, 99999) var use_player2_selected_character_desired_index : int = -1
+
 ## More specific description on how to behave.
 @export_multiline var character_system_message = "Match the player's mood. Be direct with your replies, but if the player is talkative then be talkative as well."
 
+@export_group("Tool Calls", "tool_calls")
+## Set this to an object to scan for functions in that object to call
+@export var tool_calls_scan_node_for_functions : Array[Node]:
+	set(new_nodes):
+		tool_calls_scan_node_for_functions = new_nodes
+		_validate_tool_call_definitions()
+		# notify_property_list_changed()
+@export_tool_button("Rescan functions") var tool_calls_rescan_functions = _validate_tool_call_definitions
+@export var tool_calls_function_definitions : ToolcallFunctionDefinitions
+
+## More lower level Character configuration.
+@export var character_config : Player2AICharacterConfig = Player2AICharacterConfig.new():
+	set(new_config):
+		character_config = new_config
+		character_config.property_list_changed.connect(notify_property_list_changed)
+		notify_property_list_changed()
+## More lower level Chat configuration.
+@export var chat_config : Player2AIChatConfig = Player2AIChatConfig.new():
+	set(new_config):
+		chat_config = new_config
+		chat_config.property_list_changed.connect(notify_property_list_changed)
+		notify_property_list_changed()
+
 var _tts_configured = false
-## Enable TTS
+## Override TTS component to use (if you want a 3D audio source for example)
 @export var tts : Player2TTS:
 	get:
 		if Engine.is_editor_hint():
@@ -30,25 +65,6 @@ var _tts_configured = false
 			tts.tts_ended.connect(func(): tts_ended.emit())
 			_tts_configured = true
 		return tts
-
-## More lower level Character configuration.
-@export var character_config : Player2AICharacterConfig = Player2AICharacterConfig.new():
-	set(new_config):
-		character_config = new_config
-		character_config.property_list_changed.connect(notify_property_list_changed)
-		notify_property_list_changed()
-## More lower level Chat configuration.
-@export var chat_config : Player2AIChatConfig = Player2AIChatConfig.new()
-
-@export_subgroup("Tool Calls", "tool_calls")
-## Set this to an object to scan for functions in that object to call
-@export var tool_calls_scan_node_for_functions : Array[Node]:
-	set(new_nodes):
-		tool_calls_scan_node_for_functions = new_nodes
-		_validate_tool_call_definitions()
-		# notify_property_list_changed()
-@export_tool_button("Rescan functions") var tool_calls_rescan_functions = _validate_tool_call_definitions
-@export var tool_calls_function_definitions : ToolcallFunctionDefinitions
 
 ## Whether the agent is thinking (coming up with a reply to a chat, stimulus, or summarizing the chat)
 var thinking: bool:
@@ -858,7 +874,7 @@ func _update_selected_character_from_endpoint() -> void:
 		thinking = false
 		var characters : Array = result["characters"] if (result and "characters" in result) else []
 		if characters and characters.size() > 0:
-			var index = character_config.use_player2_selected_character_desired_index
+			var index = use_player2_selected_character_desired_index
 			if index >= characters.size() or index < 0:
 				# Invalid index, find a valid one.
 				# TODO: get a random index from the least available agents, so we actually fill it up one by one.
@@ -890,8 +906,15 @@ func _validate_property(property: Dictionary) -> void:
 	var name = property.name
 
 	# Don't show character name/description if we're using player2 selected character
-	if character_config and character_config.use_player2_selected_character:
+	if use_player2_selected_character:
 		if name == "character_name" or name == "character_description":
+			property.usage = PROPERTY_USAGE_NO_EDITOR
+	else:
+		if name == "use_player2_selected_character_desired_index":
+			property.usage = PROPERTY_USAGE_NO_EDITOR
+
+	if not chat_config.auto_store_conversation_history:
+		if name == "editor_tool_button_clear_conversation_history":
 			property.usage = PROPERTY_USAGE_NO_EDITOR
 
 	# Clear conversation history button: Appear only if we have the conversation history file present
@@ -968,6 +991,8 @@ func _ready() -> void:
 		_validate_tool_call_definitions()
 		if character_config and !character_config.property_list_changed.is_connected(notify_property_list_changed):
 			character_config.property_list_changed.connect(notify_property_list_changed)
+		if chat_config and !chat_config.property_list_changed.is_connected(notify_property_list_changed):
+			chat_config.property_list_changed.connect(notify_property_list_changed)
 		return
 	_queue_process_timer = Timer.new()
 	self.add_child(_queue_process_timer)
@@ -980,7 +1005,7 @@ func _ready() -> void:
 	if not chat_config.auto_store_conversation_history:
 		clear_conversation_history()
 
-	if character_config.use_player2_selected_character:
+	if use_player2_selected_character:
 		_update_selected_character_from_endpoint()
 	else:
 		_on_entry_load_conversation_or_greet()
