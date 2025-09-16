@@ -103,7 +103,6 @@ tool_calls_message_optional_arg_description = "If you wish to say something whil
 
 [node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
 script = ExtResource("1_v8qlu")
-editor_tool_button_clear_conversation_history = Callable()
 tool_calls_scan_node_for_functions = [NodePath("../Tool Receiver")]
 tool_calls_function_definitions = SubResource("Resource_jcp5b")
 character_config = SubResource("Resource_333ad")
