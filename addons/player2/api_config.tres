@@ -41,6 +41,7 @@ endpoint_check = "{root}/v1/health"
 
 [sub_resource type="Resource" id="Resource_4mmoy"]
 script = ExtResource("3_m5qx4")
+download_player2_launcher = "https://player2.game/"
 profile_ai_power = "https://player2.game/profile/ai-power"
 
 [resource]
