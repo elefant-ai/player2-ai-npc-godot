@@ -798,9 +798,6 @@ func _process_chat_api() -> void:
 
 							# History
 							tool_call_history_messages.append("Called " + tool_name + " with arguments [" + ",".join(args_actual) + "]")
-	
-				# Agent Reply
-				_run_chat_internal(message_reply)
 
 				var agent_message := ConversationMessage.new()
 				agent_message.role = "assistant"
@@ -846,6 +843,9 @@ func _process_chat_api() -> void:
 									.replace("${tool_call_reply}", func_result_string)
 								notify(func_result_notify_string)
 						)
+
+				# Agent Reply
+				_run_chat_internal(message_reply)
 				,
 		func(body : String, error_code : int):
 			thinking = false
