@@ -20,6 +20,7 @@ const API_SOURCE_HELPER_AUTOLOAD_PATH = "res://addons/player2/helpers/Player2API
 const API_HELPER_AUTOLOAD_NAME = "Player2API"
 const API_HELPER_AUTOLOAD_PATH = "res://addons/player2/helpers/api.gd"
 
+const OPENING_PROMPT_UI_SCENE = "res://addons/player2/ui/opening/Player2OpeningUI.tscn"
 
 func _enter_tree() -> void:
 	# Settings
@@ -32,6 +33,15 @@ func _enter_tree() -> void:
 			"type": TYPE_STRING,
 			"hint": PROPERTY_HINT_NONE
 		})
+	# Hide opening prompt (don't show again)
+	if not ProjectSettings.has_setting("player2/hide_opening_prompt"):
+		ProjectSettings.set_setting("player2/hide_opening_prompt", false)
+		ProjectSettings.add_property_info({
+			"name": "player2/hide_opening_prompt",
+			"type": TYPE_BOOL,
+			"hint": PROPERTY_HINT_NONE
+		})
+
 	# TODO: This breaks godot/crashes the loading, so if this ever gets fixed add it back in since it's so nice!!
 	# API settings
 	#if not ProjectSettings.has_setting("player2/api"):
@@ -50,6 +60,7 @@ func _enter_tree() -> void:
 	if ProjectSettings.has_setting("player2/game_key"):
 		ProjectSettings.clear("player2/game_key")
 	ProjectSettings.set_as_basic("player2/client_id", true)
+	ProjectSettings.set_as_basic("player2/hide_opening_prompt", true)
 	#ProjectSettings.set_as_basic("player2/api", true)
 
 	add_autoload_singleton(ASYNC_HELPER_AUTOLOAD_NAME, ASYNC_HELPER_AUTOLOAD_PATH)
@@ -65,10 +76,13 @@ func _enter_tree() -> void:
 	add_custom_type("Player2TTS", "Player2TTS", preload("nodes/Player2TTS.gd"), preload("p2.svg"))
 	add_custom_type("Player2AIChatCompletion", "Player2AIChatCompletion.gd", preload("nodes/Player2AIChatCompletion.gd"), preload("p2.svg"))
 
+	_possibly_run_opening_prompt()
+
 
 func _exit_tree() -> void:
 	# Settings
 	ProjectSettings.clear("player2/client_id")
+	ProjectSettings.clear("player2/hide_opening_prompt")
 	#ProjectSettings.clear("player2/api", true)
 
 	remove_autoload_singleton(API_HELPER_AUTOLOAD_NAME)
@@ -89,3 +103,34 @@ func _enable_plugin() -> void:
 	pass
 func _disable_plugin() -> void:
 	pass
+
+
+func _possibly_run_opening_prompt():
+	if ProjectSettings.get_setting("player2/hide_opening_prompt", false):
+		return
+
+	var ui_scene = load(OPENING_PROMPT_UI_SCENE)
+	if not ui_scene:
+		printerr("Could not open starting UI scene. Make sure that the player2 plugin is under the root `addons` folder.")
+		return
+
+	var opening_ui = ui_scene.instantiate() as Player2OpeningUI
+
+	var w := Window.new()
+	w.always_on_top = true
+	w.borderless = true
+	w.add_child(opening_ui)
+	EditorInterface.popup_dialog_centered(w, Vector2i(640, 480))
+	w.close_requested.connect(func():
+		w.queue_free()
+		)
+
+	opening_ui.closed.connect(func(dont_show_again : bool):
+		if dont_show_again:
+			ProjectSettings.set_setting("player2/hide_opening_prompt", true)
+		w.queue_free()
+		)
+	opening_ui.template_opened.connect(func(template_scene : PackedScene):
+		print("OPENING SCENE: ", template_scene.resource_path)
+		w.queue_free()
+	)
