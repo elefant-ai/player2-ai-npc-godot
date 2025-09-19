@@ -10,3 +10,9 @@ func path(path_property : String) -> String:
 	if root:
 		result = result.replace("{root}", root)
 	return result
+
+func path_raw(path_property : String) -> String:
+	var result : String = get(path_property)
+	if result:
+		result = result.replace("{root}", "")
+	return result

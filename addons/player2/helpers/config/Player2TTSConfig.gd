@@ -5,6 +5,17 @@ extends Resource
 enum Gender {MALE, FEMALE, OTHER}
 enum Language { en_US, en_GB, ja_JP, zh_CN, es_ES, fr_FR, hi_IN, it_IT, pt_BR }
 
+var stream = false
+
+## TODO: TTS Streaming is broken, add back in once streaming is confirmed to work
+## If true, will stream. Otherwise will grab the entire audio at once.
+# @export var stream : bool = true
+
+# This depends on whether we're streaming or not
+var use_wav : bool:
+	get:
+		return stream
+
 ## Speed Scale (1 is default)
 @export var tts_speed : float = 1
 ## Default TTS language (overriden if `Player2 Selected Character` is enabled)
@@ -70,6 +81,7 @@ func _open_voice_selector_window():
 			var speak_path = endpoint_local.path("tts_speak")
 			var req := {}
 			req.voice_ids = []
+			req.audio_format = "mp3"
 			req.voice_ids.assign([voice_id])
 			req.text = preview_text
 			req.play_in_app = false
@@ -77,7 +89,7 @@ func _open_voice_selector_window():
 			var req_string := JSON.stringify(req)
 			Player2WebHelper.request(speak_path, HTTPClient.Method.METHOD_POST, req_string, ['Content-Type: application/json'], func(body, code, headers):
 				# Speak
-				Player2TTS.speak_raw_data(selector_ui, JSON.parse_string(body)["data"], null)
+				Player2TTS.speak_raw_data(selector_ui, JSON.parse_string(body)["data"], null, false)
 				)
 			)
 

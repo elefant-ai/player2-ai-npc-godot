@@ -3,14 +3,16 @@ extends Node
 
 var should_print_response = func(path : String, body : String): return true
 
-func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", headers : Array[String] = [], on_completed : Callable = Callable(), on_fail : Callable = Callable(), timeout = -1) -> void:
-	var string_body : String
+func _body_to_string(body : Variant) -> String:
 	if body is String:
-		string_body = body
+		return body
 	elif body is Dictionary:
-		string_body = JSON.stringify(body)
-	else:
-		string_body = JsonClassConverter.class_to_json_string(body)
+		return JSON.stringify(body)
+	return JsonClassConverter.class_to_json_string(body)
+
+
+func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", headers : Array[String] = [], on_completed : Callable = Callable(), on_fail : Callable = Callable(), timeout = -1) -> void:
+	var string_body := _body_to_string(body)
 
 	print("HTTP REQUEST:")
 	print(headers)
@@ -73,3 +75,66 @@ func request(path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD
 		if on_fail != null:
 			on_fail.call("Error sending HTTP request with the following Godot HTTP Error Code: ", err)
 		return
+
+func request_stream(host : String, port : int, path : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", headers : Array[String] = [], on_data : Callable = Callable(), on_completed : Callable = Callable(), on_fail : Callable = Callable(), timeout = -1):
+	var string_body := _body_to_string(body)
+
+	var http_client = HTTPClient.new()
+
+	var connect_err := http_client.connect_to_host(host, port )
+	if connect_err != OK:
+		if on_fail:
+			on_fail.call("Failed to connect to host (" + host + ":" + str(port) + "): " + str(connect_err), connect_err)
+		return
+	# Wait until resolved and connected.
+	while http_client.get_status() == HTTPClient.STATUS_CONNECTING or http_client.get_status() == HTTPClient.STATUS_RESOLVING:
+		http_client.poll()
+		print("Connecting...")
+		await get_tree().process_frame
+	# Request the public data of my own profile
+	var req_err := http_client.request(method, path, headers, string_body)
+	if req_err != OK:
+		if on_fail:
+			on_fail.call("Failed to connect to path (" + path + " for " + host + ":" + str(port) + "): " + str(req_err), req_err)
+		return
+
+	while http_client.get_status() == HTTPClient.STATUS_REQUESTING:
+		# Keep polling for as long as the request is being processed.
+		http_client.poll()
+		print("Requesting...")
+		await get_tree().process_frame
+
+	print("STREAMING ", connect_err, ", ", req_err, ": ", http_client.get_status())
+
+	if http_client.has_response():
+		while http_client.get_status() == HTTPClient.STATUS_BODY:
+			# While there is body left to be read
+			http_client.poll()
+
+			var rb = PackedByteArray()
+
+			# Get a chunk.
+			var chunk = http_client.read_response_body_chunk()
+			while chunk.size() != 0:
+				print("    Chunk: ", chunk.size())
+				rb = rb + chunk
+				chunk = http_client.read_response_body_chunk()
+
+			if rb.size() != 0:
+				var code := http_client.get_response_code()
+				var headers_reply := http_client.get_response_headers_as_dictionary()
+				print("GOT: ", code, rb.size())
+				if on_data:
+					var keep_running : bool = on_data.call(rb, code, headers_reply)
+					if not keep_running:
+						print("(stream ABORTED)")
+						break # on_data false = stop stream
+
+			await get_tree().process_frame
+		print(http_client.get_status())
+
+	print("STREAM DONE")
+
+	#http_client.free()
+	if on_completed and on_completed.is_valid():
+		on_completed.call()
