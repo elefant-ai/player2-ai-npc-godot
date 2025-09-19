@@ -815,6 +815,11 @@ func _process_chat_api() -> void:
 							# History
 							tool_call_history_messages.append("Called " + tool_name + " with arguments [" + ",".join(args_actual) + "]")
 
+				# Never have the MESSAGE_ARG thing appear on the message reply. That is invalid!
+				var bad_start_possible = "{\"" + TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME + "\": \""
+				if message_reply.begins_with(bad_start_possible):
+					message_reply = message_reply.substr(bad_start_possible.length())
+
 				var agent_message := ConversationMessage.new()
 				agent_message.role = "assistant"
 				agent_message.message = message_reply
