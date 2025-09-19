@@ -36,7 +36,10 @@ func _open_voice_selector_window():
 
 	var fail := func(content, code):
 		var d := ConfirmationDialog.new()
-		EditorInterface.popup_dialog_centered(d, Vector2i(480, 120))
+		# Silly godot build issue
+		# EditorInterface.popup_dialog_centered(d, Vector2i(480, 120))
+		var editor_interface = Engine.get_singleton("EditorInterface")
+		editor_interface.popup_dialog_centered(d, Vector2i(480, 120))
 		d.close_requested.connect(func():
 			d.queue_free()
 			)
@@ -66,9 +69,16 @@ func _open_voice_selector_window():
 		var selector_ui = ui_scene.instantiate() as Player2VoiceIdSelectorUI
 
 		var w := Window.new()
-		w.always_on_top = true
+		# w.always_on_top = true
+		# this is better
+		w.transient = true
+		w.exclusive = true
 		w.add_child(selector_ui)
-		EditorInterface.popup_dialog_centered(w, Vector2i(640, 480))
+
+		# Silly godot build issue
+		# EditorInterface.popup_dialog_centered(w, Vector2i(640, 480))
+		var editor_interface = Engine.get_singleton("EditorInterface")
+		editor_interface.popup_dialog_centered(w, Vector2i(640, 480))
 		w.close_requested.connect(func():
 			w.queue_free()
 			)
