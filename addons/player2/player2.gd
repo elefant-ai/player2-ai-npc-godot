@@ -20,7 +20,6 @@ const API_SOURCE_HELPER_AUTOLOAD_PATH = "res://addons/player2/helpers/Player2API
 const API_HELPER_AUTOLOAD_NAME = "Player2API"
 const API_HELPER_AUTOLOAD_PATH = "res://addons/player2/helpers/api.gd"
 
-
 func _enter_tree() -> void:
 	# Settings
 	# Client ID
