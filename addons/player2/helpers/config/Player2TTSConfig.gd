@@ -30,11 +30,14 @@ var use_wav : bool:
 @export_tool_button("Select Voice ID") var open_voice_selector_window = _open_voice_selector_window
 
 func _open_voice_selector_window():
+	assert(Engine.is_editor_hint())
+
 	var endpoint_local := Player2LocalEndpointConfig.new()
 	var endpoing_website := Player2WebpageEndpointConfig.new()
 	var path = endpoint_local.path("tts_voices")
 
 	var fail := func(content, code):
+		assert(Engine.is_editor_hint())
 		var d := ConfirmationDialog.new()
 		# Silly godot build issue
 		# EditorInterface.popup_dialog_centered(d, Vector2i(480, 120))
