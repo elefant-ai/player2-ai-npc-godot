@@ -6,10 +6,11 @@
 
 [sub_resource type="Resource" id="Resource_tv5bm"]
 script = ExtResource("3_ye3im")
+stream = true
 tts_speed = 1.0
 tts_default_language = 0
 tts_default_gender = 0
-voice_id = "01955d76-ed5b-7480-951c-af1dd9873e34"
+voice_id = "01955d76-ed5b-7416-82d8-5fc486e2f676"
 
 [node name="TtsTest" type="Control"]
 layout_mode = 3
