@@ -260,7 +260,7 @@ func _poll_socket(socket : WebSocketPeer) -> void:
 		return
 	socket.poll()
 
-func _stereo_float_frames_to_byte_array(frames_stereo : PackedVector2Array, spb : StreamPeerBuffer) -> void:
+static func _stereo_float_frames_to_byte_array(frames_stereo : PackedVector2Array, spb : StreamPeerBuffer) -> void:
 	# 16 bit signed int
 	#var spb := StreamPeerBuffer.new()
 	spb.big_endian = false  # WAV/PCM typical little-endian
