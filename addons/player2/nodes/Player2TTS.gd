@@ -23,10 +23,12 @@ signal tts_ended
 var _tts_playing
 var _tts_waiting_for_data
 
-var _tts_cancel_flag
-
+# Streaming
+var _stream_index : int = 0
 var _queue_start_frames : int = 0
 var _queued_data : PackedByteArray = []
+var _skip_last_skips : int = 0
+var _skip_frames_counter : int = 0
 
 var _test_data : PackedByteArray = []
 
@@ -114,8 +116,15 @@ func _stereo_float_frames_to_byte_array(arr: PackedVector2Array) -> PackedByteAr
 
 func _update_audio_frames() -> void:
 
+	# This is only for streaming
+	if not config.stream:
+		return
+
+	if not _tts_playing:
+		return
+
 	var player = _get_audio_stream_player(self, tts_audio_player)
-	
+
 	if not player or not player.playing:
 		return
 
@@ -128,6 +137,18 @@ func _update_audio_frames() -> void:
 	# one frame reads 2 bytes s16
 	var data_frames_available := int(floor(_queued_data.size() * 0.5)) - _queue_start_frames
 	var pushing_frames := int(min(can_push_frames, data_frames_available))
+
+	# SKIP end check
+	# After we stop getting data and get some skips, we're done.
+	var skips = playback.get_skips()
+	if skips != _skip_last_skips:
+		var skips_since_last = skips - _skip_last_skips
+		_skip_last_skips = skips
+		# If we're not waiting for data, count how much we skipped.
+		if not _tts_waiting_for_data:
+			_skip_frames_counter += skips_since_last
+			if _skip_frames_counter > 100: # magic number
+				_on_tts_finished()
 
 	# If we can't push nothing, do nothings
 	if pushing_frames == 0:
@@ -157,8 +178,6 @@ func _process(delta: float) -> void:
 func speak(message : String, voice_ids : Array[String] = []) -> void:
 	# Cancel previous TTS
 	stop()
-	# don't actually stop it tho
-	_tts_cancel_flag = false
 
 	if message.is_empty():
 		printerr("Empty message to TTS provided. Not speaking.")
@@ -180,44 +199,56 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 		_tts_waiting_for_data = true
 		_tts_playing = false
 
+		# Stream index
+		var our_stream_index := _stream_index
+
 		_queue_start_frames = 0
 
-		#print("ASDF 0")
+		_skip_frames_counter = 0
+
 		_queued_data.clear()
 
 		# TEST only
 		_test_data.clear()
 
-		Player2API.tts_speak_stream(req, func(data):
-			var raw_data = data["data"] if data is Dictionary else data
+		Player2API.tts_speak_stream(req,
+			func(data):
+				if _stream_index != our_stream_index:
+					# stop, no longer at our valid index.
+					return false
 
-			# Initialize audio
-			if not _tts_playing:
-				_tts_playing = true
-				tts_audio_player = _get_audio_stream_player(self, tts_audio_player)
-				var generator_stream = AudioStreamGenerator.new()
-				generator_stream.buffer_length = 4 # seconds
-				generator_stream.mix_rate = 48000 / 2
-				tts_audio_player.stream = generator_stream
-				tts_audio_player.play()
+				var raw_data = data["data"] if data is Dictionary else data
 
-				# JANK to prevent popin for wav
-				if config.use_wav:
-					var target_volume = tts_audio_player.volume_db
-					tts_audio_player.volume_db = -36
-					Player2AsyncHelper.call_timeout(func():
-						tts_audio_player.volume_db = target_volume, 0.04
-					)
+				_skip_frames_counter = 0
 
-			# Append data
-			_queued_data.append_array(data)
+				# Initialize audio
+				if not _tts_playing:
+					_tts_playing = true
+					tts_began.emit()
+					tts_audio_player = _get_audio_stream_player(self, tts_audio_player)
+					var generator_stream = AudioStreamGenerator.new()
+					generator_stream.buffer_length = 4 # seconds
+					generator_stream.mix_rate = 48000 / 2
+					tts_audio_player.stream = generator_stream
+					tts_audio_player.play()
 
-			# TODO: Check if cancelled
-			return not _tts_cancel_flag
-			,
+					# JANK to prevent popin for wav
+					if config.use_wav:
+						var target_volume = tts_audio_player.volume_db
+						tts_audio_player.volume_db = -36
+						Player2AsyncHelper.call_timeout(func():
+							tts_audio_player.volume_db = target_volume, 0.04
+						)
+
+				# Append data
+				_queued_data.append_array(data)
+
+				# We keep going
+				return true,
 			func():
-				# Allow audio player to finish
-				_tts_waiting_for_data = false
+				if _stream_index == our_stream_index:
+					# Allow audio player to finish
+					_tts_waiting_for_data = false
 		)
 	else:
 		# no stream, do it all at once.
@@ -230,11 +261,12 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 
 ## Stops TTS
 func stop() -> void:
+	# old closures with invalid stream index will stop
+	_stream_index += 1
 	if not Player2API.using_web():
 		Player2API.tts_stop()
 	if tts_audio_player:
 		tts_audio_player.stop()
-	_tts_cancel_flag = true
 	_on_tts_finished()
 
 func _property_can_revert(property: StringName) -> bool:

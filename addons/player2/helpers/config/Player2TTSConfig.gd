@@ -5,11 +5,9 @@ extends Resource
 enum Gender {MALE, FEMALE, OTHER}
 enum Language { en_US, en_GB, ja_JP, zh_CN, es_ES, fr_FR, hi_IN, it_IT, pt_BR }
 
-var stream = false
-
-## TODO: TTS Streaming is broken, add back in once streaming is confirmed to work
-## If true, will stream. Otherwise will grab the entire audio at once.
-# @export var stream : bool = true
+## If true, will stream audio as we receive it.
+## Otherwise will grab the entire audio at once.
+@export var stream : bool = true
 
 # This depends on whether we're streaming or not
 var use_wav : bool:
