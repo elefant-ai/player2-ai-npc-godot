@@ -23,6 +23,12 @@ signal tts_ended
 var _tts_playing
 var _tts_waiting_for_data
 
+var _tts_cancel_flag
+
+var _queue_start_frames : int = 0
+var _queued_data : PackedByteArray = []
+
+var _test_data : PackedByteArray = []
 
 func _on_tts_finished() -> void:
 	if _tts_playing and not _tts_waiting_for_data:
@@ -63,6 +69,7 @@ static func speak_raw_data(parent : Node, audio_data : Variant, tts_audio_player
 		stream = AudioStreamWAV.new()
 		stream.format = AudioStreamWAV.FORMAT_16_BITS
 		stream.mix_rate = 48000 / 2 # WTF 48000 is incorrect??
+		stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
 	else:
 		stream = AudioStreamMP3.new()
 
@@ -84,16 +91,74 @@ static func speak_raw_data(parent : Node, audio_data : Variant, tts_audio_player
 
 func _byte_array_to_stereo_float_frames(spb : PackedByteArray) -> PackedVector2Array:
 	var result : PackedVector2Array = []
+	if spb.size() % 2 != 0:
+		printerr("Packed byte array data is not divisible by 2, implying it's not 16 bit: ", spb.size())
 	for i in range(spb.size() / 2):
 		var v_s16 = spb.decode_s16(i * 2)
-		var v_float = float(v_s16) / 32767.0
+		var p = inverse_lerp(-32768, 32767, v_s16)
+		var v_float = lerp(-1.0, 1.0, p)
 		result.push_back(Vector2(v_float, v_float))
 	return result
+func _stereo_float_frames_to_byte_array(arr: PackedVector2Array) -> PackedByteArray:
+	var pb := StreamPeerBuffer.new()
+	pb.big_endian = false
 
+	var result : PackedByteArray = []
+	for i in range(arr.size()):
+		var v2 := arr.get(i)
+		var f_avg = (v2.x + v2.y) * 0.5
+		var s16 : int = int(round(clamp(f_avg, -1, 1) * 32767))
+		pb.put_16(s16)
+	return pb.data_array
+
+
+func _update_audio_frames() -> void:
+
+	var player = _get_audio_stream_player(self, tts_audio_player)
+	
+	if not player or not player.playing:
+		return
+
+	var playback : AudioStreamGeneratorPlayback = player.get_stream_playback()
+
+	if not playback:
+		return
+
+	var can_push_frames := playback.get_frames_available()
+	# one frame reads 2 bytes s16
+	var data_frames_available := int(floor(_queued_data.size() * 0.5)) - _queue_start_frames
+	var pushing_frames := int(min(can_push_frames, data_frames_available))
+
+	# If we can't push nothing, do nothings
+	if pushing_frames == 0:
+		return
+
+	var queue_start_bytes := _queue_start_frames * 2
+	var pushing_bytes := pushing_frames * 2
+
+	#print("ASDF PUSH [", queue_start_bytes, ", ", queue_start_bytes + pushing_bytes, "). Total queue size: ", _queued_data.size(), ", available bytes to push: ", (can_push_frames * 2))
+	var data_to_process = _queued_data.slice(queue_start_bytes, queue_start_bytes + pushing_bytes)
+
+	_test_data.append_array(data_to_process)
+	#print("PUSHING ", pushing_bytes, " = ", data_to_process.size(), " sliced from ", queued_data.size(), ": ", can_push_frames, " vs ", data_frames_available)
+
+	var vector2_buffer := _byte_array_to_stereo_float_frames(data_to_process)
+	playback.push_buffer(vector2_buffer)
+
+	_queue_start_frames += pushing_frames
+
+	#if 2 * _queue_start_frames >= _queued_data.size():
+		# We ran out
+
+
+func _process(delta: float) -> void:
+	_update_audio_frames()
 
 func speak(message : String, voice_ids : Array[String] = []) -> void:
 	# Cancel previous TTS
 	stop()
+	# don't actually stop it tho
+	_tts_cancel_flag = false
 
 	if message.is_empty():
 		printerr("Empty message to TTS provided. Not speaking.")
@@ -114,40 +179,14 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 		# Stream.
 		_tts_waiting_for_data = true
 		_tts_playing = false
-		#var test_data : PackedVector2Array = []
 
-		var queued_data : PackedVector2Array = []
-		var queue_start : int = 0
-		#var push_or_queue_data = func(playback : AudioStreamGeneratorPlayback, data : PackedVector2Array):
-			#queued_data.append_array(data)
-			#var can_push := playback.get_frames_available()
-			#if can_push == 0:
-				#return
-			#if can_push < queued_data.size():
-				#playback.push_buffer(queued_data.slice(0, can_push).duplicate())
-				#queued_data = queued_data.slice(can_push)
-			#else:
-				#playback.push_buffer(queued_data.duplicate())
-				#queued_data.clear()
-		var push_or_queue_data = func(playback : AudioStreamGeneratorPlayback, data : PackedVector2Array):
-			queued_data.append_array(data)
-			var can_push := playback.get_frames_available()
-			if can_push == 0:
-				return
-			var data_left = queued_data.size() - queue_start
-			if data_left == 0:
-				return
-			if can_push < data_left:
-				playback.push_buffer(queued_data.slice(queue_start, queue_start + can_push).duplicate())
-				queue_start += can_push
-				#queued_data = queued_data.slice(can_push)
-			else:
-				playback.push_buffer(queued_data.slice(queue_start).duplicate())
-				queue_start = queued_data.size()
+		_queue_start_frames = 0
 
-		# Clear out the buffer while we can
-		var update_frame = func():
-			push_or_queue_data.call(tts_audio_player.get_stream_playback(), [])
+		#print("ASDF 0")
+		_queued_data.clear()
+
+		# TEST only
+		_test_data.clear()
 
 		Player2API.tts_speak_stream(req, func(data):
 			var raw_data = data["data"] if data is Dictionary else data
@@ -157,7 +196,7 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 				_tts_playing = true
 				tts_audio_player = _get_audio_stream_player(self, tts_audio_player)
 				var generator_stream = AudioStreamGenerator.new()
-				generator_stream.buffer_length = 300 # seconds
+				generator_stream.buffer_length = 4 # seconds
 				generator_stream.mix_rate = 48000 / 2
 				tts_audio_player.stream = generator_stream
 				tts_audio_player.play()
@@ -170,38 +209,13 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 						tts_audio_player.volume_db = target_volume, 0.04
 					)
 
-				get_tree().process_frame.connect(update_frame)
-
-
 			# Append data
-			var playback : AudioStreamGeneratorPlayback = tts_audio_player.get_stream_playback()
-			var stereo_data : PackedVector2Array = _byte_array_to_stereo_float_frames(raw_data)
-
-			queued_data.append_array(stereo_data)
-			# TODO: Add this back in, the above tests the per-frame pushing 
-			#push_or_queue_data.call(playback, stereo_data)
+			_queued_data.append_array(data)
 
 			# TODO: Check if cancelled
-			return true
+			return not _tts_cancel_flag
 			,
 			func():
-
-				if _tts_playing:
-					get_tree().process_frame.disconnect(update_frame)
-
-				#_tts_playing = true
-				#tts_audio_player = _get_audio_stream_player(self, tts_audio_player)
-				#var generator_stream = AudioStreamGenerator.new()
-				#generator_stream.mix_rate = 48000 / 2
-				#tts_audio_player.stream = generator_stream
-				#tts_audio_player.play()
-				#var playback : AudioStreamGeneratorPlayback = tts_audio_player.get_stream_playback()
-				#print("guh???", playback.get_frames_available())
-				#playback.push_buffer(test_data)
-				#print("guh???", playback.get_frames_available())
-				#_tts_waiting_for_data = false
-				#return
-
 				# Allow audio player to finish
 				_tts_waiting_for_data = false
 		)
@@ -220,6 +234,7 @@ func stop() -> void:
 		Player2API.tts_stop()
 	if tts_audio_player:
 		tts_audio_player.stop()
+	_tts_cancel_flag = true
 	_on_tts_finished()
 
 func _property_can_revert(property: StringName) -> bool:
