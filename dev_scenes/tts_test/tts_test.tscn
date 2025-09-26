@@ -7,6 +7,7 @@
 [sub_resource type="Resource" id="Resource_tv5bm"]
 script = ExtResource("3_ye3im")
 stream = true
+use_wav = false
 tts_speed = 1.0
 tts_default_language = 0
 tts_default_gender = 0
@@ -49,10 +50,19 @@ custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CheckButton" type="CheckButton" parent="VBoxContainer/HBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Stream Checkbox" type="CheckButton" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 button_pressed = true
 text = "Stream?"
+alignment = 2
+
+[node name="Mp3 Checkbox" type="CheckButton" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+button_pressed = true
+text = "Mp3"
 alignment = 2
 
 [node name="TalkingIndicator" type="ColorRect" parent="."]

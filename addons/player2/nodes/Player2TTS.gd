@@ -3,6 +3,10 @@
 class_name Player2TTS
 extends Node
 
+# TODO: Audio streaming implementation is a mess.
+# If ever I need to do a redesign, I would probably create a separate node to
+# accept audio mp3/wav data as a stream and to play it.
+
 @export var config : Player2TTSConfig = Player2TTSConfig.new()
 
 ## Text to speech audio. If not present, an audio player will be created.
@@ -29,6 +33,8 @@ var _queue_start_frames : int = 0
 var _queued_data : PackedByteArray = []
 var _skip_last_skips : int = 0
 var _skip_frames_counter : int = 0
+var _empty_mp3_frames : int = 0
+var _first_mp3_received : bool
 
 var _test_data : PackedByteArray = []
 
@@ -61,10 +67,12 @@ static func _get_audio_stream_player(parent : Node, tts_audio_player : Node):
 		parent.add_child(tts_audio_player)
 	return tts_audio_player
 
-static func speak_raw_data(parent : Node, audio_data : Variant, tts_audio_player : Node, use_wav : bool = false) -> Node:
+static func speak_raw_data(parent : Node, audio_data : Variant, tts_audio_player : Node, use_wav : bool = false, playback_pos : float = -1) -> Node:
 	audio_data = _filter_raw_data(audio_data)
 	tts_audio_player = _get_audio_stream_player(parent, tts_audio_player)
 	# Decode raw bytes to audio stream
+
+	var decoded_bytes = audio_data
 
 	var stream
 	if use_wav:
@@ -72,14 +80,16 @@ static func speak_raw_data(parent : Node, audio_data : Variant, tts_audio_player
 		stream.format = AudioStreamWAV.FORMAT_16_BITS
 		stream.mix_rate = 48000 / 2 # WTF 48000 is incorrect??
 		stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
+		stream.set_data(decoded_bytes)
 	else:
-		stream = AudioStreamMP3.new()
+		stream = AudioStreamMP3.load_from_buffer(decoded_bytes)
 
-	var decoded_bytes = audio_data
-	stream.set_data(decoded_bytes)
 	# Play this stream
 	tts_audio_player.stream = stream
-	tts_audio_player.play()
+	if playback_pos <= 0:
+		tts_audio_player.play()
+	else:
+		tts_audio_player.play(playback_pos)
 
 	# JANK to prevent popin for wav
 	if use_wav:
@@ -113,14 +123,67 @@ func _stereo_float_frames_to_byte_array(arr: PackedVector2Array) -> PackedByteAr
 		pb.put_16(s16)
 	return pb.data_array
 
+func _update_audio_frames_stream_mp3_pull(player : Variant) -> void:
+	if _queued_data.size() == 0:
+		print("mp3 EMPTY")
+		# _empty_mp3_frames += 1
+		if _empty_mp3_frames > 20:
+			_on_tts_finished()
+		return
+	_empty_mp3_frames = 0
 
-func _update_audio_frames() -> void:
+	# CONTINUING does not work, mp3 can't accurately seek resulting in obvious skips.
+
+	#var should_continue = player.playing and player.get_stream_playback() != null
+	#if should_continue:
+		#var prev_position = player.get_playback_position()
+		#speak_raw_data(self, _queued_data, player, false, prev_position)
+		#print("mp3 CONTINUE: at ", prev_position, " -> ", player.get_playback_position(), ": ", _queued_data.size())
+		#_last_mp3_pull_playback_position = prev_position
+	#else:
+	# new
+
+	# print("mp3 NEW: ", _queued_data.size())
+	speak_raw_data(self, _queued_data, player, false)
+	_queued_data.clear()
+	_first_mp3_received = true
+
+func _update_audio_frames_stream_mp3() -> void:
+	# This is only for streaming
+	if not config.stream:
+		return
+
+	if not _tts_playing:
+		return
+
+	# We only do this for mp3.
+	if config.use_wav:
+		return
+
+	var player = _get_audio_stream_player(self, tts_audio_player)
+
+	# var done : bool = not player.playing or not player.get_stream_playback()
+	# if not done:
+	# 	var playback : AudioStreamMP3 = player.stream as AudioStreamMP3
+	# 	if playback:
+	# 		print("mp3 PLAY: ", player.get_playback_position(), " / ",  playback.get_length())
+
+	if not player.playing or player.get_stream_playback() == null:
+		# Start after 16KB buffer has data
+		if _first_mp3_received or _queued_data.size() > 16384:
+			_update_audio_frames_stream_mp3_pull(player)
+
+func _update_audio_frames_stream_wav() -> void:
 
 	# This is only for streaming
 	if not config.stream:
 		return
 
 	if not _tts_playing:
+		return
+
+	# We only do this for wav. Mp3 does its own thing.
+	if not config.use_wav:
 		return
 
 	var player = _get_audio_stream_player(self, tts_audio_player)
@@ -173,7 +236,8 @@ func _update_audio_frames() -> void:
 
 
 func _process(delta: float) -> void:
-	_update_audio_frames()
+	_update_audio_frames_stream_wav()
+	_update_audio_frames_stream_mp3()
 
 func speak(message : String, voice_ids : Array[String] = []) -> void:
 	# Cancel previous TTS
@@ -203,9 +267,11 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 		var our_stream_index := _stream_index
 
 		_queue_start_frames = 0
+		_first_mp3_received = false
 
 		_skip_frames_counter = 0
 
+		print("STREAM START")
 		_queued_data.clear()
 
 		# TEST only
@@ -226,11 +292,15 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 					_tts_playing = true
 					tts_began.emit()
 					tts_audio_player = _get_audio_stream_player(self, tts_audio_player)
-					var generator_stream = AudioStreamGenerator.new()
-					generator_stream.buffer_length = 4 # seconds
-					generator_stream.mix_rate = 48000 / 2
-					tts_audio_player.stream = generator_stream
-					tts_audio_player.play()
+					
+					# if wav, we initialize a generator
+					# otherwise we just keep popping audio streams...
+					if config.use_wav:
+						var generator_stream = AudioStreamGenerator.new()
+						generator_stream.buffer_length = 4 # seconds
+						generator_stream.mix_rate = 48000 / 2
+						tts_audio_player.stream = generator_stream
+						tts_audio_player.play()
 
 					# JANK to prevent popin for wav
 					if config.use_wav:
@@ -241,6 +311,7 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 						)
 
 				# Append data
+				# print("STREAM GOT ", data.size())
 				_queued_data.append_array(data)
 
 				# We keep going
