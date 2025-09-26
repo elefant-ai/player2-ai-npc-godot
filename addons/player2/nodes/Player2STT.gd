@@ -235,10 +235,12 @@ func _stop_stt_web() -> void:
 
 func _ready() -> void:
 	_audio_stream_leftover_timer = Timer.new()
+	_audio_stream_leftover_timer.process_mode = Node.PROCESS_MODE_ALWAYS
 	_audio_stream_leftover_timer.one_shot = true
 	add_child(_audio_stream_leftover_timer)
 	_audio_stream_leftover_timer.timeout.connect(func(): _audio_stream_leftover_timer_triggered = true)
 	_audio_stream_release_timer = Timer.new()
+	_audio_stream_release_timer.process_mode = Node.PROCESS_MODE_ALWAYS
 	_audio_stream_release_timer.one_shot = true
 	add_child(_audio_stream_release_timer)
 	_audio_stream_release_timer.timeout.connect(func():

@@ -1005,6 +1005,7 @@ func _ready() -> void:
 		return
 	_queue_process_timer = Timer.new()
 	self.add_child(_queue_process_timer)
+	_queue_process_timer.process_mode = Node.PROCESS_MODE_ALWAYS
 	_queue_process_timer.wait_time = chat_config.queue_check_interval_seconds
 	_queue_process_timer.one_shot = false
 	_queue_process_timer.timeout.connect(_process_chat_api)
