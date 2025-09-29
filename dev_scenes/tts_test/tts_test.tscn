@@ -6,10 +6,12 @@
 
 [sub_resource type="Resource" id="Resource_tv5bm"]
 script = ExtResource("3_ye3im")
+stream = true
+use_wav = false
 tts_speed = 1.0
 tts_default_language = 0
 tts_default_gender = 0
-voice_id = "01955d76-ed5b-7480-951c-af1dd9873e34"
+voice_id = "01955d76-ed5b-7416-82d8-5fc486e2f676"
 
 [node name="TtsTest" type="Control"]
 layout_mode = 3
@@ -20,37 +22,62 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_pss7e")
 
-[node name="TextEdit" type="TextEdit" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -208.0
+offset_bottom = -55.0
 grow_horizontal = 2
-grow_vertical = 0
+grow_vertical = 2
 
-[node name="Button" type="Button" parent="."]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_right = -5.0
-offset_bottom = 390.0
-grow_horizontal = 2
+[node name="Button" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
 text = "Speak"
+
+[node name="TextEdit" type="TextEdit" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "A train (from Old French trahiner, from Latin trahere, \"to pull, to draw\") is a series of connected vehicles that run along a railway track and transport people or freight. Trains are typically pulled or pushed by locomotives (often known simply as \"engines\"), though some are self-propelled, such as multiple units or railcars. Passengers and cargo are carried in railroad cars, also known as wagons or carriages. Trains are designed to a certain gauge, or distance between rails. Most trains operate on steel tracks with steel wheels, the low friction of which makes them more efficient than other forms of transport. Many countries use rail transport."
+wrap_mode = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Voice ID" type="TextEdit" parent="VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Stream Checkbox" type="CheckButton" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+button_pressed = true
+text = "Stream?"
+alignment = 2
+
+[node name="Mp3 Checkbox" type="CheckButton" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+button_pressed = true
+text = "Mp3"
+alignment = 2
+
+[node name="TalkingIndicator" type="ColorRect" parent="."]
+visible = false
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+offset_top = 616.0
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0.318666, 0.547634, 0.418672, 1)
 
 [node name="Player2TTS" type="Node" parent="."]
 script = ExtResource("2_qmhqp")
 config = SubResource("Resource_tv5bm")
 metadata/_custom_type_script = "uid://dy7oafpimf5sn"
-
-[node name="TalkingIndicator" type="ColorRect" parent="."]
-visible = false
-layout_mode = 0
-offset_left = 467.0
-offset_top = 387.0
-offset_right = 507.0
-offset_bottom = 427.0
 
 [connection signal="tts_began" from="Player2TTS" to="TalkingIndicator" method="show"]
 [connection signal="tts_ended" from="Player2TTS" to="TalkingIndicator" method="hide"]

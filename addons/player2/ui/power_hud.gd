@@ -24,8 +24,25 @@ class ColorThreshold extends Resource:
 		self.upper_threshold = upper_threshold
 		self.color = color
 
+var _power_read_wait_timer : Timer
+var _power_read_queued : bool
+var _power_read_paused : bool
+
 func _ready() -> void:
 	_instance = self
+
+	_power_read_wait_timer = Timer.new()
+	_power_read_wait_timer.process_mode = Node.PROCESS_MODE_ALWAYS
+	_power_read_wait_timer.one_shot = true
+	_power_read_wait_timer.autostart = false
+	_power_read_wait_timer.timeout.connect(func():
+		_power_read_paused = false
+	)
+	add_child(_power_read_wait_timer)
+	_power_read_queued = false
+	_power_read_paused = false
+
+	
 	var api : Player2APIConfig = Player2APIConfig.grab()
 	if button:
 		button.pressed.connect(func():
@@ -45,15 +62,23 @@ func _ready() -> void:
 	_check_power_endpoint(func():
 		Player2AsyncHelper.call_timeout(_check_power_endpoint, power_poll_interval)
 	)
-	
+
 	Player2API.request_success.connect(func(path : String):
 			if path == "joules":
 				return
 			if request_ignore_power_blacklist.find(path) != -1:
 				return
-			print("(success: refresh power)")
-			_check_power_endpoint()
+			_power_read_queued = true
 	)
+
+func _process(delta: float) -> void:
+	if _power_read_paused:
+		return
+	if _power_read_queued:
+		_check_power_endpoint()
+		_power_read_queued = false
+		_power_read_paused = true
+		_power_read_wait_timer.start(5)
 
 func _get_power_color(power : int) -> Color:
 	for i in range(colors.size()):

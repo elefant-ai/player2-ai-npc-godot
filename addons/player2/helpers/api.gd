@@ -49,8 +49,9 @@ func establish_connection(on_complete : Callable = Callable()) -> void:
 		return
 	var complete = func():
 		for c in _establishing_connection_queue:
-			c.call()
-		if on_complete:
+			if c.is_valid():
+				c.call()
+		if on_complete and on_complete.is_valid():
 			on_complete.call()
 		_establishing_connection_queue = []
 
@@ -58,17 +59,20 @@ func establish_connection(on_complete : Callable = Callable()) -> void:
 	# TODO: This can fail!
 	if established_api_connection():
 		_establishing_connection = false
-		complete.call()
+		if complete.is_valid():
+			complete.call()
 		return
 	# TODO: wrap the logic below in _req here to avoid an extra request
 	get_health(
 		func(data):
 			_establishing_connection = false
-			complete.call()
+			if complete.is_valid():
+				complete.call()
 			return,
 		func(msg, code):
 			_establishing_connection = false
-			complete.call()
+			if complete.is_valid():
+				complete.call()
 			return,
 	)
 
@@ -120,11 +124,11 @@ func _wipe_cached_key() -> void:
 	var filename = "user://auth_cache"
 	DirAccess.remove_absolute(filename)
 
-func _get_headers(web : bool) -> Array[String]:
+func _get_headers(web : bool, accept_type : String = "application/json") -> Array[String]:
 	var config := Player2APIConfig.grab()
 	var result : Array[String] = [
 		"Content-Type: application/json; charset=utf-8",
-		"Accept: application/json; charset=utf-8"
+		"Accept: " + accept_type + "; charset=utf-8"
 	]
 
 	if web and !_web_p2_key.is_empty() and not _internal_site:
@@ -138,7 +142,158 @@ func _code_success(code : int) -> bool:
 # Run source test and call after a source has been established
 # If a web is required, establish a connection somehow (get player to open up the auth page)
 func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", on_completed : Callable = Callable(), on_fail : Callable = Callable()):
+	print("pre:", path_property)
 
+	var api := Player2APIConfig.grab()
+	var use_web = using_web()
+	var endpoint = api.endpoint_web if use_web else api.endpoint_local
+	var path = endpoint.path(path_property)
+
+	print("hitting path ", path)
+	
+	var on_auth_ready = func(run_again):
+		Player2WebHelper.request(
+			path,
+			method,
+			body,
+			_get_headers(use_web),
+			# RECEIVE
+			func(body, code, headers):
+				# Check if successful HTTP
+				if !_code_success(code):
+					# not success
+					# Unauthorized
+					if use_web and code == 401:
+						if _internal_site:
+							Player2ErrorHelper.send_error("Got Unauthorized response. Try refreshing the page!")
+							return
+						print("Unauthorized response. Resetting key and trying to re-auth.")
+						Player2ErrorHelper.send_error("Got Unauthorized while doing web requests, redoing auth.")
+						_web_p2_key = ""
+						run_again.call()
+						return
+
+					_alert_error_fail(code, false, body)
+					if on_fail and on_fail.is_valid():
+						on_fail.call(body, code)
+					return
+				if on_completed and on_completed.is_valid():
+					# Try json, otherwise just return it...
+					var result = JSON.parse_string(body)
+					on_completed.call(result if result else body)
+				request_success.emit(path_property)
+				,
+			# FAIL
+			func(body, code):
+				# Failure, notify if local/web is present
+				if code != HTTPRequest.RESULT_SUCCESS:
+					if use_web:
+						_last_web_present = false
+					else:
+						_last_local_present = false
+					# both were tested, both failed.
+					if !_last_local_present and !_last_web_present:
+						_source_tested = false
+						# Try finding the source again!
+						print("Source got unset. Trying to find again...")
+						# TODO: Magic number
+						Player2AsyncHelper.call_timeout(run_again, 3)
+				else:
+					_last_web_present = true
+				_alert_error_fail(code, true)
+				if on_fail and on_fail.is_valid():
+					on_fail.call("", code)
+		)
+
+	# Run the auth
+	_prereq_auth(on_auth_ready, on_fail)
+
+func _req_stream(path_property : String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body : Variant = "", on_data : Callable = Callable(), on_completed : Callable = Callable(), on_fail : Callable = Callable()):
+	print("pre:", path_property)
+
+	var api := Player2APIConfig.grab()
+	var use_web = using_web()
+	var endpoint = api.endpoint_web if use_web else api.endpoint_local
+
+	# We need the host/port/path separately.
+	# SUPER JANK: If the root does not match, it does not work.
+	# Oh well.
+	var root_full : String = endpoint.get("root")
+	var last_colon := root_full.rfind(":")
+	var host = root_full
+	var port : int = -1
+	if last_colon != -1:
+		host = root_full.substr(0, last_colon)
+		if host != "https" and host != "http":
+			port = int(root_full.substr(last_colon + 1))
+		else:
+			host = root_full
+	var path = endpoint.path_raw(path_property)
+
+	print("hitting http stream: ", host, ":", port, "", path)
+
+	# BIG CODE DUPLICATION HERE oh well
+	var on_auth_ready = func(run_again):
+		Player2WebHelper.request_stream(
+			host, port, path,
+			method,
+			body,
+			_get_headers(use_web, "application/octet-stream"),
+			# RECEIVE DATA
+			func(body, code, headers):
+				# Check if successful HTTP
+				if !_code_success(code):
+					# not success
+					# Unauthorized
+					if use_web and code == 401:
+						if _internal_site:
+							Player2ErrorHelper.send_error("Got Unauthorized response. Try refreshing the page!")
+							return
+						print("Unauthorized response. Resetting key and trying to re-auth.")
+						Player2ErrorHelper.send_error("Got Unauthorized while doing web requests, redoing auth.")
+						_web_p2_key = ""
+						run_again.call()
+						return false
+
+					_alert_error_fail(code, false, body)
+					if on_fail and on_fail.is_valid():
+						on_fail.call(body, code)
+					print("(code failed: ", code, ")")
+					return false
+				if on_data and on_data.is_valid():
+					# Try json, otherwise just return it...
+					#var result = JSON.parse_string(body)
+					var continue_stream = on_data.call(body)
+					request_success.emit(path_property)
+					return continue_stream
+				return true,
+			on_completed,
+			# FAIL
+			func(body, code):
+				# Failure, notify if local/web is present
+				if code != HTTPRequest.RESULT_SUCCESS:
+					if use_web:
+						_last_web_present = false
+					else:
+						_last_local_present = false
+					# both were tested, both failed.
+					if !_last_local_present and !_last_web_present:
+						_source_tested = false
+						# Try finding the source again!
+						print("Source got unset. Trying to find again...")
+						# TODO: Magic number
+						Player2AsyncHelper.call_timeout(run_again, 3)
+				else:
+					_last_web_present = true
+				_alert_error_fail(code, true)
+				if on_fail and on_fail.is_valid():
+					on_fail.call("", code)
+		)
+
+	# Run the auth
+	_prereq_auth(on_auth_ready, on_fail)	
+
+func _prereq_auth(on_auth_ready : Callable, on_fail : Callable = Callable()):
 	var api := Player2APIConfig.grab()
 
 	# Some pre config
@@ -150,7 +305,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 	var use_web = using_web()
 
 	var run_again = func():
-		_req(path_property, method, body, on_completed, on_fail)
+		_prereq_auth(on_auth_ready, on_fail)
 
 	if !_source_tested and _source_testing:
 		print("(tried a request while testing source, calling again later...)")
@@ -171,31 +326,6 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		_source_testing = false
 		run_again.call()
 
-	# When we receive the results ..
-	var receive_results = func(body, code, headers):
-		# Check if successful HTTP
-		if !_code_success(code):
-			# not success
-			# Unauthorized
-			if use_web and code == 401:
-				if _internal_site:
-					Player2ErrorHelper.send_error("Got Unauthorized response. Try refreshing the page!")
-					return
-				print("Unauthorized response. Resetting key and trying to re-auth.")
-				Player2ErrorHelper.send_error("Got Unauthorized while doing web requests, redoing auth.")
-				_web_p2_key = ""
-				run_again.call()
-				return
-
-			_alert_error_fail(code, false, body)
-			if on_fail:
-				on_fail.call(body, code)
-			return
-		if on_completed:
-			# Try json, otherwise just return it...
-			var result = JSON.parse_string(body)
-			on_completed.call(result if result else body)
-			request_success.emit(path_property)
 
 	if !api:
 		print("API config is null/not configured!")
@@ -204,11 +334,6 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 
 	# Source is TESTED, proceed
 	var endpoint = api.endpoint_web if use_web else api.endpoint_local
-
-	print("pre:", path_property)
-	var path = endpoint.path(path_property)
-
-	print("hitting path ", path)
 
 	# If not source tested...
 	if !_source_tested:
@@ -222,7 +347,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 				# Wait a bit and go again if we have tried both and failed
 				# TODO: Magic number
 				Player2AsyncHelper.call_timeout(run_again, 3)
-			else:
+			elif run_again.is_valid():
 				# Just go immediately
 				run_again.call()
 
@@ -298,7 +423,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 			var msg = "No client id defined. Please set a valid client id in the project settings under player2/client_id"
 			Player2ErrorHelper.send_error(msg)
 			# TODO: Custom code/constant of some sorts?
-			if on_fail:
+			if on_fail and on_fail.is_valid():
 				on_fail.call(msg, -2)
 			return
 
@@ -314,7 +439,7 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 			calls.assign(_auth_queue.map(func(c): return c.run))
 			_auth_queue.clear()
 			for c in calls:
-				if c:
+				if c and c.is_valid():
 					c.call()
 
 		# The user can cancel the process at any time with Player2AuthHelper.cancel_auth()
@@ -324,13 +449,13 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 				var msg = "Unable to connect to web after player denied auth request."
 				Player2ErrorHelper.send_error(msg)
 				# TODO: Custom code/constant of some sorts?
-				if on_fail:
+				if on_fail and on_fail.is_valid():
 					on_fail.call(msg, -3)
 				var calls : Array[Callable] = []
 				calls.assign(_auth_queue.map(func(c): return c.on_fail))
 				_auth_queue.clear()
 				for c in calls:
-					if c:
+					if c and c.is_valid():
 						c.call(msg, -3)
 		)
 
@@ -416,9 +541,10 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 										return
 									if _code_success(code):
 										# We succeeded!
-										if let_ui_know_auth_completed:
+										if let_ui_know_auth_completed and let_ui_know_auth_completed.is_valid():
 											let_ui_know_auth_completed.call()
-										on_complete.call(false)
+										if on_complete.is_valid():
+											on_complete.call(false)
 										var p2_key = JSON.parse_string(body)["p2Key"]
 										do_auth_complete.call(p2_key)
 										return
@@ -429,19 +555,22 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 									if expired:
 										print("Device code expired. Trying from the start...")
 										Player2AsyncHelper.call_timeout(run_again, 2)
-										on_complete.call(false)
+										if on_complete.is_valid():
+											on_complete.call(false)
 										return
 									print("Got " + str(code) + " (polling)")
 									if code != 400:
 										Player2ErrorHelper.send_error("Auth polling Error " + str(code) + ": " + body)
 
-									on_complete.call(true),
+									if on_complete.is_valid():
+										on_complete.call(true),
 								func(body, code):
 									_auth_running = false
 									# Fail while polling
 									Player2ErrorHelper.send_error("Unable to connect to web during auth polling. Trying from start...")
 									Player2AsyncHelper.call_timeout(run_again, 2)
-									on_complete.call(false)
+									if on_complete.is_valid():
+										on_complete.call(false)
 									pass
 							)
 							,
@@ -460,32 +589,8 @@ func _req(path_property : String, method: HTTPClient.Method = HTTPClient.Method.
 		# do NOT continue running the request, we are doing our thing up here.
 		return
 
-	Player2WebHelper.request(
-		path,
-		method,
-		body,
-		_get_headers(use_web),
-		receive_results,
-		func(body, code):
-			# Failure, notify if local/web is present
-			if code != HTTPRequest.RESULT_SUCCESS:
-				if use_web:
-					_last_web_present = false
-				else:
-					_last_local_present = false
-				# both were tested, both failed.
-				if !_last_local_present and !_last_web_present:
-					_source_tested = false
-					# Try finding the source again!
-					print("Source got unset. Trying to find again...")
-					# TODO: Magic number
-					Player2AsyncHelper.call_timeout(run_again, 3)
-			else:
-				_last_web_present = true
-			_alert_error_fail(code, true)
-			if on_fail:
-				on_fail.call("", code)
-	)
+	if on_auth_ready.is_valid():
+		on_auth_ready.call(run_again)
 
 
 func _alert_error_fail(code : int, use_http_result : bool = false, response_body : String = ""):
@@ -529,6 +634,9 @@ func chat(request: Player2Schema.ChatCompletionRequest, on_complete: Callable, o
 
 func tts_speak(request : Player2Schema.TTSRequest,on_complete : Callable = Callable(), on_fail : Callable = Callable()) -> void:
 	_req("tts_speak", HTTPClient.Method.METHOD_POST, request, on_complete, on_fail)
+
+func tts_speak_stream(request : Player2Schema.TTSRequest, on_data : Callable, on_complete : Callable = Callable(), on_fail : Callable = Callable()) -> void:
+	_req_stream("tts_speak_stream", HTTPClient.Method.METHOD_POST, request, on_data, on_complete, on_fail)
 
 func tts_stop(on_fail : Callable = Callable()) -> void:
 	_req("tts_stop", HTTPClient.Method.METHOD_POST, "", Callable(), on_fail)
@@ -589,10 +697,20 @@ func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 	return socket
 
 func _ready() -> void:
+
+	# Don't print TTS responses, they are big!
+	var api = Player2APIConfig.grab()
+
+	Player2WebHelper.should_print_response = func(path : String, body : String):
+		# keep editor tooling clean for now...
+		if Engine.is_editor_hint():
+			return
+		if path == api.endpoint_web.path("tts_speak") or path == api.endpoint_local.path("tts_speak"):
+			return false
+		return true
+
 	if Engine.is_editor_hint():
 		return
-
-	var api = Player2APIConfig.grab()
 
 	# Check for internal site
 	if Engine.has_singleton("JavaScriptBridge"):
@@ -604,12 +722,6 @@ func _ready() -> void:
 			api.source_mode = Player2APIConfig.SourceMode.WEB_ONLY
 			api.endpoint_web.set_using_site(origin)
 
-
-	# Don't print TTS responses, they are big!
-	Player2WebHelper.should_print_response = func(path : String, body : String):
-		if path == api.endpoint_web.path("tts_speak"):
-			return false
-		return true
 
 	var client_id = ProjectSettings.get_setting("player2/client_id")
 	if !client_id:

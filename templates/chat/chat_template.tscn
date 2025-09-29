@@ -47,6 +47,8 @@ get_current_time = SubResource("Resource_x4btm")
 
 [sub_resource type="Resource" id="Resource_qec4n"]
 script = ExtResource("3_x4btm")
+stream = true
+use_wav = false
 tts_speed = 1.0
 tts_default_language = 0
 tts_default_gender = 0

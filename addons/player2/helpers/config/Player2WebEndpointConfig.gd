@@ -11,6 +11,7 @@ extends Player2EndpointConfig
 @export var joules : String = "{root}/v1/joules"
 
 @export var tts_speak: String = "{root}/v1/tts/speak"
+@export var tts_speak_stream: String = "{root}/v1/tts/stream"
 @export var tts_voices : String = "{root}/v1/tts/voices"
 
 @export var get_selected_characters : String = "{root}/v1/selected_characters"

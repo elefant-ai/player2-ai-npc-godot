@@ -5,6 +5,13 @@ extends Resource
 enum Gender {MALE, FEMALE, OTHER}
 enum Language { en_US, en_GB, ja_JP, zh_CN, es_ES, fr_FR, hi_IN, it_IT, pt_BR }
 
+## If true, will stream audio as we receive it.
+## Otherwise will grab the entire audio at once.
+@export var stream : bool = true
+
+## Experiment with this. Setting to false (use Mp3) is generally better but wav is a good fallback.
+@export var use_wav : bool = false
+
 ## Speed Scale (1 is default)
 @export var tts_speed : float = 1
 ## Default TTS language (overriden if `Player2 Selected Character` is enabled)
@@ -19,13 +26,19 @@ enum Language { en_US, en_GB, ja_JP, zh_CN, es_ES, fr_FR, hi_IN, it_IT, pt_BR }
 @export_tool_button("Select Voice ID") var open_voice_selector_window = _open_voice_selector_window
 
 func _open_voice_selector_window():
+	assert(Engine.is_editor_hint())
+
 	var endpoint_local := Player2LocalEndpointConfig.new()
 	var endpoing_website := Player2WebpageEndpointConfig.new()
 	var path = endpoint_local.path("tts_voices")
 
 	var fail := func(content, code):
+		assert(Engine.is_editor_hint())
 		var d := ConfirmationDialog.new()
-		EditorInterface.popup_dialog_centered(d, Vector2i(480, 120))
+		# Silly godot build issue
+		# EditorInterface.popup_dialog_centered(d, Vector2i(480, 120))
+		var editor_interface = Engine.get_singleton("EditorInterface")
+		editor_interface.popup_dialog_centered(d, Vector2i(480, 120))
 		d.close_requested.connect(func():
 			d.queue_free()
 			)
@@ -55,9 +68,16 @@ func _open_voice_selector_window():
 		var selector_ui = ui_scene.instantiate() as Player2VoiceIdSelectorUI
 
 		var w := Window.new()
-		w.always_on_top = true
+		# w.always_on_top = true
+		# this is better
+		w.transient = true
+		w.exclusive = true
 		w.add_child(selector_ui)
-		EditorInterface.popup_dialog_centered(w, Vector2i(640, 480))
+
+		# Silly godot build issue
+		# EditorInterface.popup_dialog_centered(w, Vector2i(640, 480))
+		var editor_interface = Engine.get_singleton("EditorInterface")
+		editor_interface.popup_dialog_centered(w, Vector2i(640, 480))
 		w.close_requested.connect(func():
 			w.queue_free()
 			)
@@ -70,6 +90,7 @@ func _open_voice_selector_window():
 			var speak_path = endpoint_local.path("tts_speak")
 			var req := {}
 			req.voice_ids = []
+			req.audio_format = "mp3"
 			req.voice_ids.assign([voice_id])
 			req.text = preview_text
 			req.play_in_app = false
@@ -77,7 +98,7 @@ func _open_voice_selector_window():
 			var req_string := JSON.stringify(req)
 			Player2WebHelper.request(speak_path, HTTPClient.Method.METHOD_POST, req_string, ['Content-Type: application/json'], func(body, code, headers):
 				# Speak
-				Player2TTS.speak_raw_data(selector_ui, JSON.parse_string(body)["data"], null)
+				Player2TTS.speak_raw_data(selector_ui, JSON.parse_string(body)["data"], null, false)
 				)
 			)
 

@@ -235,10 +235,12 @@ func _stop_stt_web() -> void:
 
 func _ready() -> void:
 	_audio_stream_leftover_timer = Timer.new()
+	_audio_stream_leftover_timer.process_mode = Node.PROCESS_MODE_ALWAYS
 	_audio_stream_leftover_timer.one_shot = true
 	add_child(_audio_stream_leftover_timer)
 	_audio_stream_leftover_timer.timeout.connect(func(): _audio_stream_leftover_timer_triggered = true)
 	_audio_stream_release_timer = Timer.new()
+	_audio_stream_release_timer.process_mode = Node.PROCESS_MODE_ALWAYS
 	_audio_stream_release_timer.one_shot = true
 	add_child(_audio_stream_release_timer)
 	_audio_stream_release_timer.timeout.connect(func():
@@ -260,7 +262,7 @@ func _poll_socket(socket : WebSocketPeer) -> void:
 		return
 	socket.poll()
 
-func _stereo_float_frames_to_byte_array(frames_stereo : PackedVector2Array, spb : StreamPeerBuffer) -> void:
+static func _stereo_float_frames_to_byte_array(frames_stereo : PackedVector2Array, spb : StreamPeerBuffer) -> void:
 	# 16 bit signed int
 	#var spb := StreamPeerBuffer.new()
 	spb.big_endian = false  # WAV/PCM typical little-endian
@@ -349,8 +351,9 @@ func _process_socket(socket : WebSocketPeer) -> void:
 							var messages : Array = data["data"]["channel"]["alternatives"]
 							# When we get the END of messages, data["data"]["is_final"] is set to true
 							var messages_final = "is_final" in data["data"] and data["data"]["is_final"]
-							print("STT messages: ", messages_final, messages)
-							if messages.size():
+							print("STT messages: ", messages_final, " ", messages)
+							# If we get a message with just {} data, it's basically empty.
+							if messages.size() and not (messages.size() == 1 and messages[0].is_empty()):
 								# We got a transcript
 								var highest = messages.reduce(func(max, msg): return msg if msg["confidence"] > max["confidence"] else max)
 								if highest:
@@ -365,10 +368,10 @@ func _process_socket(socket : WebSocketPeer) -> void:
 									_flush_audio_transcript_buffer()
 									print("STT update transcript: ", _audio_stream_transcript)
 							else:
-								if _audio_stream_leftover_timer_triggered and _audio_stream_running:
-									# We're done!
+								# We're not getting anything, could be done.
+								# if _audio_stream_leftover_timer_triggered and _audio_stream_running:
+								if not listening:
 									_socket_complete()
-				#print("ASDF", data, data["type"])
 		WebSocketPeer.STATE_CLOSING:
 			# wait to close
 			pass
@@ -388,7 +391,7 @@ func _socket_complete() -> void:
 		print("Done. Got", _audio_stream_transcript)
 		stt_received.emit(_audio_stream_transcript)
 		_audio_stream_transcript = ""
-		if _socket:
-			_socket.close()
-			_socket = null
+	if _socket:
+		_socket.close()
+		_socket = null
 	waiting_on_reply = false
