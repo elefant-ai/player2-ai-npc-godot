@@ -406,6 +406,10 @@ func _scan_node_tool_call_functions(node : Node) -> Array[Dictionary]:
 		if f_name.begins_with("_"):
 			continue
 
+		# Some internal stuff
+		if f_name.begins_with("@"):
+			continue
+
 		result.append(function)
 
 	return result
@@ -621,6 +625,24 @@ func _process_chat_api() -> void:
 			"world_status": The status of the current game world.,
 		}
 	"""
+
+	# Process tool calls as part of the prompt if we have them
+	for t in _generate_manual_tools():
+		var tool_name := t.function_name
+		if system_msg_content.contains("{" + tool_name + "}"):
+			if _tool_call_func_map.has(tool_name):
+				var f : Callable = _tool_call_func_map.get(tool_name)
+				# Assume an object is present...
+				var o : Object = f.get_object()
+				if !o:
+					printerr("Failed to call tool call for function " + tool_name + " despite having a callable discovered earlier. Probably a bug!")
+					continue
+				var result = _convert_tool_call_result(f.call())
+				system_msg_content = system_msg_content.replace("{" + tool_name + "}", result)
+				print("    sys msg tool call: ", tool_name, "=", result)
+			else:
+				printerr("Did not find tool call mapped for {" + tool_name + "}. Internal error. Check your system message or manually modify it in code.")
+
 	if chat_config.tool_calls_use_tool_call_api:
 		system_msg_content += """
 			Response format:
@@ -852,15 +874,7 @@ func _process_chat_api() -> void:
 					Player2AsyncHelper.run_await_async(func_to_call, func(func_result):
 						if func_result:
 							# convert func result to string
-							var func_result_string : String
-							if func_result is String:
-								func_result_string = func_result
-							elif func_result is Dictionary:
-								func_result_string = JSON.stringify(func_result)
-							elif func_result is Object:
-								func_result_string = JsonClassConverter.class_to_json_string(func_result)
-							else:
-								func_result_string = str(func_result)
+							var func_result_string : String = _convert_tool_call_result(func_result)
 
 							if func_result_string and !func_result_string.is_empty():
 								var func_result_notify_string := chat_config.tool_calls_reply_message \
@@ -876,6 +890,17 @@ func _process_chat_api() -> void:
 			thinking = false
 			chat_failed.emit(error_code)
 	)
+
+func _convert_tool_call_result(func_result : Variant) -> String:
+	if func_result is String:
+		return func_result
+	elif func_result is Dictionary:
+		return JSON.stringify(func_result)
+	elif func_result is Object:
+		return JsonClassConverter.class_to_json_string(func_result)
+
+	return str(func_result)
+
 
 func _update_selected_character_from_endpoint() -> void:
 	thinking = true

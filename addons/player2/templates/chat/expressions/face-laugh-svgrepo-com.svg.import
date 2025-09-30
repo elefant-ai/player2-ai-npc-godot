@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://qelpvbvxbnjw"
-path="res://.godot/imported/play-svgrepo-com.svg-651e0559377ff6b6012526e11042b82d.ctex"
+uid="uid://cqtwlc4h1hpxy"
+path="res://.godot/imported/face-laugh-svgrepo-com.svg-24fd2c9d651fdb8c9e388f9fb50dcb3f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/player2/ui/play-svgrepo-com.svg"
-dest_files=["res://.godot/imported/play-svgrepo-com.svg-651e0559377ff6b6012526e11042b82d.ctex"]
+source_file="res://addons/player2/templates/chat/expressions/face-laugh-svgrepo-com.svg"
+dest_files=["res://.godot/imported/face-laugh-svgrepo-com.svg-24fd2c9d651fdb8c9e388f9fb50dcb3f.ctex"]
 
 [params]
 

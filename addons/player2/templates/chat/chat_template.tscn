@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://5tdvp5lgxuea"]
+[gd_scene load_steps=29 format=3 uid="uid://5tdvp5lgxuea"]
 
 [ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/nodes/Player2AINPC.gd" id="1_v8qlu"]
 [ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/helpers/config/Player2AICharacterConfig.gd" id="2_gxjob"]
@@ -6,12 +6,22 @@
 [ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/helpers/config/Player2AIChatConfig.gd" id="4_g1s46"]
 [ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="5_1v8gg"]
 [ext_resource type="Script" uid="uid://dt7mt3t7a08me" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinitions.gd" id="6_d141t"]
-[ext_resource type="Script" uid="uid://da0a3so5hl7je" path="res://templates/chat/tool_calling.gd" id="7_v8qlu"]
+[ext_resource type="Script" uid="uid://da0a3so5hl7je" path="res://addons/player2/templates/chat/tool_calling.gd" id="7_v8qlu"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/shared/simple_interface.tscn" id="8_gv28p"]
+[ext_resource type="Texture2D" uid="uid://d3jy0nagn27kf" path="res://addons/player2/ui/texture/speaker-svgrepo-com.svg" id="9_lx5dc"]
+[ext_resource type="Script" uid="uid://on6qvq2lmx1" path="res://addons/player2/templates/chat/profile_expressions.gd" id="9_osgfy"]
+[ext_resource type="Texture2D" uid="uid://cy4sarbk1xgiy" path="res://addons/player2/templates/chat/expressions/face-smile-svgrepo-com.svg" id="10_rts2l"]
+[ext_resource type="Texture2D" uid="uid://b1dkj4xlwcxdr" path="res://addons/player2/templates/chat/expressions/face-angry-svgrepo-com.svg" id="11_8rrku"]
+[ext_resource type="Texture2D" uid="uid://jsgkwir0xfvp" path="res://addons/player2/templates/chat/expressions/face-open-mouth-svgrepo-com.svg" id="12_85efc"]
+[ext_resource type="Texture2D" uid="uid://d3xpefd8x4mpd" path="res://addons/player2/templates/chat/expressions/face-cry-svgrepo-com.svg" id="13_wbjuu"]
+[ext_resource type="Texture2D" uid="uid://cqtwlc4h1hpxy" path="res://addons/player2/templates/chat/expressions/face-laugh-svgrepo-com.svg" id="14_d8631"]
+[ext_resource type="Texture2D" uid="uid://cpphh8lal16yc" path="res://addons/player2/templates/chat/expressions/face-sad-svgrepo-com.svg" id="15_4kdid"]
+[ext_resource type="Texture2D" uid="uid://bof1jj0jmc3s7" path="res://addons/player2/templates/chat/expressions/face-no-mouth-svgrepo-com.svg" id="15_8rrku"]
+[ext_resource type="Texture2D" uid="uid://di7ece24k0p3q" path="res://addons/player2/templates/chat/expressions/face-meh-svgrepo-com.svg" id="16_c0hsj"]
 
 [sub_resource type="Resource" id="Resource_v8qlu"]
 Resource = null
-resource_path = "res://templates/chat/chat_template.tscn::Resource_v8qlu"
+resource_path = "res://addons/player2/templates/chat/chat_template.tscn::Resource_v8qlu"
 resource_scene_unique_id = "Resource_v8qlu"
 script = ExtResource("5_1v8gg")
 name = "blink"
@@ -20,39 +30,69 @@ description_comment = "Make the background of the user's input field quickly fla
 
 [sub_resource type="Resource" id="Resource_gxjob"]
 Resource = null
-resource_path = "res://templates/chat/chat_template.tscn::Resource_gxjob"
+resource_path = "res://addons/player2/templates/chat/chat_template.tscn::Resource_gxjob"
 resource_scene_unique_id = "Resource_gxjob"
 script = ExtResource("5_1v8gg")
 name = "console_log_hello_world"
-enabled = true
+enabled = false
 description_comment = "Logs \"Hello World!\" to the console. "
 
 [sub_resource type="Resource" id="Resource_x4btm"]
 Resource = null
-resource_path = "res://templates/chat/chat_template.tscn::Resource_x4btm"
+resource_path = "res://addons/player2/templates/chat/chat_template.tscn::Resource_x4btm"
 resource_scene_unique_id = "Resource_x4btm"
 script = ExtResource("5_1v8gg")
 name = "get_current_time"
 enabled = true
 description_comment = "Gets the time in full string format (YYYY-MM-DDTHH:MM:SS). "
 
+[sub_resource type="Resource" id="Resource_5dtkm"]
+Resource = null
+resource_path = "res://addons/player2/templates/chat/chat_template.tscn::Resource_5dtkm"
+resource_scene_unique_id = "Resource_5dtkm"
+script = ExtResource("5_1v8gg")
+name = "get_expressions"
+enabled = true
+description_comment = "Get a list of all expressions available to use. "
+
+[sub_resource type="Resource" id="Resource_j3so8"]
+Resource = null
+resource_path = "res://addons/player2/templates/chat/chat_template.tscn::Resource_j3so8"
+resource_scene_unique_id = "Resource_j3so8"
+script = ExtResource("5_1v8gg")
+name = "get_current_expression"
+enabled = true
+description_comment = "Gets the current expression. "
+
+[sub_resource type="Resource" id="Resource_q2x16"]
+Resource = null
+resource_path = "res://addons/player2/templates/chat/chat_template.tscn::Resource_q2x16"
+resource_scene_unique_id = "Resource_q2x16"
+script = ExtResource("5_1v8gg")
+name = "set_expression"
+enabled = true
+description_comment = "Sets our current expression. "
+
 [sub_resource type="Resource" id="Resource_jcp5b"]
 Resource = null
-resource_path = "res://templates/chat/chat_template.tscn::Resource_jcp5b"
+resource_path = "res://addons/player2/templates/chat/chat_template.tscn::Resource_jcp5b"
 script = ExtResource("6_d141t")
-definitions = Array[ExtResource("5_1v8gg")]([SubResource("Resource_gxjob"), SubResource("Resource_v8qlu"), SubResource("Resource_x4btm")])
+definitions = Array[ExtResource("5_1v8gg")]([SubResource("Resource_gxjob"), SubResource("Resource_v8qlu"), SubResource("Resource_x4btm"), SubResource("Resource_5dtkm"), SubResource("Resource_j3so8"), SubResource("Resource_q2x16")])
 console_log_hello_world = SubResource("Resource_gxjob")
 blink = SubResource("Resource_v8qlu")
 get_current_time = SubResource("Resource_x4btm")
+get_expressions = SubResource("Resource_5dtkm")
+get_current_expression = SubResource("Resource_j3so8")
+set_expression = SubResource("Resource_q2x16")
 
 [sub_resource type="Resource" id="Resource_qec4n"]
 script = ExtResource("3_x4btm")
-stream = true
+stream = false
 use_wav = false
 tts_speed = 1.0
 tts_default_language = 0
 tts_default_gender = 0
-voice_id = ""
+voice_id = "01955d76-ed5b-73e0-a88d-cbeb3c5b499d"
 
 [sub_resource type="Resource" id="Resource_333ad"]
 script = ExtResource("2_gxjob")
@@ -82,8 +122,8 @@ ${system_message_behavior}
 ${system_message_prompting}"
 system_message_prefix = ""
 system_message_postfix = ""
-auto_store_conversation_history = true
-greet_on_entry = true
+auto_store_conversation_history = false
+greet_on_entry = false
 first_entry_message = "This is the first time you've met the user, greet them!"
 auto_load_entry_message = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
 conversation_history_size = 64
@@ -105,24 +145,80 @@ tool_calls_message_optional_arg_description = "If you wish to say something whil
 
 [node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
 script = ExtResource("1_v8qlu")
-tool_calls_scan_node_for_functions = [NodePath("../Tool Receiver")]
+editor_tool_button_clear_conversation_history = Callable()
+character_system_message = "Match the player's mood. Be direct with your replies, but if the player is talkative then be talkative as well.
+
+You can set your expression with the `set_expression` tool call. Available expressions:
+{get_expressions}
+Current expression:
+{get_current_expression}"
+tool_calls_scan_node_for_functions = [NodePath("../Example Tool Receiver"), NodePath("../Avatar Profile Parent/Avatar Profile Tool Receiver")]
 tool_calls_function_definitions = SubResource("Resource_jcp5b")
 character_config = SubResource("Resource_333ad")
 chat_config = SubResource("Resource_mieae")
 metadata/_custom_type_script = "uid://bupnh0kqklshe"
 
-[node name="Tool Receiver" type="Node" parent="."]
+[node name="Example Tool Receiver" type="Node" parent="."]
 script = ExtResource("7_v8qlu")
+
+[node name="Avatar Profile Parent" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 26.0
+offset_top = 1.0
+offset_right = 402.0
+offset_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+
+[node name="Avatar Profile Tool Receiver" type="Node" parent="Avatar Profile Parent" node_paths=PackedStringArray("texture")]
+script = ExtResource("9_osgfy")
+expressions = Dictionary[String, Texture2D]({
+"angry": ExtResource("11_8rrku"),
+"cry": ExtResource("13_wbjuu"),
+"frown": ExtResource("15_4kdid"),
+"laugh_or_yay": ExtResource("14_d8631"),
+"no_mouth": ExtResource("15_8rrku"),
+"smile": ExtResource("10_rts2l"),
+"straight_face_meh": ExtResource("16_c0hsj"),
+"wow_openmouth": ExtResource("12_85efc")
+})
+texture = NodePath("../Avatar Profile")
+current_expression = "smile"
+
+[node name="Avatar Profile" type="TextureRect" parent="Avatar Profile Parent"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -136.0
+offset_top = 163.0
+offset_right = 136.0
+offset_bottom = -179.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("10_rts2l")
+expand_mode = 2
+stretch_mode = 5
 
 [node name="Simple Interface" parent="." instance=ExtResource("8_gv28p")]
 offset_top = -156.0
 
-[node name="TTS Indicator" type="ColorRect" parent="."]
+[node name="TTS Indicator" type="TextureRect" parent="."]
 visible = false
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = 11.0
+offset_top = 13.0
+offset_right = 51.0
+offset_bottom = 53.0
 size_flags_horizontal = 4
-color = Color(0.992602, 0.638143, 0.760959, 1)
+texture = ExtResource("9_lx5dc")
+expand_mode = 2
+stretch_mode = 4
 
 [connection signal="chat_received" from="Player2Agent" to="Simple Interface" method="append_line_agent"]
 [connection signal="thinking_began" from="Player2Agent" to="Simple Interface" method="start_thinking"]
@@ -130,5 +226,3 @@ color = Color(0.992602, 0.638143, 0.760959, 1)
 [connection signal="tts_began" from="Player2Agent" to="TTS Indicator" method="show"]
 [connection signal="tts_ended" from="Player2Agent" to="TTS Indicator" method="hide"]
 [connection signal="text_sent" from="Simple Interface" to="Player2Agent" method="chat"]
-
-[editable path="Simple Interface"]

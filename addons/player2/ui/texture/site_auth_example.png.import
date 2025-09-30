@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://2q85n0l7ywh0"
-path="res://.godot/imported/check-mark-circle-svgrepo-com.svg-c82a96ed832ab6417cb85491b5248558.ctex"
+uid="uid://cw6s6dp4uas50"
+path="res://.godot/imported/site_auth_example.png-de24f229c82dba8174ba12c665cc447e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/player2/ui/check-mark-circle-svgrepo-com.svg"
-dest_files=["res://.godot/imported/check-mark-circle-svgrepo-com.svg-c82a96ed832ab6417cb85491b5248558.ctex"]
+source_file="res://addons/player2/ui/texture/site_auth_example.png"
+dest_files=["res://.godot/imported/site_auth_example.png-de24f229c82dba8174ba12c665cc447e.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

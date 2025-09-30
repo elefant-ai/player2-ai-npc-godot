@@ -2,7 +2,8 @@ extends Node
 
 @export var button : Button
 @export var text : TextEdit
-@export var chat : Label
+@export var chat_container : Control
+@export var scroll_container : ScrollContainer
 @export var thinking : CanvasItem
 
 @export var deselect_on_send : bool
@@ -14,6 +15,9 @@ const stt_keycode : int = KEY_TAB
 signal text_sent(text : String)
 
 func _ready() -> void:
+	#for x in ["HELLO!", "aSDasd aDS asd asD ASD aDs aSD asD aSD ASD asdAADAS ", "sda !# K!@R( QSKD( akdi0 ak))", "fourth line", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]:
+		#_append_line(x)
+
 	button.pressed.connect(send)
 	# Make enter key send a message too
 	text.gui_input.connect(
@@ -43,16 +47,26 @@ func _send(text : String) -> void:
 
 func send() -> void:
 	_send(text.text)
+	
+func _append_line(raw_line : String) -> void:
+	if chat_container:
+		var label := Label.new()
+		label.text = raw_line
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		chat_container.add_child(label)
+		label.grab_focus()
+		if scroll_container:
+			await get_tree().process_frame
+			scroll_container.ensure_control_visible(label)
 
 func append_line_user(line : String) -> void:
 	print("got user: " + line)
-	if chat:
-		chat.text += "User: " + line + "\n"
+	_append_line("User: " + line)
 
 func append_line_agent(line : String) -> void:
 	print("got agent: " + line)
-	if chat:
-		chat.text += "Agent: " + line + "\n"
+	_append_line("Agent: " + line)
 
 func set_text_input(line : String) -> void:
 	text.text = line

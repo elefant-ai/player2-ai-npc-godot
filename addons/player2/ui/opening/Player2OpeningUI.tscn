@@ -1,0 +1,145 @@
+[gd_scene load_steps=9 format=3 uid="uid://bbwufi5t64tso"]
+
+[ext_resource type="PackedScene" uid="uid://bgesamm4l5wbt" path="res://addons/player2/ui/opening/Player2OpeningTemplateButtonUI.tscn" id="1_fag4n"]
+[ext_resource type="Script" uid="uid://cw15010yf6cm5" path="res://addons/player2/ui/opening/player_2_opening_ui.gd" id="1_x8p2q"]
+[ext_resource type="Texture2D" uid="uid://c37ni610aov6t" path="res://addons/player2/ui/texture/chat_example.png" id="3_dh7gq"]
+[ext_resource type="PackedScene" uid="uid://5tdvp5lgxuea" path="res://addons/player2/templates/chat/chat_template.tscn" id="3_x8p2q"]
+[ext_resource type="StyleBox" uid="uid://dg1ofyey7kf1k" path="res://addons/player2/ui/theme/Player2RedStylebox.tres" id="7_03j77"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r4u8l"]
+bg_color = Color(0.0588235, 0.0666667, 0.207843, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_blend = true
+shadow_color = Color(0, 0, 0, 0)
+
+[sub_resource type="LabelSettings" id="LabelSettings_dh7gq"]
+font_size = 18
+font_color = Color(0.520814, 0.790433, 1, 1)
+shadow_size = 10
+shadow_color = Color(0.6192, 0.711507, 0.86, 0.560784)
+
+[sub_resource type="Theme" id="Theme_k4ls5"]
+default_font_size = 16
+
+[node name="Player2OpeningUi" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_x8p2q")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_r4u8l")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Gap2" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+
+[node name="Header" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0.319519, 0.256412, 0.740438, 1)
+theme_override_font_sizes/font_size = 24
+text = "Welcome to Player2!"
+label_settings = SubResource("LabelSettings_dh7gq")
+horizontal_alignment = 1
+
+[node name="Gap" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+
+[node name="Subheader" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0.319519, 0.256412, 0.740438, 1)
+theme_override_font_sizes/font_size = 16
+text = "Check out a template to get started"
+horizontal_alignment = 1
+
+[node name="Template List" type="Control" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/Template List"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 43.0
+offset_top = 33.0
+offset_right = -43.0
+offset_bottom = -33.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 32
+alignment = 1
+
+[node name="Simple Chat Template" parent="VBoxContainer/Template List/HBoxContainer" instance=ExtResource("1_fag4n")]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+icon = ExtResource("3_dh7gq")
+title = "Simple Chat"
+icon = ExtResource("3_dh7gq")
+template_scene = ExtResource("3_x8p2q")
+
+[node name="VN" parent="VBoxContainer/Template List/HBoxContainer" instance=ExtResource("1_fag4n")]
+visible = false
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+title = "Visual Novel (WIP)"
+
+[node name="RPG" parent="VBoxContainer/Template List/HBoxContainer" instance=ExtResource("1_fag4n")]
+visible = false
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+title = "Simple RPG (WIP)"
+
+[node name="Bottom Row" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="Close Button" type="Button" parent="VBoxContainer/Bottom Row"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme = SubResource("Theme_k4ls5")
+theme_override_styles/normal = ExtResource("7_03j77")
+text = "Close"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/Bottom Row"]
+layout_mode = 2
+alignment = 1
+
+[node name="Dont Show Again Checkbox" type="CheckBox" parent="VBoxContainer/Bottom Row/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Dont show again"
+alignment = 1
+
+[node name="Gap" type="Control" parent="VBoxContainer/Bottom Row"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+
+[connection signal="pressed" from="VBoxContainer/Bottom Row/Close Button" to="." method="close"]
