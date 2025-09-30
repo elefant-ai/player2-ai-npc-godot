@@ -110,6 +110,8 @@ func _open_scene_template(template_scene : PackedScene):
 	# TODO: Open 3d/2d viewport depending on the scene configuration
 
 func _possibly_run_opening_prompt():
+	# TODO: add back in once we're ready
+	return
 	if ProjectSettings.get_setting("player2/hide_opening_prompt", false):
 		return
 
