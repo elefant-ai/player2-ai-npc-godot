@@ -7,7 +7,7 @@ enum Language { en_US, en_GB, ja_JP, zh_CN, es_ES, fr_FR, hi_IN, it_IT, pt_BR }
 
 ## If true, will stream audio as we receive it.
 ## Otherwise will grab the entire audio at once.
-@export var stream : bool = true
+@export var stream : bool = false
 
 ## Experiment with this. Setting to false (use Mp3) is generally better but wav is a good fallback.
 @export var use_wav : bool = false
