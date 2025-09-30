@@ -104,6 +104,10 @@ func _enable_plugin() -> void:
 func _disable_plugin() -> void:
 	pass
 
+func _open_scene_template(template_scene : PackedScene):
+	print("OPENING SCENE: ", template_scene.resource_path)
+	EditorInterface.open_scene_from_path(template_scene.resource_path, true)
+	# TODO: Open 3d/2d viewport depending on the scene configuration
 
 func _possibly_run_opening_prompt():
 	if ProjectSettings.get_setting("player2/hide_opening_prompt", false):
@@ -116,9 +120,15 @@ func _possibly_run_opening_prompt():
 
 	var opening_ui = ui_scene.instantiate() as Player2OpeningUI
 
+	#print("Opening deafult prompt")
+
 	var w := Window.new()
 	w.always_on_top = true
 	w.borderless = true
+	# TODO: Transparent doesn't do anything. Sticking to square for now.
+	w.transparent_bg = true
+	w.transparent = true
+	w.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
 	w.add_child(opening_ui)
 	EditorInterface.popup_dialog_centered(w, Vector2i(640, 480))
 	w.close_requested.connect(func():
@@ -131,6 +141,6 @@ func _possibly_run_opening_prompt():
 		w.queue_free()
 		)
 	opening_ui.template_opened.connect(func(template_scene : PackedScene):
-		print("OPENING SCENE: ", template_scene.resource_path)
+		_open_scene_template(template_scene)
 		w.queue_free()
 	)

@@ -1,23 +1,19 @@
 [gd_scene load_steps=14 format=3 uid="uid://bvdm811rnyhid"]
 
 [ext_resource type="Script" uid="uid://bspbxif1p8ov3" path="res://addons/player2/ui/success_accept_reject_prompt.gd" id="1_k27lu"]
-[ext_resource type="StyleBox" uid="uid://h7a4syba52h8" path="res://addons/player2/ui/Player2StyleBoxFlat.tres" id="2_nsgi6"]
-[ext_resource type="Texture2D" uid="uid://cw6s6dp4uas50" path="res://addons/player2/ui/site_auth_example.png" id="3_17kjp"]
-[ext_resource type="Texture2D" uid="uid://2q85n0l7ywh0" path="res://addons/player2/ui/check-mark-circle-svgrepo-com.svg" id="4_kp01c"]
+[ext_resource type="StyleBox" uid="uid://h7a4syba52h8" path="res://addons/player2/ui/theme/Player2StyleBoxFlat.tres" id="2_nsgi6"]
+[ext_resource type="Texture2D" uid="uid://cw6s6dp4uas50" path="res://addons/player2/ui/texture/site_auth_example.png" id="3_17kjp"]
+[ext_resource type="LabelSettings" uid="uid://ditalljxts3na" path="res://addons/player2/ui/theme/Player2Header.tres" id="3_ncaxo"]
+[ext_resource type="Theme" uid="uid://c6bjbv8gs84ei" path="res://addons/player2/ui/theme/Player2Text.tres" id="4_jp833"]
+[ext_resource type="Texture2D" uid="uid://2q85n0l7ywh0" path="res://addons/player2/ui/texture/check-mark-circle-svgrepo-com.svg" id="4_kp01c"]
+[ext_resource type="Theme" uid="uid://dgpq2qgrm8prr" path="res://addons/player2/ui/theme/Player2ButtonReject.tres" id="6_gh7pf"]
+[ext_resource type="StyleBox" uid="uid://cv5q6cs7tgau5" path="res://addons/player2/ui/theme/Player2GreenStylebox.tres" id="7_anxtx"]
+[ext_resource type="StyleBox" uid="uid://dg1ofyey7kf1k" path="res://addons/player2/ui/theme/Player2RedStylebox.tres" id="7_fqhlm"]
 
 [sub_resource type="Theme" id="Theme_k27lu"]
 
-[sub_resource type="LabelSettings" id="LabelSettings_xk7xc"]
-font_size = 24
-font_color = Color(0.520814, 0.790433, 1, 1)
-shadow_size = 10
-shadow_color = Color(0.6192, 0.711507, 0.86, 0.560784)
-
 [sub_resource type="Theme" id="Theme_17kjp"]
 default_font_size = 36
-
-[sub_resource type="Theme" id="Theme_jp833"]
-default_font_size = 24
 
 [sub_resource type="FontFile" id="FontFile_kp01c"]
 subpixel_positioning = 0
@@ -36,33 +32,6 @@ cache/0/24/0/scale = 1.0
 
 [sub_resource type="Theme" id="Theme_ncaxo"]
 default_font = SubResource("FontFile_kp01c")
-
-[sub_resource type="Theme" id="Theme_kp01c"]
-default_font_size = 24
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nsgi6"]
-bg_color = Color(0.239501, 0.688244, 0.566472, 1)
-border_width_left = 8
-border_width_top = 8
-border_width_right = 8
-border_width_bottom = 8
-border_blend = true
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_17kjp"]
-bg_color = Color(0.55, 0.253, 0.253, 1)
-border_width_left = 8
-border_width_top = 8
-border_width_right = 8
-border_width_bottom = 8
-border_blend = true
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
 
 [node name="OpenAuthPrompt" type="CanvasLayer"]
 layer = 120
@@ -109,7 +78,7 @@ alignment = 1
 [node name="Title" type="Label" parent="Panel Prompt/VBoxContainer"]
 layout_mode = 2
 text = "Player2 AI Required"
-label_settings = SubResource("LabelSettings_xk7xc")
+label_settings = ExtResource("3_ncaxo")
 horizontal_alignment = 1
 
 [node name="Gap" type="Control" parent="Panel Prompt/VBoxContainer"]
@@ -167,7 +136,7 @@ horizontal_alignment = 1
 [node name="Description Start" type="RichTextLabel" parent="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 6
-theme = SubResource("Theme_jp833")
+theme = ExtResource("4_jp833")
 bbcode_enabled = true
 text = "[b]Why?[/b]
 
@@ -180,7 +149,7 @@ horizontal_alignment = 1
 visible = false
 layout_mode = 2
 size_flags_vertical = 6
-theme = SubResource("Theme_jp833")
+theme = ExtResource("4_jp833")
 text = "Proceed to the website and authenticate the app"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -225,8 +194,8 @@ alignment = 1
 [node name="Proceed" type="Button" parent="Panel Prompt/Buttons"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme = SubResource("Theme_kp01c")
-theme_override_styles/normal = SubResource("StyleBoxFlat_nsgi6")
+theme = ExtResource("6_gh7pf")
+theme_override_styles/normal = ExtResource("7_anxtx")
 text = "Turn On Player2 AI"
 text_overrun_behavior = 3
 
@@ -239,8 +208,8 @@ layout_mode = 2
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
-theme = SubResource("Theme_kp01c")
-theme_override_styles/normal = SubResource("StyleBoxFlat_17kjp")
+theme = ExtResource("6_gh7pf")
+theme_override_styles/normal = ExtResource("7_fqhlm")
 text = "Proceed Without Player2 AI"
 text_overrun_behavior = 3
 
@@ -274,7 +243,7 @@ size_flags_vertical = 3
 [node name="Title" type="Label" parent="Panel Success/VBoxContainer"]
 layout_mode = 2
 text = "Success!"
-label_settings = SubResource("LabelSettings_xk7xc")
+label_settings = ExtResource("3_ncaxo")
 horizontal_alignment = 1
 
 [node name="Gap" type="Control" parent="Panel Success/VBoxContainer"]
@@ -348,8 +317,8 @@ alignment = 1
 [node name="Proceed" type="Button" parent="Panel Success/Buttons"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme = SubResource("Theme_kp01c")
-theme_override_styles/normal = SubResource("StyleBoxFlat_nsgi6")
+theme = ExtResource("6_gh7pf")
+theme_override_styles/normal = ExtResource("7_anxtx")
 text = "Continue With Game 🎮"
 
 [connection signal="accepted" from="." to="Panel Prompt/VBoxContainer/HBoxContainer/ScrollContainer/VBoxContainer/Connection Failed" method="hide"]

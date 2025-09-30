@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://dyd5u1qkiakb4"]
 
-[ext_resource type="Texture2D" uid="uid://c6s823ycq48nx" path="res://addons/player2/ui/lightning-1-svgrepo-com.svg" id="1_65i10"]
+[ext_resource type="Texture2D" uid="uid://c6s823ycq48nx" path="res://addons/player2/ui/texture/lightning-1-svgrepo-com.svg" id="1_65i10"]
 [ext_resource type="Script" uid="uid://dhuh47q17obt5" path="res://addons/player2/ui/power_hud.gd" id="1_ljsom"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f2r4j"]

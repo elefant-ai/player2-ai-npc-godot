@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c6s823ycq48nx"
-path="res://.godot/imported/lightning-1-svgrepo-com.svg-398fabeff4de460ce918071bb8dda079.ctex"
+uid="uid://qelpvbvxbnjw"
+path="res://.godot/imported/play-svgrepo-com.svg-25d841de2d8723ba5827ae04e2851278.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/player2/ui/lightning-1-svgrepo-com.svg"
-dest_files=["res://.godot/imported/lightning-1-svgrepo-com.svg-398fabeff4de460ce918071bb8dda079.ctex"]
+source_file="res://addons/player2/ui/texture/play-svgrepo-com.svg"
+dest_files=["res://.godot/imported/play-svgrepo-com.svg-25d841de2d8723ba5827ae04e2851278.ctex"]
 
 [params]
 
