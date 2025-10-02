@@ -10,6 +10,7 @@ class ChatCompletionRequest extends Resource:
 	# Tools and tool choice are not sent if they are empty.
 	@export var tools : Array[Player2Schema.Tool]
 	@export var tool_choice : String
+	@export var response_format : Dictionary
 
 class ChatCompletionResponse extends Resource:
 	@export var choices : Array[Player2Schema.ResponseMessage]
@@ -66,6 +67,10 @@ class TTSRequest extends Resource:
 	@export var voice_language : String
 	@export var voice_ids : Array[String]
 	@export var audio_format : String
+	@export var advanced_voice: TTSRequestAdvancedVoice
+
+class TTSRequestAdvancedVoice extends Resource:
+	@export var instructions : String
 
 class STTStartRequest extends Resource:
 	@export var timeout : float

@@ -172,7 +172,7 @@ func save_conversation_history(filename : String = "") -> void:
 	if filename.is_empty():
 		filename = _get_default_conversation_history_filepath()
 
-	var serialized = ConversationMessage.serialize_list(conversation_history, chat_config.tool_calls_use_tool_call_api)
+	var serialized = ConversationMessage.serialize_list(conversation_history)
 	print("Saving conversation history to " + filename)
 	print(serialized)
 
@@ -218,7 +218,7 @@ func load_conversation_history(notify_agent_for_welcome_message: bool = true, me
 
 	#print("content" + content)
 
-	var deserialized : Array[ConversationMessage] = ConversationMessage.deserialize_list(content, chat_config.tool_calls_use_tool_call_api)
+	var deserialized : Array[ConversationMessage] = ConversationMessage.deserialize_list(content)
 	
 	conversation_history = deserialized
 
@@ -501,12 +501,11 @@ func _convert_tool_call(simple_tool_call : AIToolCall) -> Player2Schema.Tool:
 
 	# Add our optional message arg
 	# Done because "content" field is empty otherwise
-	if chat_config.tool_calls_use_tool_call_api:
-		var optional_message_arg_t := Dictionary()
-		optional_message_arg_t["type"] = AIToolCallParameter.arg_type_to_schema_type(AIToolCallParameter.Type.STRING)
-		optional_message_arg_t["description"] = chat_config.tool_calls_message_optional_arg_description
-		p.properties[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME] = optional_message_arg_t
-		p.required.push_back(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
+	var optional_message_arg_t := Dictionary()
+	optional_message_arg_t["type"] = AIToolCallParameter.arg_type_to_schema_type(AIToolCallParameter.Type.STRING)
+	optional_message_arg_t["description"] = chat_config.tool_calls_message_optional_arg_description
+	p.properties[TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME] = optional_message_arg_t
+	p.required.push_back(TOOL_CALL_MESSAGE_OPTIONAL_ARG_NAME)
 
 	f.parameters = p
 	tool_call.function = f
@@ -530,7 +529,9 @@ func _generate_schema_tools() -> Array[Player2Schema.Tool]:
 
 	return result
 
-func _run_chat_internal(message : String) -> void:
+func _run_chat_internal(message_dictionary : Dictionary) -> void:
+	var message : String = message_dictionary["reply"]
+	var voice_instructions : String = message_dictionary["voice_instructions"]
 	if message and !message.strip_edges().is_empty():
 		var reply_message := message.trim_suffix("\n") 
 		chat_received.emit(reply_message)
@@ -538,7 +539,7 @@ func _run_chat_internal(message : String) -> void:
 			var voice_ids : Array[String] = []
 			if _selected_character:
 				voice_ids.assign(_selected_character["voice_ids"])
-			tts.speak(reply_message, voice_ids)
+			tts.speak(reply_message, voice_ids, voice_instructions)
 
 func _tool_call_json_to_tool_call_reply(tool_call_json : Array) -> Array[AIToolCallReply]:
 	var result : Array[AIToolCallReply] = []
@@ -643,67 +644,34 @@ func _process_chat_api() -> void:
 			else:
 				printerr("Did not find tool call mapped for {" + tool_name + "}. Internal error. Check your system message or manually modify it in code.")
 
-	if chat_config.tool_calls_use_tool_call_api:
+	# TODO: Structured output
+	var use_advanced_tts : bool = true
+
+	system_msg_content += """Response format:"""
+	if use_advanced_tts:
 		system_msg_content += """
-			Response format:
-			Always respond with a plain string response, which will represent what YOU say. Do not prefix with anything (for example, reply with "hello!" instead of "Agent (or my name or anything else): hello!") unless previously instructed.
+			Reply with the following json:
+			{
+				"reply": string (your reply),
+				"voice_instructions": string (extra information for the Text To Speech Voice)
+			}
+			The "reply" field in the json response will represent what YOU say."""
+	system_msg_content += """ Do not prefix with anything (for example, reply with "hello!" instead of "Agent (or my name or anything else): hello!") unless previously instructed."""
+	if use_advanced_tts:
+		system_msg_content += """
+			The "voice_instructions" field is instructions on how to say your reply.
+			EXAMPLE REPLY:
+			{
+				"reply": "Hello! What's up?",
+				"voice_instructions": "Speak with a cheerful and energetic tone"
+			}
+			DO NOT reply with a regular string (ex. "Hello! What's up?"), reply with the ABOVE JSON.
 		"""
 	else:
-		# Manual prompt, pass tool calls as functions.
-		var our_tools := _generate_manual_tools()
-		var functions_desc_list : Array[String] = []
-		for tool in our_tools:
-			var function_desc := ""
-			function_desc += tool.function_name
-			function_desc += "("
-			var args_desc_list : Array[String] = []
-			for arg in tool.args:
-				var arg_desc := ""
-				arg_desc += arg.name
-				arg_desc += " : "
-				if arg.type == AIToolCallParameter.Type.ENUM:
-					# Enum: possible strings
-					arg_desc += " | ".join(arg.enum_list.map(func(e): "\"" + e + "\""))
-				else:
-					# Regular type
-					arg_desc += ":" + arg.arg_type_to_schema_type(arg.type)
-				args_desc_list.append(arg_desc)
-			function_desc += ", ".join(args_desc_list)
-			function_desc += ")"
-			if tool.description and !tool.description.is_empty():
-				function_desc += ": " + tool.description
-			functions_desc_list.append(function_desc)
-
 		system_msg_content += """
-			Response format:
-			Always respond with JSON containing message, command and reason. All of these are strings, except for "args" which is a JSON dictionary of depth 1.
-			{
-				"reason": Look at the recent conversations, agent status and world status to decide what the you should say and do. Provide step-by-step reasoning while considering what is possible.,
-				"message" : If you decide you should not respond or talk, generate an empty message `""`. Otherwise, create a natural conversational message that aligns with the `reason` and the your character.,
-				"function": The name of the function to call, from the list of Valid Functions only. If you decide to not use any function, generate an empty function `""`.,
-				"args": The arguments to pass to a function as a JSON dictionary. Some functions may accept no arguments, whereupon you should pass an empty dictionary `{}`.
-			}
-			Valid Functions:
+			EXAMPLE REPLY:
+			"Hello! How are you doing today?"
 		"""
-		# Functions
-		system_msg_content += "\n".join(functions_desc_list)
-		system_msg_content += """
-		\n\n
-		ONLY CALL FUNCTIONS FROM THE ABOVE LIST!
-		\n\n
-			Example interpretation of a Function (this function is NOT necessarily valid, unless it is in the previous Valid Functions list):
-			go_to(name : string, speed : number)
-			a valid response would be
-			{
-				"reason": (come up with a reason),
-				"message": (come up with a message),
-				"function": "go_to",
-				"args": {"name": "Player 1", "speed": 23.0}
-			}
-			This would call the "go_to" function with name = "Player 1" and at speed = 23.0.
-		"""
-		# Double reiteration
-		system_msg_content += "\nYou must ONLY reply in JSON using the Response Format. Non-JSON String results are INVALID"
 
 	# prefix & postfix
 	system_msg_content = chat_config.system_message_prefix + system_msg_content + chat_config.system_message_postfix
@@ -724,30 +692,52 @@ func _process_chat_api() -> void:
 		var msg := Player2Schema.Message.new()
 		msg.role = conversation_element.role
 		msg.content = conversation_element.message
+
 		# tool calls: add to history if present
-		if chat_config.tool_calls_use_tool_call_api:
-			msg.tool_calls = []
-			for tool_call_json : Dictionary in conversation_element.tool_calls_optional:
-				#print("ASDF pre: " + JSON.stringify(tool_call_json))
-				var tc : Player2Schema.ToolCall = Player2Schema.ToolCall.new() # JsonClassConverter.json_to_class(Player2Schema.ToolCall, tool_call_json)
-				tc.type = tool_call_json["type"]
-				tc.id = tool_call_json["id"]
-				tc.function = Player2Schema.FunctionCall.new()
-				tc.function.name = tool_call_json["function"]["name"]
-				# json encoded as a string here
-				tc.function.arguments = tool_call_json["function"]["arguments"]
-				#print("ASDF post: " + JsonClassConverter.class_to_json_string(tc))
-				#assert(false)
-				msg.tool_calls.append(tc)
+		msg.tool_calls = []
+		for tool_call_json : Dictionary in conversation_element.tool_calls_optional:
+			#print("ASDF pre: " + JSON.stringify(tool_call_json))
+			var tc : Player2Schema.ToolCall = Player2Schema.ToolCall.new() # JsonClassConverter.json_to_class(Player2Schema.ToolCall, tool_call_json)
+			tc.type = tool_call_json["type"]
+			tc.id = tool_call_json["id"]
+			tc.function = Player2Schema.FunctionCall.new()
+			tc.function.name = tool_call_json["function"]["name"]
+			# json encoded as a string here
+			tc.function.arguments = tool_call_json["function"]["arguments"]
+			#print("ASDF post: " + JsonClassConverter.class_to_json_string(tc))
+			#assert(false)
+			msg.tool_calls.append(tc)
+
 		req_messages.push_back(msg)
 
 	request.messages = []
 	request.messages.assign(req_messages)
+	# response_format doesn't seem to work!
+	#request.response_format = JSON.parse_string("""
+#{
+	#"type": "json_schema",
+	#"json_schema": {
+		#"name": "agent_response",
+		#"schema": {
+			#"additionalProperties": false,
+			#"properties": {
+				#"reply": {
+					#"type": "string"
+				#}
+			#},
+			#"required": [
+				#"reply"
+			#],
+			#"type": "object"
+		#},
+		#"strict": true
+	#}
+#}
+	#""")
 
 	# Tools
-	if chat_config.tool_calls_use_tool_call_api:
-		request.tools = _generate_schema_tools()
-		request.tool_choice = chat_config.tool_calls_choice
+	request.tools = _generate_schema_tools()
+	request.tool_choice = chat_config.tool_calls_choice
 
 	thinking = true
 	Player2API.chat(request,
@@ -762,37 +752,24 @@ func _process_chat_api() -> void:
 				if !"message" in choice:
 					continue
 				var tool_calls_reply : Array[AIToolCallReply]
-				if chat_config.tool_calls_use_tool_call_api:
-					# Use openAI spec tool call (less error prone but slow)
-					if "content" in choice.message:
-						var reply : String = choice.message["content"]
-						message_reply += reply
-					if 'tool_calls' in choice.message:
-						tool_calls_reply = _tool_call_json_to_tool_call_reply(choice.message["tool_calls"])
-				else:
-					# Use manual system, faster and more eager but could be error prone.
-					if "content" in choice.message:
-						var content_json : Dictionary = _parse_llm_message_json(choice.message["content"])
-						if content_json.is_empty():
-							# Invalid input probably
-							print("Invalid input from LLM! Input is expected to be in a valid JSON format.")
-							Player2ErrorHelper.send_error("Invalid input from LLM, expecting JSON. See logs for input.")
-							# DO NOT notify (infinite LLM loop and wasted calls)
-							#notify("You have sent an invalid input! Please properly format your input as JSON with the specified format.")
-							return
-						if content_json.has("message"):
-							message_reply += content_json["message"]
-						tool_calls_reply = _tool_call_non_json_content_to_tool_call_reply(content_json)
+
+				# Use openAI spec tool call (less error prone)
+				if "content" in choice.message:
+					var reply : String = choice.message["content"]
+					message_reply = reply.strip_edges()
+				if 'tool_calls' in choice.message:
+					tool_calls_reply = _tool_call_json_to_tool_call_reply(choice.message["tool_calls"])
 				var tool_call_history_messages = []
+
 				if tool_calls_reply:
 					for tool_call in tool_calls_reply:
 						var tool_name := tool_call.function_name
 						#tool_name = "announce"
 						var args := tool_call.args
 						# Tool call had an optional message to it, just force it to avoid duplicates
-						if tool_call.optional_message:
+						if tool_call.optional_message and not message_reply:
 							if !tool_call.optional_message.strip_edges().is_empty():
-								message_reply = tool_call.optional_message
+								message_reply = tool_call.optional_message.strip_edges()
 						tool_called.emit(tool_name, args)
 						if _tool_call_func_map.has(tool_name):
 							# Organize the arguments, call the function...
@@ -846,22 +823,22 @@ func _process_chat_api() -> void:
 					message_reply = message_reply.substr(1, message_reply.length() - 2)
 				message_reply = message_reply.strip_edges()
 
+				# Try to parse fake JSON
+				var parsed := JSON.parse_string(message_reply)
+				if not parsed:
+					parsed = {}
+					parsed["reply"] = message_reply
+					parsed["voice_instructions"] = ""
+
 				var agent_message := ConversationMessage.new()
 				agent_message.role = "assistant"
-				agent_message.message = message_reply
+				agent_message.message = JSON.stringify(parsed, "\t")
 				# Add to the tool calls json if we DO use the tool call API
-				if tool_calls_reply and chat_config.tool_calls_use_tool_call_api:
+				if tool_calls_reply:
 					agent_message.tool_calls_optional = []
 					if 'message' in choice and 'tool_calls' in choice.message:
 						agent_message.tool_calls_optional.append_array(choice.message['tool_calls'])
 				history_to_append.append(agent_message)
-				
-				# Add a custom reply to notify tool call success if we DO NOT use the API
-				if tool_calls_reply and !chat_config.tool_calls_use_tool_call_api:
-					var tool_call_message := ConversationMessage.new()
-					tool_call_message.role = "assistant"
-					tool_call_message.message = ". ".join(tool_call_history_messages)
-					history_to_append.append(tool_call_message)
 
 				# Update history
 				conversation_history.append_array(history_to_append)
@@ -884,7 +861,7 @@ func _process_chat_api() -> void:
 						)
 
 				# Agent Reply
-				_run_chat_internal(message_reply)
+				_run_chat_internal(parsed)
 				,
 		func(body : String, error_code : int):
 			thinking = false

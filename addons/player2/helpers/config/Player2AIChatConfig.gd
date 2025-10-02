@@ -55,11 +55,16 @@ Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars
 @export_multiline var summary_prefix : String = "Summary of earlier events: ${summary}"
 
 @export_group("Tool Calls", "tool_calls")
-## If true, will use tool calls in the API to achieve function calls. If false, will use JSON and have the LLM decide the tool calls in its chat. Leave this to false ONLY IF this is not supported.
-@export var tool_calls_use_tool_call_api : bool = true
 ## Gives information to the Agent on how to handle using tool calls.
-@export_multiline var tool_calls_choice : String = "Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
+@export_multiline var tool_calls_choice : String = \
+"Use a tool when deciding to complete a task. 
+If you say you will act upon something, use a relevant tool call to perform that action.\n
+SPEAK ACTIVELY when doing a tool call (speech). Do NOT get into the habit of tool calling quietly without speech.\n
+Your speech will be provided by the \"content\" field just like before. REMEMBER that the content field should follow the JSON described beforehand.\n
+If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
 ## Tool calls can reply with text. This is the message that will be sent.
 @export_multiline var tool_calls_reply_message : String = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
 ## Tool calls may have an optional "message" field, this will be its description to help the LLM decide how to populate it.
-@export_multiline var tool_calls_message_optional_arg_description : String = "If you wish to say something while calling this function, populate this field with your speech. Leave string empty to not say anything/do it quietly. Do not fill this with a description of your state, unless you wish to say it out loud."
+@export_multiline var tool_calls_message_optional_arg_description : String = "
+If you wish to say something while calling this function, populate this field with the JSON reply (format defined above). 
+Leave the \"reply\" field empty to perform the action silently. Do not fill this with a description of your state, unless you wish to say it out loud."

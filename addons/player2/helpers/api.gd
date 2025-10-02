@@ -627,16 +627,25 @@ func chat(request: Player2Schema.ChatCompletionRequest, on_complete: Callable, o
 		for m : Dictionary in json_req["messages"]:
 			m.erase("tool_call_id")
 			m.erase("tool_calls")
+	# also default response format if none specified
+	if !request.response_format or request.response_format.size() == 0:
+		json_req.erase("response_format")
 
 	_req("chat", HTTPClient.Method.METHOD_POST, json_req,
 		on_complete, on_fail
 	)
 
-func tts_speak(request : Player2Schema.TTSRequest,on_complete : Callable = Callable(), on_fail : Callable = Callable()) -> void:
-	_req("tts_speak", HTTPClient.Method.METHOD_POST, request, on_complete, on_fail)
+func _filter_tts_req(request : Player2Schema.TTSRequest) -> Dictionary:
+	var json_req = JsonClassConverter.class_to_json(request)
+	if !request.advanced_voice or request.advanced_voice.instructions.is_empty():
+		json_req.erase("advanced_voice")
+	return json_req
+
+func tts_speak(request : Player2Schema.TTSRequest, on_complete : Callable = Callable(), on_fail : Callable = Callable()) -> void:
+	_req("tts_speak", HTTPClient.Method.METHOD_POST, _filter_tts_req(request), on_complete, on_fail)
 
 func tts_speak_stream(request : Player2Schema.TTSRequest, on_data : Callable, on_complete : Callable = Callable(), on_fail : Callable = Callable()) -> void:
-	_req_stream("tts_speak_stream", HTTPClient.Method.METHOD_POST, request, on_data, on_complete, on_fail)
+	_req_stream("tts_speak_stream", HTTPClient.Method.METHOD_POST, _filter_tts_req(request), on_data, on_complete, on_fail)
 
 func tts_stop(on_fail : Callable = Callable()) -> void:
 	_req("tts_stop", HTTPClient.Method.METHOD_POST, "", Callable(), on_fail)

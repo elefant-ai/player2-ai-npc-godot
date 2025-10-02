@@ -5,6 +5,7 @@ func _ready() -> void:
 	var text : TextEdit = $VBoxContainer/TextEdit
 	var speak_button : Button = $VBoxContainer/Button
 	var voice_text : TextEdit = $"VBoxContainer/HBoxContainer/Voice ID"
+	var voice_instructions : TextEdit = $"VBoxContainer/Voice Instructions"
 	var stream_toggle : CheckButton = $"VBoxContainer/HBoxContainer/VBoxContainer/Stream Checkbox"
 	var mp3_toggle : CheckButton = $"VBoxContainer/HBoxContainer/VBoxContainer/Mp3 Checkbox"
 
@@ -24,5 +25,5 @@ func _ready() -> void:
 		)
 
 	speak_button.pressed.connect(func():
-		p2tts.speak(text.text)
+		p2tts.speak(text.text, [], voice_instructions.text)
 	)
