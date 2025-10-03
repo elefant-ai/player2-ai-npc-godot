@@ -239,7 +239,7 @@ func _process(delta: float) -> void:
 	_update_audio_frames_stream_wav()
 	_update_audio_frames_stream_mp3()
 
-func speak(message : String, voice_ids : Array[String] = []) -> void:
+func speak(message : String, voice_ids : Array[String] = [], voice_instructions : String = "") -> void:
 	# Cancel previous TTS
 	stop()
 
@@ -257,6 +257,8 @@ func speak(message : String, voice_ids : Array[String] = []) -> void:
 	req.audio_format = "wav" if config.use_wav else "mp3" # TODO: Customize? Enum?
 	var voice_ids_override : Array[String] = [config.voice_id]
 	req.voice_ids = voice_ids if config.voice_id.is_empty() else voice_ids_override
+	req.advanced_voice = Player2Schema.TTSRequestAdvancedVoice.new()
+	req.advanced_voice.instructions = voice_instructions
 
 	if config.stream:
 		# Stream.
