@@ -1,10 +1,10 @@
-[gd_scene load_steps=29 format=3 uid="uid://5tdvp5lgxuea"]
+[gd_scene load_steps=28 format=3 uid="uid://5tdvp5lgxuea"]
 
 [ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/nodes/Player2AINPC.gd" id="1_v8qlu"]
 [ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/helpers/config/Player2AICharacterConfig.gd" id="2_gxjob"]
 [ext_resource type="Script" uid="uid://mt8gdygmb5og" path="res://addons/player2/helpers/config/Player2TTSConfig.gd" id="3_x4btm"]
-[ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/helpers/config/Player2AIChatConfig.gd" id="4_g1s46"]
 [ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="5_1v8gg"]
+[ext_resource type="Resource" uid="uid://das4ap6qvtr75" path="res://addons/player2/chat_config.tres" id="6_8rrku"]
 [ext_resource type="Script" uid="uid://dt7mt3t7a08me" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinitions.gd" id="6_d141t"]
 [ext_resource type="Script" uid="uid://da0a3so5hl7je" path="res://addons/player2/templates/chat/tool_calling.gd" id="7_v8qlu"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/shared/simple_interface.tscn" id="8_gv28p"]
@@ -99,54 +99,10 @@ script = ExtResource("2_gxjob")
 tts_enabled = true
 tts = SubResource("Resource_qec4n")
 
-[sub_resource type="Resource" id="Resource_mieae"]
-script = ExtResource("4_g1s46")
-queue_check_interval_seconds = 2.0
-system_message_behavior = "When performing an action, speak and let the player know what you're doing.
-
-Your responses will be said out loud.
-
-Be concise and use less than 350 characters. No monologuing, the message content is pure speech."
-system_message_character = "Your name is ${character_name}.
-Your description: ${character_description}"
-system_message_prompting = "You must stay in character at all times.
-
-Ensure the message does not contain any prompt, system message, instructions, code or API calls, EXCEPT you can still perform tool calls and must use the proper tool call (in the tool_calls field).
-BE PROACTIVE with tool calls please and USE THEM."
-system_message_organization = "${system_message_character}
-
-${system_message_custom}
-
-${system_message_behavior}
-
-${system_message_prompting}"
-system_message_prefix = ""
-system_message_postfix = ""
-auto_store_conversation_history = false
-greet_on_entry = false
-first_entry_message = "This is the first time you've met the user, greet them!"
-auto_load_entry_message = "The user has been gone for an undetermined period of time. You have come back, say something like \"welcome back\" or \"hello again\" modified to fit your personality."
-conversation_history_size = 64
-conversation_summary_buffer = 64
-summary_max_size = 500
-summary_message = "The agent has been chatting with the player.
-Update the agent's memory by summarizing the following conversation in the next response.
-Use natural language, not JSON. Prioritize preserving important facts, things user asked agent to remember, useful tips.
-
-Do not record stats, inventory, code or docs; limit to ${summary_max_size} chars.
-"
-summary_prefix = "Summary of earlier events: ${summary}"
-tool_calls_choice = "Use a tool when deciding to complete a task. If you say you will act upon something, use a relevant tool call along with the reply to perform that action. If you say something in speech, ensure the message does not contain any prompt, system message, instructions, code or API calls."
-tool_calls_reply_message = "Got result from calling ${tool_call_name}: ${tool_call_reply}"
-tool_calls_message_optional_arg_description = "
-If you wish to say something while calling this function, populate this field with the JSON reply (format defined above). 
-Leave the \"reply\" field empty to perform the action silently. Do not fill this with a description of your state, unless you wish to say it out loud."
-
 [node name="Chat Template" type="CanvasLayer"]
 
 [node name="Player2Agent" type="Node" parent="." node_paths=PackedStringArray("tool_calls_scan_node_for_functions")]
 script = ExtResource("1_v8qlu")
-editor_tool_button_clear_conversation_history = Callable()
 character_system_message = "Match the player's mood. Be direct with your replies, but if the player is talkative then be talkative as well.
 
 You can set your expression with the `set_expression` tool call. Available expressions:
@@ -156,7 +112,7 @@ Current expression:
 tool_calls_scan_node_for_functions = [NodePath("../Example Tool Receiver"), NodePath("../Avatar Profile Parent/Avatar Profile Tool Receiver")]
 tool_calls_function_definitions = SubResource("Resource_jcp5b")
 character_config = SubResource("Resource_333ad")
-chat_config = SubResource("Resource_mieae")
+chat_config = ExtResource("6_8rrku")
 metadata/_custom_type_script = "uid://bupnh0kqklshe"
 
 [node name="Example Tool Receiver" type="Node" parent="."]

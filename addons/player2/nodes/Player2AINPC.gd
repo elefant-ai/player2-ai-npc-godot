@@ -25,6 +25,14 @@ var editor_tool_button_clear_conversation_history = _clear_conversation_history_
 ## More specific description on how to behave.
 @export_multiline var character_system_message = "Match the player's mood. Be direct with your replies, but if the player is talkative then be talkative as well."
 
+## If true, will save our conversation history to godot's user:// directory and will auto load on startup from the history file.
+@export var auto_store_conversation_history : bool = true:
+	set(val):
+		auto_store_conversation_history = val
+		notify_property_list_changed()
+## If true, will greet the player when entering.
+@export var greet_on_entry : bool = true
+
 @export_group("Tool Calls", "tool_calls")
 ## Set this to an object to scan for functions in that object to call
 @export var tool_calls_scan_node_for_functions : Array[Node]:
@@ -41,12 +49,9 @@ var editor_tool_button_clear_conversation_history = _clear_conversation_history_
 		character_config = new_config
 		character_config.property_list_changed.connect(notify_property_list_changed)
 		notify_property_list_changed()
+
 ## More lower level Chat configuration.
-@export var chat_config : Player2AIChatConfig = Player2AIChatConfig.new():
-	set(new_config):
-		chat_config = new_config
-		chat_config.property_list_changed.connect(notify_property_list_changed)
-		notify_property_list_changed()
+@export var chat_config : Player2AIChatConfig = load("res://addons/player2/chat_config.tres")
 
 var _tts_configured = false
 ## Override TTS component to use (if you want a 3D audio source for example)
@@ -196,7 +201,7 @@ func clear_conversation_history(filename : String = ""):
 	notify_property_list_changed()
 
 func _on_entry_load_conversation_or_greet():
-	if not (chat_config.auto_store_conversation_history and load_conversation_history()):
+	if not (auto_store_conversation_history and load_conversation_history()):
 		if chat_config.greet_on_entry and !chat_config.first_entry_message.is_empty():
 			notify(chat_config.first_entry_message)
 
@@ -924,7 +929,7 @@ func _validate_property(property: Dictionary) -> void:
 		if name == "use_player2_selected_character_desired_index":
 			property.usage = PROPERTY_USAGE_NO_EDITOR
 
-	if not chat_config.auto_store_conversation_history:
+	if not auto_store_conversation_history:
 		if name == "editor_tool_button_clear_conversation_history":
 			property.usage = PROPERTY_USAGE_NO_EDITOR
 
@@ -939,7 +944,7 @@ func _property_can_revert(property: StringName) -> bool:
 
 func _property_get_revert(property: StringName) -> Variant:
 	if property == "chat_config":
-		return Player2AIChatConfig.new()
+		return load("res://addons/player2/chat_config.tres")
 	if property == "character_config":
 		return Player2AICharacterConfig.new()
 	return null
@@ -1014,7 +1019,7 @@ func _ready() -> void:
 	_queue_process_timer.start()
 
 	# Clear history if we're NOT auto storing it
-	if not chat_config.auto_store_conversation_history:
+	if not auto_store_conversation_history:
 		clear_conversation_history()
 
 	if use_player2_selected_character:
@@ -1032,5 +1037,5 @@ func _exit_tree() -> void:
 	if Engine.is_editor_hint():
 		return
 	# Before we leave, store our conversation history.
-	if chat_config.auto_store_conversation_history:
+	if auto_store_conversation_history:
 		save_conversation_history()

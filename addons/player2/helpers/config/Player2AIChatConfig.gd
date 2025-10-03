@@ -22,14 +22,6 @@ extends Resource
 @export_multiline var system_message_postfix : String = ""
 
 @export_group("Greetings and Persistent History")
-## If true, will save our conversation history to godot's user:// directory and will auto load on startup from the history file.
-@export var auto_store_conversation_history : bool = true:
-	set(val):
-		auto_store_conversation_history = val
-		# for the agent to make updates
-		notify_property_list_changed()
-## If true, will greet the player when entering.
-@export var greet_on_entry : bool = true
 ## If `greet_on_entry` is true and there is no prior history, send this to the NPC on login.
 @export_multiline var first_entry_message : String = "This is the first time you've met the user, greet them!"
 ## If `greet_on_entry` and `auto_store_conversation_history` is true, this message will be sent to the NPC on login.
