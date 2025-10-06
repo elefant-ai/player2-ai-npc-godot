@@ -202,7 +202,7 @@ func clear_conversation_history(filename : String = ""):
 
 func _on_entry_load_conversation_or_greet():
 	if not (auto_store_conversation_history and load_conversation_history()):
-		if chat_config.greet_on_entry and !chat_config.first_entry_message.is_empty():
+		if greet_on_entry and !chat_config.first_entry_message.is_empty():
 			notify(chat_config.first_entry_message)
 
 ## Load our conversation history from a file. Leave blank to use our default location.
@@ -228,7 +228,7 @@ func load_conversation_history(notify_agent_for_welcome_message: bool = true, me
 	conversation_history = deserialized
 
 	# Notify welcome message
-	if chat_config.greet_on_entry and notify_agent_for_welcome_message:
+	if greet_on_entry and notify_agent_for_welcome_message:
 		if message.is_empty():
 			message = chat_config.auto_load_entry_message
 		notify(message)
