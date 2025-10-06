@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3 uid="uid://cuj652fy4nc6h"]
+
+[ext_resource type="PackedScene" uid="uid://cdvxbm0oegixg" path="res://addons/player2/templates/rpg/entity.tscn" id="1_6lwqq"]
+[ext_resource type="Script" uid="uid://g8khjtjt60lu" path="res://addons/player2/templates/rpg/player_speech_accepter.gd" id="2_axlqe"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_axlqe"]
+radius = 178.059
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_6lwqq"]
+radius = 416.097
+
+[node name="NPC" instance=ExtResource("1_6lwqq")]
+
+[node name="Detectors" type="Node" parent="." index="2"]
+
+[node name="Player Speech Detector" type="Area2D" parent="Detectors" index="0"]
+collision_layer = 0
+collision_mask = 256
+monitorable = false
+script = ExtResource("2_axlqe")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Detectors/Player Speech Detector" index="0"]
+shape = SubResource("CircleShape2D_axlqe")
+disabled = true
+
+[node name="Player Sight Detector" type="Area2D" parent="Detectors" index="1"]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Detectors/Player Sight Detector" index="0"]
+shape = SubResource("CircleShape2D_6lwqq")
+disabled = true

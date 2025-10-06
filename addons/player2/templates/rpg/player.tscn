@@ -1,0 +1,31 @@
+[gd_scene load_steps=6 format=3 uid="uid://c5wfijuq8ym6t"]
+
+[ext_resource type="PackedScene" uid="uid://cdvxbm0oegixg" path="res://addons/player2/templates/rpg/entity.tscn" id="1_e83mc"]
+[ext_resource type="Script" uid="uid://chdeiv46f70cw" path="res://addons/player2/templates/rpg/player.gd" id="2_c1lr3"]
+[ext_resource type="PackedScene" uid="uid://dojecawo8ra37" path="res://addons/player2/templates/rpg/speech_bubble.tscn" id="3_s7pla"]
+[ext_resource type="Script" uid="uid://bnttvyylpd8v5" path="res://addons/player2/templates/rpg/player_speech_emitter.gd" id="4_c1lr3"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_e83mc"]
+radius = 66.0076
+
+[node name="Player" node_paths=PackedStringArray("bubble_dialogue") instance=ExtResource("1_e83mc")]
+collision_layer = 3
+collision_mask = 1
+script = ExtResource("2_c1lr3")
+bubble_dialogue = NodePath("Speech Bubble")
+
+[node name="Speech Bubble" parent="." index="2" instance=ExtResource("3_s7pla")]
+visible = false
+offset_left = -128.0
+offset_top = -143.0
+offset_right = 128.0
+offset_bottom = -15.0
+
+[node name="Player Speech Area" type="Area2D" parent="." index="3"]
+collision_layer = 256
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_c1lr3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player Speech Area" index="0"]
+shape = SubResource("CircleShape2D_e83mc")
