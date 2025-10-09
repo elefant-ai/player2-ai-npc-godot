@@ -16,3 +16,6 @@ data_*/
 mono_crash.*.json
 
 *.tmp
+
+# Build
+Builds
