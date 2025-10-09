@@ -44,6 +44,9 @@ endpoint_check = "{root}/v1/health"
 script = ExtResource("3_m5qx4")
 download_player2_launcher = "https://player2.game/"
 profile_ai_power = "https://player2.game/profile/ai-power"
+developer_dashboard = "https://player2.game/profile/developer/"
+upload_game = "https://player2.game/profile/developer/{client_id}/upload"
+client_id_help = "https://github.com/elefant-ai/player2-ai-npc-godot/tree/main?tab=readme-ov-file#creating-your-player2-project-and-getting-the-client-id"
 
 [resource]
 script = ExtResource("3_pqu85")
