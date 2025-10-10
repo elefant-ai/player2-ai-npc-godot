@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bv02bk1swewdy" path="res://addons/player2/templates/rpg/entity.gd" id="1_828ji"]
 [ext_resource type="Curve" uid="uid://bbksielqsi1jj" path="res://addons/player2/templates/rpg/sprite_bounce_curve.tres" id="2_t4qvq"]
-[ext_resource type="Texture2D" uid="uid://pxwnioup5l5n" path="res://addons/player2/p2.png" id="3_tqsu8"]
+[ext_resource type="Texture2D" uid="uid://csrgmddg5dn4i" path="res://addons/player2/templates/rpg/thirdparty/kenney/tiny-dungeon/Tiles/tile_0084.png" id="2_tqsu8"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_30f50"]
 size = Vector2(14, 6)
@@ -11,6 +11,7 @@ size = Vector2(14, 6)
 collision_layer = 0
 collision_mask = 0
 script = ExtResource("1_828ji")
+sprite_texture = ExtResource("2_tqsu8")
 sprite_bounce_root = NodePath("Sprite2D")
 sprite_bounce_curve = ExtResource("2_t4qvq")
 
@@ -20,7 +21,4 @@ shape = SubResource("RectangleShape2D_30f50")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture_filter = 1
-scale = Vector2(0.006, 0.006)
-texture = ExtResource("3_tqsu8")
-region_enabled = true
-region_rect = Rect2(2205.91, 1988.77, 2590.88, 2591.35)
+texture = ExtResource("2_tqsu8")

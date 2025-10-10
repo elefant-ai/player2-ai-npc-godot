@@ -1,5 +1,23 @@
-class_name Entity
+@tool
+class_name Player2RPGEntity
 extends CharacterBody2D
+
+@export_group("Sprite", "sprite")
+@export var sprite_texture : Texture2D:
+	get:
+		return $Sprite2D.texture
+	set(val):
+		if !Engine.is_editor_hint():
+			await ready
+		$Sprite2D.texture = val
+@export var sprite_scale : float = 1:
+	get:
+		return $Sprite2D.scale.x
+	set(val):
+		if !Engine.is_editor_hint():
+			await ready
+		$Sprite2D.scale.x = val
+		$Sprite2D.scale.y = val
 
 @export_group("Sprite Bounce", "sprite_bounce")
 @export var sprite_bounce_root: Node2D
@@ -65,8 +83,12 @@ func _process_sprite_bounce(delta : float) -> void:
 		_sprite_bounce_cycle -= sample_t
 
 func _process(delta : float) -> void:
+	if Engine.is_editor_hint():
+		return
 	_process_sprite_bounce(delta)
 
 func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	_process_move_speed(move_input.limit_length(1), delta)
 	move_and_slide()

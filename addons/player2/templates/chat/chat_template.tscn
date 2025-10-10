@@ -7,7 +7,7 @@
 [ext_resource type="Resource" uid="uid://das4ap6qvtr75" path="res://addons/player2/chat_config.tres" id="6_8rrku"]
 [ext_resource type="Script" uid="uid://dt7mt3t7a08me" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinitions.gd" id="6_d141t"]
 [ext_resource type="Script" uid="uid://da0a3so5hl7je" path="res://addons/player2/templates/chat/tool_calling.gd" id="7_v8qlu"]
-[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/shared/simple_interface.tscn" id="8_gv28p"]
+[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://addons/player2/templates/shared/simple_interface.tscn" id="8_gv28p"]
 [ext_resource type="Texture2D" uid="uid://d3jy0nagn27kf" path="res://addons/player2/ui/texture/speaker-svgrepo-com.svg" id="9_lx5dc"]
 [ext_resource type="Script" uid="uid://on6qvq2lmx1" path="res://addons/player2/templates/chat/profile_expressions.gd" id="9_osgfy"]
 [ext_resource type="Texture2D" uid="uid://cy4sarbk1xgiy" path="res://addons/player2/templates/chat/expressions/face-smile-svgrepo-com.svg" id="10_rts2l"]

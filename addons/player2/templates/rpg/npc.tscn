@@ -1,7 +1,35 @@
-[gd_scene load_steps=5 format=3 uid="uid://cuj652fy4nc6h"]
+[gd_scene load_steps=16 format=3 uid="uid://b8lyr2wotc21j"]
 
 [ext_resource type="PackedScene" uid="uid://cdvxbm0oegixg" path="res://addons/player2/templates/rpg/entity.tscn" id="1_6lwqq"]
-[ext_resource type="Script" uid="uid://g8khjtjt60lu" path="res://addons/player2/templates/rpg/player_speech_accepter.gd" id="2_axlqe"]
+[ext_resource type="Script" uid="uid://g8khjtjt60lu" path="res://addons/player2/templates/rpg/speech/player_speech_accepter.gd" id="2_axlqe"]
+[ext_resource type="Script" uid="uid://bcvkoahne4w1d" path="res://addons/player2/templates/rpg/npc.gd" id="2_ssmdj"]
+[ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/nodes/Player2AINPC.gd" id="4_p6i8k"]
+[ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="5_ne6o3"]
+[ext_resource type="Script" uid="uid://dt7mt3t7a08me" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinitions.gd" id="6_15klw"]
+[ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/helpers/config/Player2AICharacterConfig.gd" id="7_wetik"]
+[ext_resource type="Script" uid="uid://mt8gdygmb5og" path="res://addons/player2/helpers/config/Player2TTSConfig.gd" id="8_gvhru"]
+[ext_resource type="Resource" uid="uid://das4ap6qvtr75" path="res://addons/player2/chat_config.tres" id="9_ek077"]
+[ext_resource type="PackedScene" uid="uid://dojecawo8ra37" path="res://addons/player2/templates/rpg/speech/speech_bubble.tscn" id="10_ne6o3"]
+
+[sub_resource type="Resource" id="Resource_t7l7t"]
+Resource = null
+resource_path = "res://addons/player2/templates/rpg/npc.tscn::Resource_t7l7t"
+script = ExtResource("6_15klw")
+definitions = Array[ExtResource("5_ne6o3")]([])
+
+[sub_resource type="Resource" id="Resource_epf4f"]
+script = ExtResource("8_gvhru")
+stream = false
+use_wav = false
+tts_speed = 1.0
+tts_default_language = 0
+tts_default_gender = 0
+voice_id = ""
+
+[sub_resource type="Resource" id="Resource_cok4r"]
+script = ExtResource("7_wetik")
+tts_enabled = true
+tts = SubResource("Resource_epf4f")
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_axlqe"]
 radius = 178.059
@@ -10,18 +38,31 @@ radius = 178.059
 radius = 416.097
 
 [node name="NPC" instance=ExtResource("1_6lwqq")]
+script = ExtResource("2_ssmdj")
+ai_name = "NPC"
+ai_description = "An NPC from the town, just an ordinary folk with some stories to tell."
+metadata/_edit_group_ = true
 
-[node name="Detectors" type="Node" parent="." index="2"]
+[node name="Player2AINPC" type="Node" parent="." index="2"]
+script = ExtResource("4_p6i8k")
+character_name = "NPC"
+character_description = "An NPC from the town, just an ordinary folk with some stories to tell."
+greet_on_entry = false
+tool_calls_function_definitions = SubResource("Resource_t7l7t")
+character_config = SubResource("Resource_cok4r")
+chat_config = ExtResource("9_ek077")
+metadata/_custom_type_script = "uid://bupnh0kqklshe"
+
+[node name="Detectors" type="Node2D" parent="." index="3"]
+visible = false
 
 [node name="Player Speech Detector" type="Area2D" parent="Detectors" index="0"]
-collision_layer = 0
+collision_layer = 256
 collision_mask = 256
-monitorable = false
 script = ExtResource("2_axlqe")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Detectors/Player Speech Detector" index="0"]
 shape = SubResource("CircleShape2D_axlqe")
-disabled = true
 
 [node name="Player Sight Detector" type="Area2D" parent="Detectors" index="1"]
 collision_layer = 0
@@ -30,4 +71,13 @@ monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Detectors/Player Sight Detector" index="0"]
 shape = SubResource("CircleShape2D_6lwqq")
-disabled = true
+
+[node name="Speech Bubble" parent="." index="4" instance=ExtResource("10_ne6o3")]
+visible = false
+offset_left = -129.0
+offset_top = -144.0
+offset_right = 127.0
+offset_bottom = -16.0
+
+[connection signal="chat_received" from="Player2AINPC" to="Speech Bubble" method="play"]
+[connection signal="heard_speech" from="Detectors/Player Speech Detector" to="Player2AINPC" method="chat"]

@@ -1,21 +1,17 @@
 [gd_scene load_steps=3 format=3 uid="uid://d2lukdapb4eub"]
 
-[ext_resource type="PackedScene" uid="uid://cdvxbm0oegixg" path="res://addons/player2/templates/rpg/entity.tscn" id="1_erbxx"]
-[ext_resource type="PackedScene" uid="uid://c5wfijuq8ym6t" path="res://addons/player2/templates/rpg/player.tscn" id="2_30f50"]
+[ext_resource type="PackedScene" uid="uid://b8lyr2wotc21j" path="res://addons/player2/templates/rpg/npc.tscn" id="2_5dgrg"]
+[ext_resource type="PackedScene" uid="uid://bewt3bfe00575" path="res://addons/player2/templates/rpg/player.tscn" id="2_30f50"]
 
 [node name="Rpg Template" type="Node2D"]
 
-[node name="Entity" parent="." instance=ExtResource("1_erbxx")]
-position = Vector2(73, 45)
-
 [node name="Player" parent="." instance=ExtResource("2_30f50")]
-position = Vector2(129, 88)
+position = Vector2(188.19, 81.9506)
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
 zoom = Vector2(2, 2)
-limit_left = 0
-limit_top = 0
-limit_right = 1280
-limit_bottom = 1280
 limit_smoothed = true
 position_smoothing_enabled = true
+
+[node name="NPC" parent="." instance=ExtResource("2_5dgrg")]
+position = Vector2(441, 96)

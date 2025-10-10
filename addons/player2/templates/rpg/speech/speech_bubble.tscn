@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://dojecawo8ra37"]
 
-[ext_resource type="Script" uid="uid://dsh154eai2tbn" path="res://addons/player2/templates/rpg/speech_bubble.gd" id="2_y2cti"]
+[ext_resource type="Script" uid="uid://dsh154eai2tbn" path="res://addons/player2/templates/rpg/speech/speech_bubble.gd" id="2_y2cti"]
 
 [sub_resource type="Theme" id="Theme_2u3js"]
 default_font_size = 0
@@ -35,4 +35,4 @@ script = ExtResource("2_y2cti")
 [node name="Timer" type="Timer" parent="."]
 wait_time = 5.0
 
-[connection signal="timeout" from="Timer" to="." method="hide"]
+[connection signal="timeout" from="Timer" to="." method="fade"]
