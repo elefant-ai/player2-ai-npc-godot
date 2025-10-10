@@ -313,10 +313,30 @@ func _send_socket(socket : WebSocketPeer) -> void:
 		#var b : Control = $"../Control/ColorRect"
 		#b.position.y = i16 * 0.01
 
-		var err = socket.send(bytes)
+		# Sockets can have a max of 65535 buffered up
+		# Figure out how much we can send
+		var to_send := bytes
+		var max_size := 65535 - socket.get_current_outbound_buffered_amount()
+		if max_size == 0:
+			# do nothing, wait for buffer to clear
+			print("(socket send delayed frame waiting for buffer to clear)")
+			return
+		if to_send.size() > max_size:
+			to_send = to_send.slice(0, max_size)
+
+		#print(socket.inbound_buffer_size, ", ", socket.outbound_buffer_size, ", ", socket.get_current_outbound_buffered_amount(), ": ", bytes.size(), " -> ", to_send.size())
+
+		var err = socket.send(to_send)
 		if err != OK:
 			print("SOCKET SEND ERROR:", err)
-	_audio_capture_buffer.clear()
+
+		if bytes.size() > to_send.size():
+			_audio_capture_buffer = StreamPeerBuffer.new()
+			_audio_capture_buffer.put_data(bytes.slice(to_send.size()))
+		else:
+			_audio_capture_buffer.clear()
+	else:
+		_audio_capture_buffer.clear()
 
 func _get_message_total_so_far() -> String:
 	if _audio_stream_transcript.length() > 0:
