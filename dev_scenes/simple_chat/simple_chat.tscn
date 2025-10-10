@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://bpvfdwoxmeah3" path="res://addons/player2/helpers/config/Player2AIChatConfig.gd" id="4_a46nd"]
 [ext_resource type="Script" uid="uid://r7ec3bhr4ij0" path="res://dev_scenes/simple_chat/ai_simple_tool_receiver.gd" id="4_ccetc"]
 [ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="4_ofn2n"]
-[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/shared/simple_interface.tscn" id="5_333ad"]
+[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://addons/player2/templates/shared/simple_interface.tscn" id="5_333ad"]
 [ext_resource type="Script" uid="uid://dt7mt3t7a08me" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinitions.gd" id="5_ccetc"]
 
 [sub_resource type="Resource" id="Resource_ccetc"]

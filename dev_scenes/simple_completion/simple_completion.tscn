@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://b0bvpk34hdjbf"]
 
-[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/shared/simple_interface.tscn" id="1_gdmo3"]
+[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://addons/player2/templates/shared/simple_interface.tscn" id="1_gdmo3"]
 [ext_resource type="Script" uid="uid://codbx8odbryj7" path="res://addons/player2/nodes/Player2AIChatCompletion.gd" id="2_hgcvq"]
 
 [node name="SimpleCompletion" type="CanvasLayer"]
