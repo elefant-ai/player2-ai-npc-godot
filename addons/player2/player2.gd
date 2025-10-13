@@ -27,7 +27,8 @@ var _editor_ui_helper := Player2EditorPublishButtonUIHelper.new()
 func _enter_tree() -> void:
 
 	# Custom UI
-	_editor_ui_helper.create_button()
+	if _editor_ui_helper:
+		_editor_ui_helper.create_button()
 
 	# Settings
 	# Client ID
@@ -88,7 +89,8 @@ func _enter_tree() -> void:
 func _exit_tree() -> void:
 
 	# Custom UI
-	_editor_ui_helper.delete_button()
+	if _editor_ui_helper:
+		_editor_ui_helper.delete_button()
 
 	# Settings
 	ProjectSettings.clear("player2/client_id")
