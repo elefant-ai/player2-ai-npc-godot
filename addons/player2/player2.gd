@@ -22,7 +22,14 @@ const API_HELPER_AUTOLOAD_PATH = "res://addons/player2/helpers/api.gd"
 
 const OPENING_PROMPT_UI_SCENE = "res://addons/player2/ui/opening/Player2OpeningUI.tscn"
 
+var _editor_ui_helper := Player2EditorPublishButtonUIHelper.new()
+
 func _enter_tree() -> void:
+
+	# Custom UI
+	if _editor_ui_helper:
+		_editor_ui_helper.create_button()
+
 	# Settings
 	# Client ID
 	if not ProjectSettings.has_setting("player2/client_id"):
@@ -80,6 +87,11 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
+
+	# Custom UI
+	if _editor_ui_helper:
+		_editor_ui_helper.delete_button()
+
 	# Settings
 	ProjectSettings.clear("player2/client_id")
 	ProjectSettings.clear("player2/hide_opening_prompt")
@@ -103,6 +115,7 @@ func _enable_plugin() -> void:
 	pass
 func _disable_plugin() -> void:
 	pass
+
 
 func _open_scene_template(template_scene : PackedScene):
 	print("OPENING SCENE: ", template_scene.resource_path)
