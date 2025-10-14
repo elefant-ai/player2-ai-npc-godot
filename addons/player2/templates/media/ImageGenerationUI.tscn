@@ -1,7 +1,6 @@
-[gd_scene load_steps=5 format=3 uid="uid://cbcjvi1f3l6py"]
+[gd_scene load_steps=4 format=3 uid="uid://di80370u322bl"]
 
 [ext_resource type="Script" uid="uid://bork4vx0iyywd" path="res://addons/player2/ui/image_generation_ui.gd" id="1_image_gen"]
-[ext_resource type="PackedScene" uid="uid://5tdvp5lgxuea" path="res://addons/player2/templates/chat/chat_template.tscn" id="2_jfk8u"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
 bg_color = Color(0.25, 0.5, 0.75, 1)
@@ -34,9 +33,9 @@ image_display = NodePath("Panel/MarginContainer/VBoxContainer/ImageDisplay")
 status_label = NodePath("Panel/MarginContainer/VBoxContainer/StatusLabel")
 
 [node name="ToggleButton" type="Button" parent="."]
-offset_left = 20.0
+offset_left = 11.0
 offset_top = 13.0
-offset_right = 200.0
+offset_right = 191.0
 offset_bottom = 58.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(0.9, 0.9, 0.9, 1)
@@ -151,5 +150,3 @@ layout_mode = 2
 size_flags_vertical = 3
 expand_mode = 1
 stretch_mode = 5
-
-[node name="Chat Template" parent="." instance=ExtResource("2_jfk8u")]
