@@ -608,6 +608,8 @@ func _alert_error_fail(code : int, use_http_result : bool = false, response_body
 			Player2ErrorHelper.send_error("User is not authenticated: " + response_body)
 		402:
 			Player2ErrorHelper.send_error("Insufficient credits to complete request: " + response_body)
+		403:
+			Player2ErrorHelper.send_error("Forbidden: " + response_body)
 		500:
 			Player2ErrorHelper.send_error("Internal server error: " + response_body)
 
@@ -652,6 +654,9 @@ func joules(on_complete : Callable, on_fail : Callable = Callable()) -> void:
 
 func get_selected_characters(on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	_req("get_selected_characters", HTTPClient.Method.METHOD_GET, "", on_complete, on_fail)
+
+func image_generate(request : Player2Schema.ImageGenerateRequest, on_complete : Callable, on_fail : Callable = Callable()) -> void:
+	_req("image_generate", HTTPClient.Method.METHOD_POST, request, on_complete, on_fail)
 
 func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 

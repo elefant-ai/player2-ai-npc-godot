@@ -77,3 +77,11 @@ class AuthPollRequest extends Resource:
 	@export var client_id : String
 	@export var device_code : String
 	@export var grant_type : String
+
+class ImageGenerateRequest extends Resource:
+	@export var prompt : String
+	@export var height : int
+	@export var width : int
+
+class ImageGenerateResponse extends Resource:
+	@export var image : String

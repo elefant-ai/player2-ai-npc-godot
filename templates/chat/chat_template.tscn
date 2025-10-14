@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://5tdvp5lgxuea"]
+[gd_scene load_steps=17 format=3 uid="uid://5tdvp5lgxuea"]
 
 [ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/nodes/Player2AINPC.gd" id="1_v8qlu"]
 [ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/helpers/config/Player2AICharacterConfig.gd" id="2_gxjob"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://dt7mt3t7a08me" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinitions.gd" id="6_d141t"]
 [ext_resource type="Script" uid="uid://da0a3so5hl7je" path="res://templates/chat/tool_calling.gd" id="7_v8qlu"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://dev_scenes/shared/simple_interface.tscn" id="8_gv28p"]
+[ext_resource type="PackedScene" uid="uid://cnl4gkj8xrp3p" path="res://addons/player2/ui/ImageGenerationUI.tscn" id="9_gxjob"]
 
 [sub_resource type="Resource" id="Resource_v8qlu"]
 Resource = null
@@ -114,6 +115,12 @@ script = ExtResource("7_v8qlu")
 
 [node name="Simple Interface" parent="." instance=ExtResource("8_gv28p")]
 offset_top = -156.0
+
+[node name="ImageGenerationUI" parent="Simple Interface" instance=ExtResource("9_gxjob")]
+
+[node name="History Label" parent="Simple Interface" index="3"]
+offset_top = -224.0
+offset_bottom = -10.0
 
 [node name="TTS Indicator" type="ColorRect" parent="."]
 visible = false
