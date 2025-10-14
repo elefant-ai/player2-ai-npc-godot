@@ -13,6 +13,7 @@ func run_await_async(call : Callable, on_done : Callable) -> void:
 func call_timeout(call : Callable, timeout : float) -> void:
 	var t = Timer.new()
 	t.autostart = false
+	t.process_mode = Node.PROCESS_MODE_ALWAYS
 	t.timeout.connect(func():
 		call.call()
 		t.queue_free())

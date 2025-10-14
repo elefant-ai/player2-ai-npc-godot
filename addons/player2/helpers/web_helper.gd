@@ -87,9 +87,9 @@ func request_stream(host : String, port : int, path : String, method: HTTPClient
 			on_fail.call("Failed to connect to host (" + host + ":" + str(port) + "): " + str(connect_err), connect_err)
 		return
 	# Wait until resolved and connected.
+	print("Connecting...")
 	while http_client.get_status() == HTTPClient.STATUS_CONNECTING or http_client.get_status() == HTTPClient.STATUS_RESOLVING:
 		http_client.poll()
-		print("Connecting...")
 		await get_tree().process_frame
 	# Request the public data of my own profile
 	var req_err := http_client.request(method, path, headers, string_body)
@@ -98,13 +98,13 @@ func request_stream(host : String, port : int, path : String, method: HTTPClient
 			on_fail.call("Failed to connect to path (" + path + " for " + host + ":" + str(port) + "): " + str(req_err), req_err)
 		return
 
+	print("Requesting...")
 	while http_client.get_status() == HTTPClient.STATUS_REQUESTING:
 		# Keep polling for as long as the request is being processed.
 		http_client.poll()
-		print("Requesting...")
 		await get_tree().process_frame
 
-	print("STREAMING ", connect_err, ", ", req_err, ": ", http_client.get_status())
+	# print("STREAMING ", connect_err, ", ", req_err, ": ", http_client.get_status())
 
 	if http_client.has_response():
 		while http_client.get_status() == HTTPClient.STATUS_BODY:
@@ -116,14 +116,14 @@ func request_stream(host : String, port : int, path : String, method: HTTPClient
 			# Get a chunk.
 			var chunk = http_client.read_response_body_chunk()
 			while chunk.size() != 0:
-				print("    Chunk: ", chunk.size())
+				# print("    Chunk: ", chunk.size())
 				rb = rb + chunk
 				chunk = http_client.read_response_body_chunk()
 
 			if rb.size() != 0:
 				var code := http_client.get_response_code()
 				var headers_reply := http_client.get_response_headers_as_dictionary()
-				print("GOT: ", code, rb.size())
+				# print("GOT: ", code, rb.size())
 				if on_data:
 					var keep_running : bool = on_data.call(rb, code, headers_reply)
 					if not keep_running:

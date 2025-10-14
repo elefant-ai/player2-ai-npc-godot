@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cubtlch2k182f"]
 
-[ext_resource type="Texture2D" uid="uid://qelpvbvxbnjw" path="res://addons/player2/ui/play-svgrepo-com.svg" id="1_j73wk"]
+[ext_resource type="Texture2D" uid="uid://qelpvbvxbnjw" path="res://addons/player2/ui/texture/play-svgrepo-com.svg" id="1_j73wk"]
 
 [node name="Voice Selection Button" type="HBoxContainer"]
 

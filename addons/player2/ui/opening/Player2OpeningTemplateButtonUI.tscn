@@ -1,0 +1,52 @@
+[gd_scene load_steps=4 format=3 uid="uid://bgesamm4l5wbt"]
+
+[ext_resource type="StyleBox" uid="uid://cv5q6cs7tgau5" path="res://addons/player2/ui/theme/Player2GreenStylebox.tres" id="1_hfgye"]
+[ext_resource type="Script" uid="uid://dv72xwld63jd1" path="res://addons/player2/ui/opening/template_button_ui.gd" id="1_wokhk"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_hfgye"]
+font_size = 18
+font_color = Color(0.359781, 0.17782, 0.39106, 1)
+shadow_size = 10
+shadow_color = Color(0.6192, 0.711507, 0.86, 0.560784)
+
+[node name="Template Button" type="Button"]
+custom_minimum_size = Vector2(128, 128)
+offset_right = 253.0
+offset_bottom = 253.0
+size_flags_vertical = 4
+theme_override_styles/normal = ExtResource("1_hfgye")
+script = ExtResource("1_wokhk")
+
+[node name="Panel" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -13.0
+offset_bottom = -13.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Title"
+label_settings = SubResource("LabelSettings_hfgye")
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Icon" type="TextureRect" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+expand_mode = 2
+stretch_mode = 5

@@ -5,16 +5,12 @@ extends Resource
 enum Gender {MALE, FEMALE, OTHER}
 enum Language { en_US, en_GB, ja_JP, zh_CN, es_ES, fr_FR, hi_IN, it_IT, pt_BR }
 
-var stream = false
+## If true, will stream audio as we receive it.
+## Otherwise will grab the entire audio at once.
+@export var stream : bool = false
 
-## TODO: TTS Streaming is broken, add back in once streaming is confirmed to work
-## If true, will stream. Otherwise will grab the entire audio at once.
-# @export var stream : bool = true
-
-# This depends on whether we're streaming or not
-var use_wav : bool:
-	get:
-		return stream
+## Experiment with this. Setting to false (use Mp3) is generally better but wav is a good fallback.
+@export var use_wav : bool = false
 
 ## Speed Scale (1 is default)
 @export var tts_speed : float = 1

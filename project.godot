@@ -70,6 +70,7 @@ talk={
 [player2]
 
 client_id=""
+hide_opening_prompt=false
 
 [rendering]
 

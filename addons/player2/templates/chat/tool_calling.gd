@@ -14,10 +14,10 @@ func console_log_hello_world():
 ## black and then go back to normal. Notifies caller when one blink is successful.
 func blink() -> String:
 	print("blinked!")
-	var blink_background = $"../Simple Interface"
-	var c = blink_background.color
-	blink_background.color = Color.BLACK
-	blink_background.create_tween().tween_property(blink_background, "color", c, 0.5).set_trans(Tween.TRANS_SINE)
+	var blink_background : Panel = $"../Simple Interface"
+	var c = blink_background.modulate
+	blink_background.modulate = Color.BLACK
+	blink_background.create_tween().tween_property(blink_background, "modulate", c, 0.5).set_trans(Tween.TRANS_SINE)
 	await get_tree().create_timer(1).timeout
 	print("done.")
 	return "Finished blinking."

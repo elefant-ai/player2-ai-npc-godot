@@ -1,0 +1,12 @@
+lightning svg:
+	by Leonid Tsvetkov
+	https://www.svgrepo.com/svg/457852/lightning-1
+play svg:
+	by Dazzle UI
+	https://www.svgrepo.com/svg/532511/play
+speaker:
+	by pixelbazaar
+	https://www.svgrepo.com/svg/513516/speaker
+send-alt-1:
+	by Dazzle UI
+	https://www.svgrepo.com/svg/533310/send-alt-1?
