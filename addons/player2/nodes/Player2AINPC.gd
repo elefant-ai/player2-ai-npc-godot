@@ -1019,8 +1019,9 @@ func _ready() -> void:
 	_queue_process_timer.start()
 
 	# Clear history if we're NOT auto storing it
-	if not auto_store_conversation_history:
-		clear_conversation_history()
+	# no actually don't do this we might do it manually...
+	#if not auto_store_conversation_history:
+		#clear_conversation_history()
 
 	if use_player2_selected_character:
 		_update_selected_character_from_endpoint()

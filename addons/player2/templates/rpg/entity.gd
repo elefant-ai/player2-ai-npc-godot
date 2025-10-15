@@ -9,15 +9,17 @@ extends CharacterBody2D
 	set(val):
 		if !Engine.is_editor_hint():
 			await ready
-		$Sprite2D.texture = val
+		if $Sprite2D:
+			$Sprite2D.texture = val
 @export var sprite_scale : float = 1:
 	get:
 		return $Sprite2D.scale.x
 	set(val):
 		if !Engine.is_editor_hint():
 			await ready
-		$Sprite2D.scale.x = val
-		$Sprite2D.scale.y = val
+		if $Sprite2D:
+			$Sprite2D.scale.x = val
+			$Sprite2D.scale.y = val
 
 @export_group("Sprite Bounce", "sprite_bounce")
 @export var sprite_bounce_root: Node2D

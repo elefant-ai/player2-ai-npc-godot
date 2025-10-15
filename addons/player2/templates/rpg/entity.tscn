@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://csrgmddg5dn4i" path="res://addons/player2/templates/rpg/thirdparty/kenney/tiny-dungeon/Tiles/tile_0084.png" id="2_tqsu8"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_30f50"]
-size = Vector2(14, 6)
+size = Vector2(10, 6)
 
 [node name="Entity" type="CharacterBody2D" node_paths=PackedStringArray("sprite_bounce_root")]
 collision_layer = 0
