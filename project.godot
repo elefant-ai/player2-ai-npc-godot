@@ -30,6 +30,7 @@ Player2API="*res://addons/player2/helpers/api.gd"
 [display]
 
 window/stretch/mode="canvas_items"
+window/vsync/vsync_mode=0
 
 [editor_plugins]
 
@@ -66,6 +67,16 @@ talk={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":96,"key_label":0,"unicode":96,"location":0,"echo":false,"script":null)
 ]
 }
+
+[layer_names]
+
+2d_physics/layer_1="Solid"
+2d_physics/layer_2="Player"
+2d_physics/layer_9="Player Speech"
+
+[physics]
+
+common/physics_interpolation=true
 
 [player2]
 

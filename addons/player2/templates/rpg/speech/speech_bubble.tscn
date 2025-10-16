@@ -1,0 +1,38 @@
+[gd_scene load_steps=3 format=3 uid="uid://dojecawo8ra37"]
+
+[ext_resource type="Script" uid="uid://dsh154eai2tbn" path="res://addons/player2/templates/rpg/speech/speech_bubble.gd" id="2_y2cti"]
+
+[sub_resource type="Theme" id="Theme_2u3js"]
+default_font_size = 0
+
+[node name="Speech Bubble" type="TextEdit"]
+texture_filter = 1
+custom_minimum_size = Vector2(256, 128)
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 56.0
+offset_right = 96.0
+offset_bottom = 120.0
+grow_horizontal = 2
+pivot_offset = Vector2(128, 0)
+theme = SubResource("Theme_2u3js")
+text = "Hello there!"
+editable = false
+context_menu_enabled = false
+emoji_menu_enabled = false
+shortcut_keys_enabled = false
+selecting_enabled = false
+deselect_on_focus_loss_enabled = false
+drag_and_drop_selection_enabled = false
+virtual_keyboard_enabled = false
+middle_mouse_paste_enabled = false
+empty_selection_clipboard_enabled = false
+wrap_mode = 1
+script = ExtResource("2_y2cti")
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 5.0
+
+[connection signal="timeout" from="Timer" to="." method="fade"]

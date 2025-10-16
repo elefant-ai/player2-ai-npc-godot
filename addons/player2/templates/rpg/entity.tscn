@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3 uid="uid://cdvxbm0oegixg"]
+
+[ext_resource type="Script" uid="uid://bv02bk1swewdy" path="res://addons/player2/templates/rpg/entity.gd" id="1_828ji"]
+[ext_resource type="Texture2D" uid="uid://dywrfrp4mbq4v" path="res://addons/player2/templates/rpg/thirdparty/kenney/tiny-dungeon/Tiles/tile_0085.png" id="2_828ji"]
+[ext_resource type="Curve" uid="uid://bbksielqsi1jj" path="res://addons/player2/templates/rpg/sprite_bounce_curve.tres" id="2_t4qvq"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_30f50"]
+size = Vector2(10, 6)
+
+[node name="Entity" type="CharacterBody2D" node_paths=PackedStringArray("sprite_bounce_root")]
+collision_layer = 0
+collision_mask = 0
+motion_mode = 1
+script = ExtResource("1_828ji")
+sprite_texture = ExtResource("2_828ji")
+sprite_bounce_root = NodePath("Sprite2D")
+sprite_bounce_curve = ExtResource("2_t4qvq")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 4)
+shape = SubResource("RectangleShape2D_30f50")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("2_828ji")

@@ -1,0 +1,68 @@
+[gd_scene load_steps=8 format=3 uid="uid://bewt3bfe00575"]
+
+[ext_resource type="PackedScene" uid="uid://cdvxbm0oegixg" path="res://addons/player2/templates/rpg/entity.tscn" id="1_e83mc"]
+[ext_resource type="Script" uid="uid://chdeiv46f70cw" path="res://addons/player2/templates/rpg/player.gd" id="2_c1lr3"]
+[ext_resource type="PackedScene" uid="uid://dojecawo8ra37" path="res://addons/player2/templates/rpg/speech/speech_bubble.tscn" id="3_s7pla"]
+[ext_resource type="Script" uid="uid://bnttvyylpd8v5" path="res://addons/player2/templates/rpg/speech/player_speech_emitter.gd" id="4_c1lr3"]
+[ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://addons/player2/templates/shared/simple_interface.tscn" id="5_s7pla"]
+[ext_resource type="Script" uid="uid://1tplyfhmalqq" path="res://addons/player2/templates/rpg/speech/on_key.gd" id="6_0x1em"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_e83mc"]
+radius = 66.0076
+
+[node name="Player" node_paths=PackedStringArray("bubble_dialogue") instance=ExtResource("1_e83mc")]
+collision_layer = 3
+collision_mask = 1
+script = ExtResource("2_c1lr3")
+bubble_dialogue = NodePath("Speech Bubble")
+
+[node name="Player Speech Area" type="Area2D" parent="." index="2"]
+visible = false
+collision_layer = 256
+collision_mask = 256
+script = ExtResource("4_c1lr3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player Speech Area" index="0"]
+shape = SubResource("CircleShape2D_e83mc")
+
+[node name="Chat Interface" type="CanvasLayer" parent="." index="3"]
+
+[node name="Open on Key" type="Node" parent="Chat Interface" index="0"]
+script = ExtResource("6_0x1em")
+key = 84
+
+[node name="Open Key" type="Label" parent="Chat Interface/Open on Key" index="0"]
+offset_left = 993.0
+offset_top = 614.0
+offset_right = 1117.0
+offset_bottom = 637.0
+text = "T: Speak"
+
+[node name="Simple Interface" parent="Chat Interface" index="1" instance=ExtResource("5_s7pla")]
+visible = false
+show_history = false
+
+[node name="Escape Go Back" type="Label" parent="Chat Interface/Simple Interface" index="6"]
+layout_mode = 0
+offset_left = 979.0
+offset_top = -32.0
+offset_right = 1103.0
+offset_bottom = -9.0
+text = "Escape: Go back"
+
+[node name="Hide On Escape" type="Node" parent="Chat Interface/Simple Interface" index="7"]
+script = ExtResource("6_0x1em")
+
+[node name="Speech Bubble" parent="." index="4" instance=ExtResource("3_s7pla")]
+visible = false
+offset_left = -126.0
+offset_top = 46.0
+offset_right = 130.0
+offset_bottom = 174.0
+
+[connection signal="area_entered" from="Player Speech Area" to="Player Speech Area" method="_on_area_entered"]
+[connection signal="key_pressed" from="Chat Interface/Open on Key" to="Chat Interface/Simple Interface" method="show"]
+[connection signal="text_sent" from="Chat Interface/Simple Interface" to="Player Speech Area" method="emit_speech"]
+[connection signal="text_sent" from="Chat Interface/Simple Interface" to="Speech Bubble" method="play"]
+[connection signal="text_sent" from="Chat Interface/Simple Interface" to="Chat Interface/Simple Interface" method="hide" unbinds=1]
+[connection signal="key_pressed" from="Chat Interface/Simple Interface/Hide On Escape" to="Chat Interface/Simple Interface" method="hide"]

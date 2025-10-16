@@ -1,4 +1,5 @@
-extends Node
+@tool
+extends Control
 
 @export var button : Button
 @export var text : TextEdit
@@ -6,7 +7,9 @@ extends Node
 @export var scroll_container : ScrollContainer
 @export var thinking : CanvasItem
 
-@export var deselect_on_send : bool
+@export var focus_on_show : bool = true
+@export var deselect_on_send : bool = false
+@export var show_history : bool = true
 
 @export var player2_stt : Player2STT
 
@@ -15,8 +18,13 @@ const stt_keycode : int = KEY_TAB
 signal text_sent(text : String)
 
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
 	#for x in ["HELLO!", "aSDasd aDS asd asD ASD aDs aSD asD aSD ASD asdAADAS ", "sda !# K!@R( QSKD( akdi0 ak))", "fourth line", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]:
 		#_append_line(x)
+
+	if $History:
+		$History.visible = show_history
 
 	button.pressed.connect(send)
 	# Make enter key send a message too
@@ -34,16 +42,21 @@ func _ready() -> void:
 					send()
 	)
 
+	self.visibility_changed.connect(func():
+		if visible and focus_on_show:
+			text.grab_focus()
+	)
+
 	#if player2_stt:
 		## Pass the message from stt upwards
 		#player2_stt.stt_received.connect(_send)
 
 func _send(text : String) -> void:
 	append_line_user(text)
-	text_sent.emit(text)
 	self.text.text = ""
 	if deselect_on_send:
 		self.text.release_focus()
+	text_sent.emit(text)
 
 func send() -> void:
 	_send(text.text)
@@ -94,5 +107,7 @@ func process_stt(event : InputEvent) -> void:
 				_stt_press = stt_press
 
 func _input(event: InputEvent) -> void:
-	if player2_stt:
+	if Engine.is_editor_hint():
+		return
+	if visible and player2_stt:
 		process_stt(event)
