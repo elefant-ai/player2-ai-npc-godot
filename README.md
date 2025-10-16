@@ -105,6 +105,15 @@ However, in order to do this audio must first be enabled in the godot engine.
 
 Enable audio in godot:
 
+## Image generation
+
+Use the `Player2AIImageGeneration` node to generate AI images.
+
+Use the `generate_image` function and the `generation_succeeded` signal to receive your generated image.
+Use `cache` to avoid hitting the endpoint multiple times for the same image.
+
+An example of generating AI slop can be found under `dev_scenes/slop_gen/slop_gen.tscn`
+
 **Project Settings** -> **Audio** -> **Enable Input (turn it on).**
 
 ## Web API Configuration
