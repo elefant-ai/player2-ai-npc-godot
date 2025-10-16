@@ -230,7 +230,7 @@ save_conversation_history = false
 sprite_texture = ExtResource("4_0jg4g")
 
 [node name="Guard" parent="." instance=ExtResource("2_5dgrg")]
-position = Vector2(326, 118)
+position = Vector2(707, 126)
 ai_name = "Rupert"
 ai_description = "A guard who is volunteering on the weekend. There haven't been any monsters for 100 years but you still want to help protect the townspeople."
 save_conversation_history = false
