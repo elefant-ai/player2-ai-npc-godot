@@ -82,6 +82,7 @@ func _enter_tree() -> void:
 	add_custom_type("Player2STT", "Player2STT", preload("nodes/Player2STT.gd"), preload("p2.svg"))
 	add_custom_type("Player2TTS", "Player2TTS", preload("nodes/Player2TTS.gd"), preload("p2.svg"))
 	add_custom_type("Player2AIChatCompletion", "Player2AIChatCompletion.gd", preload("nodes/Player2AIChatCompletion.gd"), preload("p2.svg"))
+	add_custom_type("Player2AIImageGeneration", "Player2AIImageGeneration", preload("nodes/Player2AIImageGeneration.gd"), preload("p2.svg"))
 
 	_possibly_run_opening_prompt()
 
@@ -109,6 +110,7 @@ func _exit_tree() -> void:
 	remove_custom_type("Player2STT")
 	remove_custom_type("Player2TTS")
 	remove_custom_type("Player2AIChatCompletion")
+	remove_custom_type("Player2AIImageGeneration")
 
 
 func _enable_plugin() -> void:
