@@ -118,9 +118,8 @@ func _disable_plugin() -> void:
 
 
 func _open_scene_template(template_scene : PackedScene):
-	print("OPENING SCENE: ", template_scene.resource_path)
+	# print("OPENING SCENE: ", template_scene.resource_path)
 	EditorInterface.open_scene_from_path(template_scene.resource_path, true)
-	# TODO: Open 3d/2d viewport depending on the scene configuration
 
 func _possibly_run_opening_prompt():
 	if ProjectSettings.get_setting("player2/hide_opening_prompt", false):
