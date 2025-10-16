@@ -10,10 +10,11 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_e83mc"]
 radius = 66.0076
 
-[node name="Player" instance=ExtResource("1_e83mc")]
+[node name="Player" node_paths=PackedStringArray("bubble_dialogue") instance=ExtResource("1_e83mc")]
 collision_layer = 3
 collision_mask = 1
 script = ExtResource("2_c1lr3")
+bubble_dialogue = NodePath("Speech Bubble")
 
 [node name="Player Speech Area" type="Area2D" parent="." index="2"]
 visible = false
