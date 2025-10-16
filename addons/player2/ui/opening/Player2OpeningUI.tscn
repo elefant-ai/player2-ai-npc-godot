@@ -1,9 +1,11 @@
-[gd_scene load_steps=9 format=3 uid="uid://bbwufi5t64tso"]
+[gd_scene load_steps=11 format=3 uid="uid://bbwufi5t64tso"]
 
 [ext_resource type="PackedScene" uid="uid://bgesamm4l5wbt" path="res://addons/player2/ui/opening/Player2OpeningTemplateButtonUI.tscn" id="1_fag4n"]
 [ext_resource type="Script" uid="uid://cw15010yf6cm5" path="res://addons/player2/ui/opening/player_2_opening_ui.gd" id="1_x8p2q"]
 [ext_resource type="Texture2D" uid="uid://c37ni610aov6t" path="res://addons/player2/ui/texture/chat_example.png" id="3_dh7gq"]
 [ext_resource type="PackedScene" uid="uid://5tdvp5lgxuea" path="res://addons/player2/templates/chat/chat_template.tscn" id="3_x8p2q"]
+[ext_resource type="Texture2D" uid="uid://b1j1m2tjd1sp4" path="res://addons/player2/ui/texture/rpg_example.png" id="5_03j77"]
+[ext_resource type="PackedScene" uid="uid://d2lukdapb4eub" path="res://addons/player2/templates/rpg/rpg_template.tscn" id="5_k4ls5"]
 [ext_resource type="StyleBox" uid="uid://dg1ofyey7kf1k" path="res://addons/player2/ui/theme/Player2RedStylebox.tres" id="7_03j77"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r4u8l"]
@@ -110,12 +112,14 @@ size_flags_vertical = 1
 title = "Visual Novel (WIP)"
 
 [node name="RPG" parent="VBoxContainer/Template List/HBoxContainer" instance=ExtResource("1_fag4n")]
-visible = false
 custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 1
-title = "Simple RPG (WIP)"
+icon = ExtResource("5_03j77")
+title = "Simple RPG"
+icon = ExtResource("5_03j77")
+template_scene = ExtResource("5_k4ls5")
 
 [node name="Bottom Row" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2

@@ -1,8 +1,7 @@
-[gd_scene load_steps=9 format=3 uid="uid://bewt3bfe00575"]
+[gd_scene load_steps=8 format=3 uid="uid://bewt3bfe00575"]
 
 [ext_resource type="PackedScene" uid="uid://cdvxbm0oegixg" path="res://addons/player2/templates/rpg/entity.tscn" id="1_e83mc"]
 [ext_resource type="Script" uid="uid://chdeiv46f70cw" path="res://addons/player2/templates/rpg/player.gd" id="2_c1lr3"]
-[ext_resource type="Texture2D" uid="uid://b2l735pjisttk" path="res://addons/player2/templates/rpg/thirdparty/kenney/tiny-dungeon/Tiles/tile_0088.png" id="3_0x1em"]
 [ext_resource type="PackedScene" uid="uid://dojecawo8ra37" path="res://addons/player2/templates/rpg/speech/speech_bubble.tscn" id="3_s7pla"]
 [ext_resource type="Script" uid="uid://bnttvyylpd8v5" path="res://addons/player2/templates/rpg/speech/player_speech_emitter.gd" id="4_c1lr3"]
 [ext_resource type="PackedScene" uid="uid://bj2556dthmk1e" path="res://addons/player2/templates/shared/simple_interface.tscn" id="5_s7pla"]
@@ -15,10 +14,6 @@ radius = 66.0076
 collision_layer = 3
 collision_mask = 1
 script = ExtResource("2_c1lr3")
-sprite_texture = ExtResource("3_0x1em")
-
-[node name="Sprite2D" parent="." index="1"]
-texture = ExtResource("3_0x1em")
 
 [node name="Player Speech Area" type="Area2D" parent="." index="2"]
 visible = false

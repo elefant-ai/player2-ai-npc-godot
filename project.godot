@@ -30,6 +30,7 @@ Player2API="*res://addons/player2/helpers/api.gd"
 [display]
 
 window/stretch/mode="canvas_items"
+window/vsync/vsync_mode=0
 
 [editor_plugins]
 
@@ -72,6 +73,10 @@ talk={
 2d_physics/layer_1="Solid"
 2d_physics/layer_2="Player"
 2d_physics/layer_9="Player Speech"
+
+[physics]
+
+common/physics_interpolation=true
 
 [player2]
 

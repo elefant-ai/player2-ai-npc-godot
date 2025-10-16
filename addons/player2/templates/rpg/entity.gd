@@ -3,23 +3,8 @@ class_name Player2RPGEntity
 extends CharacterBody2D
 
 @export_group("Sprite", "sprite")
-@export var sprite_texture : Texture2D:
-	get:
-		return $Sprite2D.texture
-	set(val):
-		if !Engine.is_editor_hint():
-			await ready
-		if $Sprite2D:
-			$Sprite2D.texture = val
-@export var sprite_scale : float = 1:
-	get:
-		return $Sprite2D.scale.x
-	set(val):
-		if !Engine.is_editor_hint():
-			await ready
-		if $Sprite2D:
-			$Sprite2D.scale.x = val
-			$Sprite2D.scale.y = val
+@export var sprite_texture : Texture2D
+@export var sprite_scale : float = 1
 
 @export_group("Sprite Bounce", "sprite_bounce")
 @export var sprite_bounce_root: Node2D
@@ -37,8 +22,7 @@ extends CharacterBody2D
 
 var _sprite_bounce_cycle : float = 0
 
-var move_input : Vector2 = Vector2.ZERO
-
+var move_input : Vector2
 
 func _add_accel(val : Vector2, target : Vector2, accel : float, delta : float) -> Vector2:
 	var delta_frame := accel * delta
@@ -50,7 +34,11 @@ func _add_accel(val : Vector2, target : Vector2, accel : float, delta : float) -
 func _process_move_speed(input : Vector2, delta : float) -> void:
 	var v = velocity
 	var accelerating = v.dot(input) > 0
-	
+
+	#v = input * move_speed
+	#velocity = v
+	#return
+
 	if input.length() < 0.01:
 		v = _add_accel(v, Vector2.ZERO, move_speed_deaccel, delta)
 		velocity = v
@@ -84,13 +72,34 @@ func _process_sprite_bounce(delta : float) -> void:
 	if sprite_bounce_strength <= 0.001:
 		_sprite_bounce_cycle -= sample_t
 
+func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
+	if $Sprite2D:
+		$Sprite2D.texture = sprite_texture
+		$Sprite2D.scale.x = sprite_scale
+		$Sprite2D.scale.y = sprite_scale
+
 func _process(delta : float) -> void:
 	if Engine.is_editor_hint():
+		if $Sprite2D:
+			$Sprite2D.texture = sprite_texture
+			$Sprite2D.scale.x = sprite_scale
+			$Sprite2D.scale.y = sprite_scale
 		return
-	_process_sprite_bounce(delta)
 
-func _physics_process(delta: float) -> void:
-	if Engine.is_editor_hint():
-		return
+
+	# Seems to work fine in process, is smoother.
+	# Feel free to move these two back to physics process though.
 	_process_move_speed(move_input.limit_length(1), delta)
 	move_and_slide()
+
+	_process_sprite_bounce(delta)
+
+
+#func _physics_process(delta: float) -> void:
+	#if Engine.is_editor_hint():
+		#return
+#
+	#_process_move_speed(move_input, delta)
+	#move_and_slide()

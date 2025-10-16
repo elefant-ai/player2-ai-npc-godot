@@ -1,7 +1,7 @@
 [gd_scene load_steps=17 format=3 uid="uid://b2x1x08mrp5cc"]
 
 [ext_resource type="PackedScene" uid="uid://cdvxbm0oegixg" path="res://addons/player2/templates/rpg/entity.tscn" id="1_6lwqq"]
-[ext_resource type="Script" uid="uid://g8khjtjt60lu" path="res://addons/player2/templates/rpg/player_speech_accepter.gd" id="2_axlqe"]
+[ext_resource type="Script" uid="uid://g8khjtjt60lu" path="res://addons/player2/templates/rpg/speech/player_speech_accepter.gd" id="2_axlqe"]
 [ext_resource type="Script" uid="uid://bcvkoahne4w1d" path="res://addons/player2/templates/rpg/npc.gd" id="2_ssmdj"]
 [ext_resource type="Script" uid="uid://bupnh0kqklshe" path="res://addons/player2/nodes/Player2AINPC.gd" id="4_p6i8k"]
 [ext_resource type="Script" uid="uid://fpb2ysodtcuy" path="res://addons/player2/helpers/tool_call/ToolCallFunctionDefinition.gd" id="5_ne6o3"]

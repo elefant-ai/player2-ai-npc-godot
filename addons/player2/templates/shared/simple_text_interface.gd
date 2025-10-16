@@ -9,14 +9,7 @@ extends Control
 
 @export var focus_on_show : bool = true
 @export var deselect_on_send : bool = false
-@export var show_history : bool = true:
-	get:
-		return $History.visible
-	set(val):
-		if not Engine.is_editor_hint():
-			await ready
-		print("SETTING: ", val)
-		$History.visible = val
+@export var show_history : bool = true
 
 @export var player2_stt : Player2STT
 
@@ -29,6 +22,9 @@ func _ready() -> void:
 		return
 	#for x in ["HELLO!", "aSDasd aDS asd asD ASD aDs aSD asD aSD ASD asdAADAS ", "sda !# K!@R( QSKD( akdi0 ak))", "fourth line", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]:
 		#_append_line(x)
+
+	if $History:
+		$History.visible = show_history
 
 	button.pressed.connect(send)
 	# Make enter key send a message too

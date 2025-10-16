@@ -216,14 +216,16 @@ tile_set = SubResource("TileSet_30f50")
 
 [node name="Player" parent="." instance=ExtResource("2_30f50")]
 position = Vector2(188.19, 81.9506)
+motion_mode = 0
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
 zoom = Vector2(2, 2)
-limit_smoothed = true
 position_smoothing_enabled = true
+position_smoothing_speed = 10.0
 
 [node name="Farmer" parent="." instance=ExtResource("2_5dgrg")]
 position = Vector2(441, 96)
+motion_mode = 0
 ai_name = "Susie"
 ai_description = "A farmer from the town. There are literally no crops around but you farm anyway. There are trees so I guess you farm those."
 save_conversation_history = false
@@ -231,6 +233,7 @@ sprite_texture = ExtResource("4_0jg4g")
 
 [node name="Guard" parent="." instance=ExtResource("2_5dgrg")]
 position = Vector2(707, 126)
+motion_mode = 0
 ai_name = "Rupert"
 ai_description = "A guard who is volunteering on the weekend. There haven't been any monsters for 100 years but you still want to help protect the townspeople."
 save_conversation_history = false
@@ -238,6 +241,7 @@ sprite_texture = ExtResource("5_37xhk")
 
 [node name="The Bunkster" parent="." instance=ExtResource("2_5dgrg")]
 position = Vector2(282, 354)
+motion_mode = 0
 ai_name = "The Bunkster"
 ai_description = "You Are The Bunkster. That's capital B Bunkster.
 Make sure whoever you talk to knows about this FIRST.
