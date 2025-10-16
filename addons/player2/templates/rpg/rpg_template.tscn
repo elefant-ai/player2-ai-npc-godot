@@ -1,11 +1,13 @@
-[gd_scene load_steps=9 format=4 uid="uid://d2lukdapb4eub"]
+[gd_scene load_steps=13 format=4 uid="uid://d2lukdapb4eub"]
 
 [ext_resource type="PackedScene" uid="uid://b2x1x08mrp5cc" path="res://addons/player2/templates/rpg/npc.tscn" id="2_5dgrg"]
 [ext_resource type="PackedScene" uid="uid://bewt3bfe00575" path="res://addons/player2/templates/rpg/player.tscn" id="2_30f50"]
 [ext_resource type="Texture2D" uid="uid://ybtnbh5ieb6v" path="res://addons/player2/templates/rpg/thirdparty/kenney/tiny-town/Tilemap/tilemap_packed.png" id="3_5dgrg"]
 [ext_resource type="Texture2D" uid="uid://cln7diayw38uv" path="res://addons/player2/templates/rpg/thirdparty/kenney/tiny-dungeon/Tiles/tile_0099.png" id="4_0jg4g"]
+[ext_resource type="Script" uid="uid://bsi5tjg54www7" path="res://addons/player2/helpers/config/Player2AICharacterConfig.gd" id="4_8qlkx"]
 [ext_resource type="Texture2D" uid="uid://dpuohuc7bxujw" path="res://addons/player2/templates/rpg/thirdparty/kenney/tiny-dungeon/Tiles/tile_0086.png" id="5_1v2wc"]
 [ext_resource type="Texture2D" uid="uid://2mgetht0uy64" path="res://addons/player2/templates/rpg/thirdparty/kenney/tiny-dungeon/Tiles/tile_0097.png" id="5_37xhk"]
+[ext_resource type="Script" uid="uid://mt8gdygmb5og" path="res://addons/player2/helpers/config/Player2TTSConfig.gd" id="5_r3ew8"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0jg4g"]
 texture = ExtResource("3_5dgrg")
@@ -202,6 +204,21 @@ texture = ExtResource("3_5dgrg")
 physics_layer_0/collision_layer = 1
 sources/0 = SubResource("TileSetAtlasSource_0jg4g")
 
+[sub_resource type="Resource" id="Resource_meahk"]
+script = ExtResource("5_r3ew8")
+stream = false
+use_wav = false
+tts_speed = 1.0
+tts_default_language = 0
+tts_default_gender = 1
+voice_id = ""
+
+[sub_resource type="Resource" id="Resource_3g2ds"]
+script = ExtResource("4_8qlkx")
+tts_enabled = true
+tts = SubResource("Resource_meahk")
+metadata/_custom_type_script = "uid://bsi5tjg54www7"
+
 [node name="Rpg Template" type="Node2D"]
 
 [node name="Floor Tilemap" type="TileMapLayer" parent="."]
@@ -228,7 +245,8 @@ position = Vector2(441, 96)
 motion_mode = 0
 ai_name = "Susie"
 ai_description = "A farmer from the town. There are literally no crops around but you farm anyway. There are trees so I guess you farm those."
-save_conversation_history = false
+ai_save_conversation_history = false
+ai_character_config = SubResource("Resource_3g2ds")
 sprite_texture = ExtResource("4_0jg4g")
 
 [node name="Guard" parent="." instance=ExtResource("2_5dgrg")]
@@ -236,7 +254,7 @@ position = Vector2(707, 126)
 motion_mode = 0
 ai_name = "Rupert"
 ai_description = "A guard who is volunteering on the weekend. There haven't been any monsters for 100 years but you still want to help protect the townspeople."
-save_conversation_history = false
+ai_save_conversation_history = false
 sprite_texture = ExtResource("5_37xhk")
 
 [node name="The Bunkster" parent="." instance=ExtResource("2_5dgrg")]
@@ -253,5 +271,5 @@ When first encountering someone, just act like a characature. \"I am the Bunkste
 if someone says \"what?\" then reply with \"That's Capital B Bunkster.\"
 
 Don't engage in conversations or carry them through, you are a punchline."
-save_conversation_history = false
+ai_save_conversation_history = false
 sprite_texture = ExtResource("5_1v2wc")

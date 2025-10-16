@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://b2x1x08mrp5cc"]
+[gd_scene load_steps=19 format=3 uid="uid://b2x1x08mrp5cc"]
 
 [ext_resource type="PackedScene" uid="uid://cdvxbm0oegixg" path="res://addons/player2/templates/rpg/entity.tscn" id="1_6lwqq"]
 [ext_resource type="Script" uid="uid://g8khjtjt60lu" path="res://addons/player2/templates/rpg/speech/player_speech_accepter.gd" id="2_axlqe"]
@@ -11,6 +11,21 @@
 [ext_resource type="Resource" uid="uid://das4ap6qvtr75" path="res://addons/player2/chat_config.tres" id="9_ek077"]
 [ext_resource type="PackedScene" uid="uid://dojecawo8ra37" path="res://addons/player2/templates/rpg/speech/speech_bubble.tscn" id="10_ne6o3"]
 [ext_resource type="Script" uid="uid://b2t46qb8xam24" path="res://addons/player2/templates/shared/thinking_animation.gd" id="11_15klw"]
+
+[sub_resource type="Resource" id="Resource_15klw"]
+script = ExtResource("8_gvhru")
+stream = false
+use_wav = false
+tts_speed = 1.0
+tts_default_language = 0
+tts_default_gender = 0
+voice_id = ""
+
+[sub_resource type="Resource" id="Resource_wetik"]
+script = ExtResource("7_wetik")
+tts_enabled = true
+tts = SubResource("Resource_15klw")
+metadata/_custom_type_script = "uid://bsi5tjg54www7"
 
 [sub_resource type="Resource" id="Resource_t7l7t"]
 Resource = null
@@ -42,7 +57,8 @@ radius = 416.097
 script = ExtResource("2_ssmdj")
 ai_name = "NPC"
 ai_description = "An NPC from the town, just an ordinary folk with some stories to tell."
-save_conversation_history = true
+ai_save_conversation_history = null
+ai_character_config = SubResource("Resource_wetik")
 metadata/_edit_group_ = true
 
 [node name="Player2AINPC" type="Node" parent="." index="2"]
