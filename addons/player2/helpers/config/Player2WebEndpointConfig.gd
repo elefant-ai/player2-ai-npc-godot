@@ -17,6 +17,7 @@ extends Player2EndpointConfig
 @export var get_selected_characters : String = "{root}/v1/selected_characters"
 
 @export var image_generate : String = "{root}/v1/image/generate"
+@export var image_edit : String = "{root}/v1/image/edit"
 
 @export var auth_start : String = "{root}/v1/login/device/new"
 @export var auth_poll : String = "{root}/v1/login/device/token"
