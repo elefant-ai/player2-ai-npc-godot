@@ -667,6 +667,9 @@ func get_selected_characters(on_complete : Callable, on_fail : Callable = Callab
 func image_generate(request : Player2Schema.ImageGenerateRequest, on_complete : Callable, on_fail : Callable = Callable()) -> void:
 	_req("image_generate", HTTPClient.Method.METHOD_POST, request, on_complete, on_fail)
 
+func image_edit(request : Player2Schema.ImageEditRequest, on_complete : Callable, on_fail : Callable = Callable()) -> void:
+	_req("image_edit", HTTPClient.Method.METHOD_POST, request, on_complete, on_fail)
+
 func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 
 	if not established_api_connection():
