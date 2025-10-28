@@ -90,3 +90,10 @@ class ImageGenerateRequest extends Resource:
 
 class ImageGenerateResponse extends Resource:
 	@export var image : String
+
+class ImageEditRequest extends Resource:
+	@export var images : Array[String]
+	@export var prompt : String
+
+class ImageEditResponse extends Resource:
+	@export var image : String
