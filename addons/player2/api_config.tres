@@ -9,61 +9,18 @@
 
 [sub_resource type="Resource" id="Resource_m5qx4"]
 script = ExtResource("1_vtgv6")
-root = "http://127.0.0.1:4315"
-chat = "{root}/v1/chat/completions"
-health = "{root}/v1/health"
-joules = "{root}/v1/joules"
-tts_speak = "{root}/v1/tts/speak"
-tts_stop = "{root}/v1/tts/stop"
-tts_voices = "{root}/v1/tts/voices"
-get_selected_characters = "{root}/v1/selected_characters"
-image_generate = "{root}/v1/image/generate"
-stt_start = "{root}/v1/stt/start"
-stt_stop = "{root}/v1/stt/stop"
-webapi_login = "{root}/v1/login/web/{client_id}"
-endpoint_check = "{root}/v1/health"
 
 [sub_resource type="Resource" id="Resource_nncrx"]
 script = ExtResource("2_88imo")
-root = "https://api.player2.game"
-root_internal_site = "{origin}/_api"
-internal_site_origin = "player2.game"
-chat = "{root}/v1/chat/completions"
-health = "{root}/v1/health"
-joules = "{root}/v1/joules"
-tts_speak = "{root}/v1/tts/speak"
-tts_speak_stream = "{root}/v1/tts/stream"
-tts_voices = "{root}/v1/tts/voices"
-get_selected_characters = "{root}/v1/selected_characters"
-image_generate = "{root}/v1/image/generate"
-auth_start = "{root}/v1/login/device/new"
-auth_poll = "{root}/v1/login/device/token"
-stt_stream = "{root}/v1/stt/stream"
-stt_protocol = "wss"
-endpoint_check = "{root}/v1/health"
 
 [sub_resource type="Resource" id="Resource_4mmoy"]
 script = ExtResource("3_m5qx4")
-download_player2_launcher = "https://player2.game/"
-profile_ai_power = "https://player2.game/profile/ai-power"
-developer_dashboard = "https://player2.game/profile/developer/"
-upload_game = "https://player2.game/profile/developer/{client_id}/upload"
-client_id_help = "https://github.com/elefant-ai/player2-ai-npc-godot/tree/main?tab=readme-ov-file#creating-your-player2-project-and-getting-the-client-id"
 
 [resource]
 script = ExtResource("3_pqu85")
-prompt_auth_page_immediately = true
-source_mode = 0
-error_log_ui = true
 endpoint_web = SubResource("Resource_nncrx")
 endpoint_local = SubResource("Resource_m5qx4")
 endpoint_webpage = SubResource("Resource_4mmoy")
-request_timeout = 30.0
-request_timeout_check_local = 1.0
-request_timeout_check_web = 8.0
-request_timeout_local_auth = 0.5
-retry_delay = 3.0
-auth_key_cache_locally = true
 ui_web_auth_prompt = ExtResource("4_88imo")
 ui_power_hud = ExtResource("5_m5qx4")
 metadata/_custom_type_script = "uid://b6indg81ao1we"

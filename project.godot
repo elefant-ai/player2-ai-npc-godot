@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Player2 AI NPC Godot"
 run/main_scene="uid://5tdvp5lgxuea"
-config/features=PackedStringArray("4.4", "Forward Plus")
+config/features=PackedStringArray("4.5", "Forward Plus")
 
 [audio]
 
