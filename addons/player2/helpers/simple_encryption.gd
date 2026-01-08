@@ -1,5 +1,5 @@
 ## Security by obscurity layer (since players can access the key anyway, just a tiny extra layer for encryption)
-class_name Player2CrappyEncryption
+class_name Player2SimpleEncryption
 
 ## Don't roll your own crypto kids
 static func encrypt_unsecure(text : String, salt : String = "asdf") -> String:

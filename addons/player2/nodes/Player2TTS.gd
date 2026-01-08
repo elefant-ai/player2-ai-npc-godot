@@ -50,7 +50,7 @@ static func _filter_raw_data(audio_data : Variant) -> PackedByteArray:
 	var first_comma = audio_data.find(",")
 	if first_comma != -1:
 		audio_data = audio_data.substr(first_comma + 1)
-	# json fuckery :(
+	# json edge cases handling
 	if audio_data.ends_with("\"}"):
 		audio_data = audio_data.substr(0, audio_data.length() - 2)
 

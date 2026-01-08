@@ -1,5 +1,5 @@
 @tool
-## AI Image Slop generation using the Player2 API.
+## AI Image generation using the Player2 API.
 ## Option to cache images to reduce cost and introduce repeatability.
 class_name Player2AIImageGeneration
 extends Node

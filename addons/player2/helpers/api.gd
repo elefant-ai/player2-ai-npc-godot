@@ -93,7 +93,7 @@ func _save_key(key : String) -> void:
 		client_id = ""
 
 	var file = FileAccess.open(filename, FileAccess.WRITE)
-	file.store_string(Player2CrappyEncryption.encrypt_unsecure("KEY: " + key, client_id))
+	file.store_string(Player2SimpleEncryption.encrypt_unsecure("KEY: " + key, client_id))
 	file.close()
 
 ## Load the auth key with some local encryption
@@ -114,7 +114,7 @@ func _load_key() -> String:
 	file.close()
 
 	# Get decryption, validate that it works though
-	var result = Player2CrappyEncryption.decrypt_unsecure(content, client_id)
+	var result = Player2SimpleEncryption.decrypt_unsecure(content, client_id)
 	if result.begins_with("KEY: "):
 		return result.substr("KEY: ".length())
 

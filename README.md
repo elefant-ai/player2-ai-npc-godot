@@ -112,7 +112,7 @@ Use the `Player2AIImageGeneration` node to generate AI images.
 Use the `generate_image` function and the `generation_succeeded` signal to receive your generated image.
 Use `cache` to avoid hitting the endpoint multiple times for the same image.
 
-An example of generating AI slop can be found under `dev_scenes/slop_gen/slop_gen.tscn`
+An example of image generation can be found under `dev_scenes/image_gen/image_gen.tscn`
 
 **Project Settings** -> **Audio** -> **Enable Input (turn it on).**
 

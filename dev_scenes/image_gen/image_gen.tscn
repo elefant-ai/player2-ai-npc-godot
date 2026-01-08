@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3 uid="uid://hsyibo7oelja"]
 
-[ext_resource type="Script" uid="uid://2pdjnvvrwgf6" path="res://dev_scenes/slop_gen/slop_gen.gd" id="1_gocj1"]
+[ext_resource type="Script" uid="uid://2pdjnvvrwgf6" path="res://dev_scenes/image_gen/image_gen.gd" id="1_gocj1"]
 [ext_resource type="Script" uid="uid://67lopvc1mgkc" path="res://addons/player2/nodes/Player2AIImageGeneration.gd" id="1_l1n38"]
 
-[node name="SlopGen" type="CanvasLayer"]
+[node name="ImageGen" type="CanvasLayer"]
 script = ExtResource("1_gocj1")
 
 [node name="Player2AIImageGeneration" type="Node" parent="."]
@@ -29,4 +29,4 @@ placeholder_text = "Prompt here"
 
 [node name="Button" type="Button" parent="VBoxContainer"]
 layout_mode = 2
-text = "Generate Slop"
+text = "Generate Image"
