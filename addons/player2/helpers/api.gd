@@ -23,7 +23,7 @@ var _auth_queue : Array[RequestCallback] = []
 
 var _internal_site : bool = false
 
-## User game data persistence. Access via Player2API.Data.get(), .set(), .delete()
+## User game data persistence. Access via Player2API.Data.get_value(), .set_value(), .delete()
 var Data: Player2Data
 
 func using_internal_site() -> bool:
@@ -323,8 +323,6 @@ func _req_with_game_id(path_property: String, method: HTTPClient.Method = HTTPCl
 		for key in query_params:
 			params_arr.append(str(key) + "=" + str(query_params[key]).uri_encode())
 		path += "?" + "&".join(params_arr)
-
-	print("hitting path (with game_id) ", path)
 
 	var on_auth_ready = func(run_again):
 		Player2WebHelper.request(

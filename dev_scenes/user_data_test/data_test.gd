@@ -1,7 +1,5 @@
 extends Node2D
 
-@export var run_on_ready := false
-
 @onready var status_label: Label = $StatusLabel
 @onready var set_btn: Button = $SetBtn
 @onready var get_btn: Button = $GetBtn

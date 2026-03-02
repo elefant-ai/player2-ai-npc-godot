@@ -25,7 +25,7 @@ func get_value(key: String, on_complete: Callable, on_fail: Callable = Callable(
 	_api._req_with_game_id(PATH_PROPERTY, HTTPClient.Method.METHOD_GET, "",
 		func(result):
 			var value_str: String = result.get("value", "")
-			var parsed = JSON.parse_string(value_str)
+			var parsed: Variant = JSON.parse_string(value_str)
 			if on_complete.is_valid():
 				on_complete.call(parsed),
 		on_fail,
