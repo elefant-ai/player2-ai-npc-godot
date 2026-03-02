@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://dev_scenes/user_data_test/data_test.gd" id="1_script"]
+
+[node name="DataTest" type="Node2D"]
+script = ExtResource("1_script")
+run_on_ready = false
+
+[node name="StatusLabel" type="Label" parent="."]
+offset_left = 40.0
+offset_top = 30.0
+offset_right = 560.0
+offset_bottom = 80.0
+text = "Press a button to test Player2API.Data"
+
+[node name="SetBtn" type="Button" parent="."]
+offset_left = 40.0
+offset_top = 100.0
+offset_right = 160.0
+offset_bottom = 140.0
+text = "Set Data"
+
+[node name="GetBtn" type="Button" parent="."]
+offset_left = 180.0
+offset_top = 100.0
+offset_right = 300.0
+offset_bottom = 140.0
+text = "Get Data"
+
+[node name="DeleteBtn" type="Button" parent="."]
+offset_left = 320.0
+offset_top = 100.0
+offset_right = 440.0
+offset_bottom = 140.0
+text = "Delete Key"
+
+[node name="DeleteAllBtn" type="Button" parent="."]
+offset_left = 460.0
+offset_top = 100.0
+offset_right = 580.0
+offset_bottom = 140.0
+text = "Delete All"
