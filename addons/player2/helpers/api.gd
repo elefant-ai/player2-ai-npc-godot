@@ -297,7 +297,8 @@ func _req_stream(path_property : String, method: HTTPClient.Method = HTTPClient.
 	_prereq_auth(on_auth_ready, on_fail)
 
 ## Like _req but replaces {game_id} in the path with the client_id
-func _req_with_game_id(path_property: String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body: Variant = "", on_completed: Callable = Callable(), on_fail: Callable = Callable()):
+## query_params is an optional dictionary of query parameters to append to the URL
+func _req_with_game_id(path_property: String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body: Variant = "", on_completed: Callable = Callable(), on_fail: Callable = Callable(), query_params: Dictionary = {}):
 	var game_id = ProjectSettings.get_setting("player2/client_id", "")
 	if game_id.is_empty():
 		var msg = "No client id defined. Cannot make game data request."
@@ -315,6 +316,13 @@ func _req_with_game_id(path_property: String, method: HTTPClient.Method = HTTPCl
 	if path:
 		path = path.replace("{root}", endpoint.get("root"))
 		path = path.replace("{game_id}", game_id)
+
+	# Append query params if any
+	if not query_params.is_empty():
+		var params_arr := []
+		for key in query_params:
+			params_arr.append(str(key) + "=" + str(query_params[key]).uri_encode())
+		path += "?" + "&".join(params_arr)
 
 	print("hitting path (with game_id) ", path)
 

@@ -13,13 +13,14 @@ var test_data := {"level": 5, "coins": 100, "inventory": ["sword", "shield"]}
 
 
 func _ready() -> void:
+	# Force local API for testing (until web API has data endpoints)
+	var api = Player2APIConfig.grab()
+	api.source_mode = Player2APIConfig.SourceMode.LOCAL_ONLY
+
 	set_btn.pressed.connect(_on_set_pressed)
 	get_btn.pressed.connect(_on_get_pressed)
 	delete_btn.pressed.connect(_on_delete_pressed)
 	delete_all_btn.pressed.connect(_on_delete_all_pressed)
-
-	if run_on_ready:
-		_run_full_test()
 
 
 func _log(msg: String) -> void:
