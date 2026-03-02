@@ -31,7 +31,7 @@ func _replace_game_id_in_path(path: String) -> String:
 ## Get a value by key. Value is auto-deserialized from JSON.
 ## on_complete receives the deserialized Variant.
 ## on_fail receives (error_message: String, error_code: int).
-func get(key: String, on_complete: Callable, on_fail: Callable = Callable()) -> void:
+func get_value(key: String, on_complete: Callable, on_fail: Callable = Callable()) -> void:
 	if key.is_empty():
 		if on_fail.is_valid():
 			on_fail.call("Key cannot be empty", -1)
@@ -51,7 +51,7 @@ func get(key: String, on_complete: Callable, on_fail: Callable = Callable()) -> 
 ## Set a value by key. Value is auto-serialized to JSON string.
 ## on_complete receives no arguments.
 ## on_fail receives (error_message: String, error_code: int).
-func set(key: String, value: Variant, on_complete: Callable = Callable(), on_fail: Callable = Callable()) -> void:
+func set_value(key: String, value: Variant, on_complete: Callable = Callable(), on_fail: Callable = Callable()) -> void:
 	if key.is_empty():
 		if on_fail.is_valid():
 			on_fail.call("Key cannot be empty", -1)

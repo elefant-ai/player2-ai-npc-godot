@@ -29,7 +29,7 @@ func _log(msg: String) -> void:
 
 func _on_set_pressed() -> void:
 	_log("Setting data...")
-	Player2API.Data.set(test_key, test_data,
+	Player2API.Data.set_value(test_key, test_data,
 		func():
 			_log("SET SUCCESS: " + JSON.stringify(test_data)),
 		func(error_msg, error_code):
@@ -39,7 +39,7 @@ func _on_set_pressed() -> void:
 
 func _on_get_pressed() -> void:
 	_log("Getting data...")
-	Player2API.Data.get(test_key,
+	Player2API.Data.get_value(test_key,
 		func(value):
 			if value:
 				_log("GET SUCCESS: " + JSON.stringify(value))
@@ -72,16 +72,16 @@ func _on_delete_all_pressed() -> void:
 
 func _run_full_test() -> void:
 	_log("Running full test...")
-	Player2API.Data.set(test_key, test_data,
+	Player2API.Data.set_value(test_key, test_data,
 		func():
 			_log("SET SUCCESS")
-			Player2API.Data.get(test_key,
+			Player2API.Data.get_value(test_key,
 				func(value):
 					_log("GET SUCCESS: " + JSON.stringify(value))
 					Player2API.Data.delete(test_key,
 						func():
 							_log("DELETE SUCCESS")
-							Player2API.Data.get(test_key,
+							Player2API.Data.get_value(test_key,
 								func(v):
 									_log("After delete GET: " + str(v)),
 								func(msg, code):
