@@ -24,6 +24,10 @@ func get_value(key: String, on_complete: Callable, on_fail: Callable = Callable(
 
 	_api._req_with_game_id(PATH_PROPERTY, HTTPClient.Method.METHOD_GET, "",
 		func(result):
+			if not result is Dictionary:
+				if on_fail.is_valid():
+					on_fail.call("Invalid response format", -1)
+				return
 			var value_str: String = result.get("value", "")
 			var parsed: Variant = JSON.parse_string(value_str)
 			if on_complete.is_valid():
@@ -43,6 +47,10 @@ func set_value(key: String, value: Variant, on_complete: Callable = Callable(), 
 		return
 
 	var value_json := JSON.stringify(value)
+	if value_json.is_empty() and value != null:
+		if on_fail.is_valid():
+			on_fail.call("Value is not JSON-serializable", -1)
+		return
 	var body := {"key": key, "value": value_json}
 	_api._req_with_game_id(PATH_PROPERTY, HTTPClient.Method.METHOD_PUT, body,
 		func(_result):
