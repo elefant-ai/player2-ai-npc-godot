@@ -1,40 +1,39 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://d07n4sl23vjug"]
 
-[ext_resource type="Script" path="res://dev_scenes/user_data_test/data_test.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://d8psndy6mtox" path="res://dev_scenes/user_data_test/data_test.gd" id="1_script"]
 
-[node name="DataTest" type="Node2D"]
+[node name="DataTest" type="Node2D" unique_id=1458882149]
 script = ExtResource("1_script")
-run_on_ready = false
 
-[node name="StatusLabel" type="Label" parent="."]
+[node name="StatusLabel" type="Label" parent="." unique_id=526566137]
 offset_left = 40.0
 offset_top = 30.0
 offset_right = 560.0
 offset_bottom = 80.0
 text = "Press a button to test Player2API.Data"
 
-[node name="SetBtn" type="Button" parent="."]
+[node name="SetBtn" type="Button" parent="." unique_id=892725928]
 offset_left = 40.0
 offset_top = 100.0
 offset_right = 160.0
 offset_bottom = 140.0
 text = "Set Data"
 
-[node name="GetBtn" type="Button" parent="."]
+[node name="GetBtn" type="Button" parent="." unique_id=258874937]
 offset_left = 180.0
 offset_top = 100.0
 offset_right = 300.0
 offset_bottom = 140.0
 text = "Get Data"
 
-[node name="DeleteBtn" type="Button" parent="."]
+[node name="DeleteBtn" type="Button" parent="." unique_id=169538191]
 offset_left = 320.0
 offset_top = 100.0
 offset_right = 440.0
 offset_bottom = 140.0
 text = "Delete Key"
 
-[node name="DeleteAllBtn" type="Button" parent="."]
+[node name="DeleteAllBtn" type="Button" parent="." unique_id=609303330]
 offset_left = 460.0
 offset_top = 100.0
 offset_right = 580.0

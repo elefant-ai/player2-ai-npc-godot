@@ -8,11 +8,15 @@
 
 config_version=5
 
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
 
 config/name="Player2 AI NPC Godot"
-run/main_scene="uid://5tdvp5lgxuea"
-config/features=PackedStringArray("4.5", "Forward Plus")
+run/main_scene="uid://d07n4sl23vjug"
+config/features=PackedStringArray("4.6", "Forward Plus")
 
 [audio]
 
@@ -20,12 +24,12 @@ driver/enable_input=true
 
 [autoload]
 
-Player2AsyncHelper="*res://addons/player2/helpers/async_helper.gd"
-Player2ErrorHelper="*res://addons/player2/helpers/error_helper.tscn"
-Player2APISourceHelper="*res://addons/player2/helpers/Player2APISource.tscn"
-Player2WebHelper="*res://addons/player2/helpers/web_helper.gd"
-Player2AuthHelper="*res://addons/player2/helpers/auth_helper.gd"
-Player2API="*res://addons/player2/helpers/api.gd"
+Player2AsyncHelper="*uid://dvrhlfnm041m4"
+Player2ErrorHelper="*uid://dmbaq0aasr5kt"
+Player2APISourceHelper="*uid://c3qd7pyhp8whk"
+Player2WebHelper="*uid://dnlfee00wl7jb"
+Player2AuthHelper="*uid://dt0p7yaopsgr8"
+Player2API="*uid://ds84b57fgfbrm"
 
 [display]
 
@@ -80,8 +84,8 @@ common/physics_interpolation=true
 
 [player2]
 
-client_id=""
 hide_opening_prompt=false
+client_id="01978f76-97af-712f-b90e-0bd5a2fae80a"
 
 [rendering]
 
