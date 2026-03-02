@@ -26,6 +26,7 @@ extends Player2EndpointConfig
 @export var stt_protocol : String = "wss"
 
 @export var endpoint_check = "{root}/v1/health"
+@export var user_data : String = "{root}/v1/games/{game_id}/data/user"
 
 # Can override if we detect we're a web build on site
 var _using_site : bool = false
