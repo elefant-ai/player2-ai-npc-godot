@@ -23,6 +23,9 @@ var _auth_queue : Array[RequestCallback] = []
 
 var _internal_site : bool = false
 
+## User game data persistence. Access via Player2API.Data.get(), .set(), .delete()
+var Data: Player2Data
+
 func using_internal_site() -> bool:
 	return _internal_site
 
@@ -780,6 +783,7 @@ func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 	return socket
 
 func _ready() -> void:
+	Data = Player2Data.new(self)
 
 	# Don't print TTS responses, they are big!
 	var api = Player2APIConfig.grab()
