@@ -85,7 +85,7 @@ common/physics_interpolation=true
 [player2]
 
 hide_opening_prompt=false
-client_id="01978f76-97af-712f-b90e-0bd5a2fae80a"
+client_id=""
 
 [rendering]
 
