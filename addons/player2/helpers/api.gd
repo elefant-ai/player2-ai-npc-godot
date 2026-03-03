@@ -23,6 +23,9 @@ var _auth_queue : Array[RequestCallback] = []
 
 var _internal_site : bool = false
 
+## User game data persistence. Access via Player2API.Data.get_value(), .set_value(), .delete()
+var Data: Player2Data
+
 func using_internal_site() -> bool:
 	return _internal_site
 
@@ -291,7 +294,79 @@ func _req_stream(path_property : String, method: HTTPClient.Method = HTTPClient.
 		)
 
 	# Run the auth
-	_prereq_auth(on_auth_ready, on_fail)	
+	_prereq_auth(on_auth_ready, on_fail)
+
+## Like _req but replaces {game_id} in the path with the client_id
+## query_params is an optional dictionary of query parameters to append to the URL
+func _req_with_game_id(path_property: String, method: HTTPClient.Method = HTTPClient.Method.METHOD_GET, body: Variant = "", on_completed: Callable = Callable(), on_fail: Callable = Callable(), query_params: Dictionary = {}):
+	var game_id = ProjectSettings.get_setting("player2/client_id", "")
+	if game_id.is_empty():
+		var msg = "No client id defined. Cannot make game data request."
+		Player2ErrorHelper.send_error(msg)
+		if on_fail.is_valid():
+			on_fail.call(msg, -2)
+		return
+
+	var api := Player2APIConfig.grab()
+	var use_web = using_web()
+	var endpoint = api.endpoint_web if use_web else api.endpoint_local
+
+	# Get the raw path and replace game_id
+	var path: String = endpoint.get(path_property)
+	if path:
+		path = path.replace("{root}", endpoint.get("root"))
+		path = path.replace("{game_id}", game_id)
+
+	# Append query params if any
+	if not query_params.is_empty():
+		var params_arr := []
+		for key in query_params:
+			params_arr.append(str(key) + "=" + str(query_params[key]).uri_encode())
+		path += "?" + "&".join(params_arr)
+
+	var on_auth_ready = func(run_again):
+		Player2WebHelper.request(
+			path,
+			method,
+			body,
+			_get_headers(use_web),
+			func(response_body, code, headers):
+				if !_code_success(code):
+					if use_web and code == 401:
+						if _internal_site:
+							Player2ErrorHelper.send_error("Got Unauthorized response. Try refreshing the page!")
+							return
+						print("Unauthorized response. Resetting key and trying to re-auth.")
+						Player2ErrorHelper.send_error("Got Unauthorized while doing web requests, redoing auth.")
+						_web_p2_key = ""
+						run_again.call()
+						return
+					_alert_error_fail(code, false, response_body)
+					if on_fail.is_valid():
+						on_fail.call(response_body, code)
+					return
+				if on_completed.is_valid():
+					var result = JSON.parse_string(response_body)
+					on_completed.call(result if result else response_body)
+				request_success.emit(path_property),
+			func(response_body, code):
+				if code != HTTPRequest.RESULT_SUCCESS:
+					if use_web:
+						_last_web_present = false
+					else:
+						_last_local_present = false
+					if !_last_local_present and !_last_web_present:
+						_source_tested = false
+						print("Source got unset. Trying to find again...")
+						Player2AsyncHelper.call_timeout(run_again, 3)
+				else:
+					_last_web_present = true
+				_alert_error_fail(code, true)
+				if on_fail.is_valid():
+					on_fail.call("", code)
+		)
+
+	_prereq_auth(on_auth_ready, on_fail)
 
 func _prereq_auth(on_auth_ready : Callable, on_fail : Callable = Callable()):
 	var api := Player2APIConfig.grab()
@@ -714,6 +789,7 @@ func stt_stream_socket(sample_rate : int = 44100) -> WebSocketPeer:
 	return socket
 
 func _ready() -> void:
+	Data = Player2Data.new(self)
 
 	# Don't print TTS responses, they are big!
 	var api = Player2APIConfig.grab()

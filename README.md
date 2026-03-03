@@ -121,3 +121,56 @@ An example of image generation can be found under `dev_scenes/image_gen/image_ge
 If you wish to disable the error logging at the top of the screen, customize request timeouts, or customize the authentication UI for the Web API, modify the resource at `addons/player2/api_config.tres`
 
 <img width="356" height="459" alt="image" src="https://github.com/user-attachments/assets/23cd97b5-e01c-4401-8fb8-53208144ff33" />
+
+## User Data Storage
+
+The plugin provides cloud-based user data storage for saving player progress, inventory, achievements, and other game state.
+
+### Basic Usage
+
+```gdscript
+# Save player data (auto-serialized to JSON)
+Player2API.Data.set_value("inventory", {"sword": 1, "shield": 2, "potions": 5}, func():
+    print("Inventory saved!")
+)
+
+# Load player data (auto-deserialized from JSON)
+Player2API.Data.get_value("inventory", func(value):
+    if value:
+        print("Loaded inventory: ", value)
+    else:
+        print("No saved inventory found")
+)
+
+# Delete a specific key
+Player2API.Data.delete("old_save", func():
+    print("Old save deleted!")
+)
+
+# Clear all user data (useful for "reset progress" feature)
+Player2API.Data.delete_all(func():
+    print("All progress reset!")
+)
+```
+
+### Error Handling
+
+All methods accept an optional `on_fail` callback:
+
+```gdscript
+Player2API.Data.get_value("progress",
+    func(value):
+        print("Got progress: ", value),
+    func(error_msg, error_code):
+        if error_code == 404:
+            print("No save data yet - new player!")
+        else:
+            print("Error: ", error_msg)
+)
+```
+
+### Storage Limits
+
+- **4 MB** quota per user per game
+- Data is stored as JSON strings
+- Requires user authentication via Player2 app
